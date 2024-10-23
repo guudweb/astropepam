@@ -4,6 +4,7 @@ const Usuario = defineTable({
   columns: {
     user_id: column.number({ primaryKey: true }),
     nombre: column.text(),
+    contraseña: column.text(),
     telefono: column.number(),
     correo: column.text(),
     congregacion: column.text(),
