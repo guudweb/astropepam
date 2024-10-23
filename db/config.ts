@@ -12,7 +12,7 @@ const Usuario = defineTable({
     role: column.text(),
     estado_civil: column.text(),
     nombre_conyuge: column.text(),
-    privilegios: column.text(),
+    privilegios: column.json(),
     isActive: column.boolean({ default: true }),
   },
 });

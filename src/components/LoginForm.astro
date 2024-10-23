@@ -4,33 +4,149 @@ import { db, Usuario } from 'astro:db';
 if (Astro.request.method === 'POST') {
   // Parse form data
   const formData = await Astro.request.formData();
-  const nombre = formData.get('nombre');
+  const correo = formData.get('correo');
   const telefono = formData.get('telefono');
-  if (typeof nombre === 'string' && typeof telefono === 'string') {
-    // Insert form data into the Comment table
-    await db.insert(Usuario).values({ nombre, telefono });
+  const nombre = formData.get('nombre');
+  const contraseña = formData.get('contraseña');
+  const congregacion = formData.get('congregacion');
+  const estado_civil = formData.get('estado_civil');
+  const nombre_conyuge = formData.get('nombre_conyuge');
+  const sexo = formData.get('sexo');
+  const role = formData.get('role');
+  const privilegios = formData.getAll('privilegios'); // Get all selected checkboxes
+
+  console.log('Form Data:', { correo, telefono, nombre, contraseña, congregacion, estado_civil, nombre_conyuge, sexo, role, privilegios }); // Log form data
+
+  if (typeof correo === 'string' && typeof telefono === 'string' && typeof nombre === 'string' && typeof contraseña === 'string' && typeof sexo === 'string' && typeof role === 'string') {
+    try {
+      // Insert form data into the Usuario table
+      await db.insert(Usuario).values({
+        correo,
+        telefono,
+        nombre,
+        contraseña,
+        congregacion,
+        estado_civil,
+        nombre_conyuge,
+        sexo,
+        role,
+        privilegios: JSON.stringify(privilegios) // Store as JSON string
+      });
+      console.log('Data inserted successfully');
+    } catch (error) {
+      console.error('Error inserting data:', error);
+    }
+  } else {
+    console.error('Invalid form data');
   }
 }
+
+
+
 ---
 
-<div class=" mx-auto mt-9 w-full max-w-xs">
-    <form method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="correo">
-                correo
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="correo" type="email" placeholder="correo">
+<div class="mx-auto mt-9 w-full max-w-2xl">
+    <form method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 grid grid-cols-2 gap-4">
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="correo">
+          Correo
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="correo" name="correo" type="email" placeholder="correo" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="nombre">
+          Nombre
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="nombre" name="nombre" type="text" placeholder="nombre" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="telefono">
+          Teléfono
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="telefono" name="telefono" type="text" placeholder="telefono" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="contraseña">
+          Contraseña
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="contraseña" name="contraseña" type="password" placeholder="**********" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="congregacion">
+          Congregación
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="congregacion" name="congregacion" type="text" placeholder="congregación">
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="estado_civil">
+          Estado Civil
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="estado_civil" name="estado_civil" type="text" placeholder="estado civil">
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="nombre_conyuge">
+          Nombre del Cónyuge
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="nombre_conyuge" name="nombre_conyuge" type="text" placeholder="nombre del cónyuge">
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2">
+          Sexo
+        </label>
+        <div class="flex items-center">
+          <label class="mr-4">
+            <input type="radio" name="sexo" value="M" required> M
+          </label>
+          <label>
+            <input type="radio" name="sexo" value="F" required> F
+          </label>
         </div>
-        <div class="mb-6">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="telefono">
-                telefono
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="telefono" type="text" placeholder="">
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2">
+          Role
+        </label>
+        <div class="flex items-center">
+          <label class="mr-4">
+            <input type="radio" name="role" value="admin" required> Admin
+          </label>
+          <label class="mr-4">
+            <input type="radio" name="role" value="superadmin" required> Superadmin
+          </label>
+          <label>
+            <input type="radio" name="role" value="user" required> User
+          </label>
         </div>
-        <div class="flex items-center justify-between">
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-                Sign In
-            </button>
+      </div>
+      <div class="mb-4 col-span-2">
+        <label class="block text-gray-700 text-sm font-bold mb-2">
+          Privilegios
+        </label>
+        <div class="flex flex-wrap">
+          <label class="mr-4">
+            <input type="checkbox" name="privilegios" value="Precursor"> Precursor
+          </label>
+          <label class="mr-4">
+            <input type="checkbox" name="privilegios" value="Anciano"> Anciano
+          </label>
+          <label class="mr-4">
+            <input type="checkbox" name="privilegios" value="Siervo"> Siervo
+          </label>
+          <label>
+            <input type="checkbox" name="privilegios" value="Otro"> Otro
+          </label>
         </div>
+      </div>
+      <div class="col-span-2 flex items-center justify-between">
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+          Submit
+        </button>
+      </div>
     </form>
-</div>
+  </div>
+  
+  
+  
+  
+  
+  
