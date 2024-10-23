@@ -1,0 +1,16 @@
+---
+import { db, Usuario } from 'astro:db';
+
+const comments = await db.select().from(Usuario);
+---
+
+<h2>Users</h2>
+
+{
+  comments.map(({ correo, telefono }) => (
+    <article>
+      <p>{correo}</p>
+      <p>{telefono}</p>
+    </article>
+  ))
+}

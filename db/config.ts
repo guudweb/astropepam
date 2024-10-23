@@ -8,6 +8,7 @@ const Usuario = defineTable({
     correo: column.text(),
     congregacion: column.text(),
     sexo: column.text(),
+    role: column.text(),
     estado_civil: column.text(),
     nombre_conyuge: column.text(),
     privilegios: column.text(),
