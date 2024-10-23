@@ -13,19 +13,20 @@ const Usuario = defineTable({
     estado_civil: column.text(),
     nombre_conyuge: column.text(),
     privilegios: column.json(),
+    disponibilidad: column.json(),
     isActive: column.boolean({ default: true }),
   },
 });
 
-const Disponibilidad = defineTable({
+const disponibilidad = defineTable({
   columns: {
     id: column.number({ primaryKey: true }),
-    usuario_id: column.number({ references: () => Usuario.columns.user_id }),
-    dias_semana: column.text(),
-    turnos: column.text(),
+    user_id: column.number({ references: () => Usuario.columns.user_id }),
+    dia: column.text(),
+    turnos: column.json(),
   },
 });
 
 export default defineDb({
-  tables: { Usuario, Disponibilidad },
+  tables: { Usuario, disponibilidad },
 });
