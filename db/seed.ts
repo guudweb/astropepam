@@ -5,6 +5,8 @@ export default async function () {
     {
       user_id: 2,
       nombre: "juan",
+      role: "admin",
+      contraseña: "1234",
       telefono: 2227006560,
       correo: "edu@sjsoco.com",
       congregacion: "furlam",
@@ -17,6 +19,8 @@ export default async function () {
     {
       id: 2,
       nombre: "pedro",
+      role: "admin",
+      contraseña: "1234",
       telefono: 2227006560,
       correo: "edu@sjsoco.com",
       congregacion: "furlam",
