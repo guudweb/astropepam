@@ -22,27 +22,28 @@ days.forEach(day => {
     usersDisponibilidad[day][turno] = getUsersForTurno(day, turno);
   });
 });
-
 ---
+
 <Layout title="program">
-    <div class="container mx-auto mt-8 text-center">
-      {days.map(day => (
-        <div key={day} class="mb-8">
-          <h2 class="text-xl font-bold mb-4">{day.charAt(0).toUpperCase() + day.slice(1)}</h2>
-          <table class="min-w-full bg-white border border-gray-200 mb-4">
-            <thead>
-              <tr>
-                <th class="px-4 py-2 border-b">Turno</th>
-                <th class="px-4 py-2 border-b">Usuarios Disponibles</th>
-              </tr>
-            </thead>
-            <tbody>
-              {turnos.map(turno => (
-                <tr key={turno}>
-                  <td class="px-4 py-2 border-b">{turno}</td>
-                  <td class="px-4 py-2 border-b">
-                    {[...Array(4)].map((_, index) => (
-                      <select key={index} class="border border-gray-300 rounded px-2 py-1 mr-2">
+  <div class="container mx-auto mt-8 text-center">
+    {days.map(day => (
+      <div key={day} class="mb-8">
+        <h2 class="text-xl font-bold mb-4">{day.charAt(0).toUpperCase() + day.slice(1)}</h2>
+        <table class="min-w-full bg-white border border-gray-200 mb-4">
+          <thead>
+            <tr>
+              <th class="px-4 py-2 border-b">Turno</th>
+              <th class="px-4 py-2 border-b">Usuarios Disponibles</th>
+            </tr>
+          </thead>
+          <tbody>
+            {turnos.map(turno => (
+              <tr key={turno}>
+                <td class="px-4 py-2 border-b">{turno}</td>
+                <td class="px-4 py-2 border-b">
+                  {[...Array(4)].map((_, index) => (
+                    <div key={index} class="inline-block mr-2">
+                      <select class="border border-gray-300 rounded px-2 py-1" data-day={day} data-turno={turno} data-index={index}>
                         {usersDisponibilidad[day][turno].length > 0 ? (
                           usersDisponibilidad[day][turno].map(({ nombre }) => (
                             <option value={nombre} key={nombre}>{nombre}</option>
@@ -50,15 +51,86 @@ days.forEach(day => {
                         ) : (
                           <option value="">No disponible</option>
                         )}
+                        <option value="add">Añadir usuario</option>
                       </select>
-                    ))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
+                    </div>
+                  ))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ))}
+  </div>
+
+  <!-- Modal -->
+  <div id="userModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-4 rounded shadow-lg">
+      <h2 class="text-xl mb-4">Seleccionar Usuario</h2>
+      <ul id="userList" class="max-h-60 overflow-y-auto">
+        {allUsers.map(user => (
+          <li key={user.user_id} class="mb-2">
+            <button 
+              class="bg-blue-500 text-white px-2 py-1 rounded user-select-btn" 
+              data-username={user.nombre}
+            >
+              {user.nombre}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button 
+        class="mt-4 bg-red-500 text-white px-4 py-2 rounded" 
+        id="closeModalBtn"
+      >
+        Cerrar
+      </button>
     </div>
-  </Layout>
-  
+  </div>
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('userModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const userSelectButtons = document.querySelectorAll('.user-select-btn');
+    const addUserButtons = document.querySelectorAll('select');
+
+    addUserButtons.forEach(select => {
+      select.addEventListener('change', (event) => {
+        if (event.target.value === 'add') {
+          const day = select.dataset.day;
+          const turno = select.dataset.turno;
+          const index = select.dataset.index;
+          modal.classList.remove('hidden');
+          modal.dataset.day = day;
+          modal.dataset.turno = turno;
+          modal.dataset.index = index;
+        }
+      });
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    userSelectButtons.forEach(button => {
+      button.addEventListener('click', (event) => {
+        const userName = event.target.dataset.username;
+        const day = modal.dataset.day;
+        const turno = modal.dataset.turno;
+        const index = modal.dataset.index;
+        
+        const select = document.querySelector(`select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`);
+        const option = document.createElement('option');
+        option.value = userName;
+        option.text = userName;
+        select.appendChild(option);
+        select.value = userName;
+
+        modal.classList.add('hidden');
+      });
+    });
+  });
+</script>
