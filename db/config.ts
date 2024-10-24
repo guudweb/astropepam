@@ -27,6 +27,13 @@ const disponibilidad = defineTable({
   },
 });
 
+const WeekData = defineTable({
+  columns: {
+    weekOffset: column.number({ primaryKey: true }),
+    data: column.json(),
+  },
+});
+
 export default defineDb({
-  tables: { Usuario, disponibilidad },
+  tables: { Usuario, disponibilidad, WeekData },
 });
