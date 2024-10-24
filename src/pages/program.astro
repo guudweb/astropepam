@@ -1,0 +1,64 @@
+---
+import Layout from "../layouts/Layout.astro"
+import { db, Usuario } from 'astro:db';
+
+const allUsers = await db.select().from(Usuario);
+
+const getUsersForTurno = (day, turno) => {
+  return allUsers.filter(user => {
+    const disponibilidad = typeof user.disponibilidad === 'string' ? JSON.parse(user.disponibilidad) : {};
+    return disponibilidad[day] && disponibilidad[day].includes(turno);
+  });
+};
+
+const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+const turnos = ['T1', 'T2', 'T3', 'T4'];
+
+const usersDisponibilidad = {};
+
+days.forEach(day => {
+  usersDisponibilidad[day] = {};
+  turnos.forEach(turno => {
+    usersDisponibilidad[day][turno] = getUsersForTurno(day, turno);
+  });
+});
+
+---
+<Layout title="program">
+    <div class="container mx-auto mt-8 text-center">
+      {days.map(day => (
+        <div key={day} class="mb-8">
+          <h2 class="text-xl font-bold mb-4">{day.charAt(0).toUpperCase() + day.slice(1)}</h2>
+          <table class="min-w-full bg-white border border-gray-200 mb-4">
+            <thead>
+              <tr>
+                <th class="px-4 py-2 border-b">Turno</th>
+                <th class="px-4 py-2 border-b">Usuarios Disponibles</th>
+              </tr>
+            </thead>
+            <tbody>
+              {turnos.map(turno => (
+                <tr key={turno}>
+                  <td class="px-4 py-2 border-b">{turno}</td>
+                  <td class="px-4 py-2 border-b">
+                    {[...Array(4)].map((_, index) => (
+                      <select key={index} class="border border-gray-300 rounded px-2 py-1 mr-2">
+                        {usersDisponibilidad[day][turno].length > 0 ? (
+                          usersDisponibilidad[day][turno].map(({ nombre }) => (
+                            <option value={nombre} key={nombre}>{nombre}</option>
+                          ))
+                        ) : (
+                          <option value="">No disponible</option>
+                        )}
+                      </select>
+                    ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+    </div>
+  </Layout>
+  

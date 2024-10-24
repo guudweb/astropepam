@@ -5,14 +5,14 @@ if (Astro.request.method === 'POST') {
   // Parse form data
   const formData = await Astro.request.formData();
   const correo = formData.get('correo') as string;
-  const telefono = formData.get('telefono');
-  const nombre = formData.get('nombre');
-  const contraseña = formData.get('contraseña');
-  const congregacion = formData.get('congregacion');
-  const estado_civil = formData.get('estado_civil');
-  const nombre_conyuge = formData.get('nombre_conyuge');
-  const sexo = formData.get('sexo');
-  const role = formData.get('role');
+  const telefono = formData.get('telefono') as string;
+  const nombre = formData.get('nombre') as string;
+  const contraseña = formData.get('contraseña') as string;
+  const congregacion = formData.get('congregacion') as string;
+  const estado_civil = formData.get('estado_civil') as string;
+  const nombre_conyuge = formData.get('nombre_conyuge') as string;
+  const sexo = formData.get('sexo') as string;
+  const role = formData.get('role') as string;
   const privilegios = formData.getAll('privilegios'); // Get all selected checkboxes
 
   // Collect disponibilidad data
@@ -33,7 +33,7 @@ if (Astro.request.method === 'POST') {
       // Insert form data into the Usuario table
       await db.insert(Usuario).values({
         correo,
-        telefono,
+        telefono: parseInt(telefono, 10), // Convert to number
         nombre,
         contraseña,
         congregacion,
@@ -155,6 +155,23 @@ if (Astro.request.method === 'POST') {
               Disponibilidad
             </label>
             <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Lunes</label>
+                    <div class="flex flex-wrap">
+                      <label class="mr-4">
+                        <input type="checkbox" name="lunes_turnos" value="T1"> T1
+                      </label>
+                      <label class="mr-4">
+                        <input type="checkbox" name="lunes_turnos" value="T2"> T2
+                      </label>
+                      <label class="mr-4">
+                        <input type="checkbox" name="lunes_turnos" value="T3"> T3
+                      </label>
+                      <label>
+                        <input type="checkbox" name="lunes_turnos" value="T4"> T4
+                      </label>
+                    </div>
+                  </div>
               <!-- Tuesday -->
               <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">Martes</label>
