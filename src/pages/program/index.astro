@@ -38,7 +38,21 @@ const getWeekDates = (weekOffset: number) => {
 let weekOffset = 0;
 let weekDates = getWeekDates(weekOffset);
 
+const handleChange = (e: { target: any; }) => {
+  const target = e.target;
+  if (target.value === "clear") {
+    target.value = ""; // Clear the selection
+    target.dispatchEvent(new Event('change', { bubbles: true })); // Trigger change event to update UI
+  }
+};
 
+const addEventListeners = () => {
+  document.querySelectorAll('select[data-day]').forEach(select => {
+    select.addEventListener('change', handleChange);
+  });
+};
+
+setTimeout(addEventListeners, 0);
 
 ---
 
@@ -76,48 +90,31 @@ let weekDates = getWeekDates(weekOffset);
               <h2 class="text-xl font-bold mb-4 week-date">
                 {day.charAt(0).toUpperCase() + day.slice(1)} - {weekDates[index].toLocaleDateString()}
               </h2>
-              <table class="min-w-full bg-white border border-gray-200 mb-4">
-                <thead>
-                  <tr>
-                    <th class="px-4 py-2 border-b">Turno</th>
-                    <th class="px-4 py-2 border-b">Usuarios Disponibles</th>
-                  </tr>
-                </thead>
-                <tbody>
-                     {turnos.map(turno => (   
-                        <tr>
-                            <td class="px-4 py-2 border-b">{turno}</td>
-                            <td class="px-4 py-2 border-b">
-                            {[...Array(4)].map((_, index) => (
-                                
-                                <div class="inline-block mr-2">
-                                <select 
-                                
-                                    class="border border-gray-300 rounded px-2 py-1" 
-                                    data-day={day} 
-                                    data-turno={turno} 
-                                    data-index={index}
-                                    onChange={(e: Event) => {
-                                    const target = e.target as HTMLSelectElement;
-                                    if (target.value === "clear") {
-                                        target.value = ""; // Clear the selection
-                                        target.dispatchEvent(new Event('change', { bubbles: true })); // Trigger change event to update UI
-                                    }
-                                    }}
-                                >
-                                    <option value="">No disponible</option>
-                                    {usersDisponibilidad[day][turno].map(({ nombre }) => (
-                                    <option value={nombre}>{nombre}</option>
-                                    ))}
-                                    <option value="add">Añadir usuario</option>
-                                </select>
-                                </div>
-                            ))}
-                            </td>
-                        </tr>
-                        ))}
-                </tbody>
-              </table>
+              <table>
+  {turnos.map(turno => (
+    <tr>
+      <td class="px-4 py-2 border-b">{turno}</td>
+      <td class="px-4 py-2 border-b">
+        {[...Array(4)].map((_, index) => (
+          <div class="inline-block mr-2">
+            <select 
+              class="border border-gray-300 rounded px-2 py-1" 
+              data-day={day} 
+              data-turno={turno} 
+              data-index={index}
+            >
+              <option value="">No disponible</option>
+              {usersDisponibilidad[day][turno].map(({ nombre }) => (
+                <option value={nombre}>{nombre}</option>
+              ))}
+              <option value="add">Añadir usuario</option>
+            </select>
+          </div>
+        ))}
+      </td>
+    </tr>
+  ))}
+</table>
             </div>
           ))}
           
