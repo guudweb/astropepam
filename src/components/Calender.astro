@@ -1,0 +1,24 @@
+---
+const fetchWeekData = async (weekOffset) => {
+  try {
+    const response = await fetch(`/api/getWeekData.json?weekOffset=${weekOffset}`);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching week data:', error);
+    return {};
+  }
+};
+
+const weekOffset = 0; // Example weekOffset value
+const currentWeekData = await fetchWeekData(weekOffset);
+const day = 'Monday'; // Example day value
+const turno = 'morning'; // Example turno value
+---
+
+<div>
+  {Array.from({ length: 4 }).map((_, index) => {
+    const value = currentWeekData[`${day}-${turno}-${index}`] || 'No disponible';
+    return <div key={index}>{value}</div>;
+  })}
+</div>
