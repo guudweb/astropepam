@@ -18,7 +18,7 @@ const comments = await db.select().from(Usuario);
       <tbody>
         {
           comments.map(({ correo, telefono, nombre, congregacion, disponibilidad }) => (
-            <tr key={correo}>
+            <tr>
               <td class="px-4 py-2 border-b whitespace-nowrap">{nombre}</td>
               <td class="px-4 py-2 border-b whitespace-nowrap">{correo}</td>
               <td class="px-4 py-2 border-b whitespace-nowrap">{telefono}</td>

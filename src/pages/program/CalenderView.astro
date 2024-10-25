@@ -4,7 +4,7 @@ import Layout from "../../layouts/Layout.astro"
 const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 const turnos = ['T1', 'T2', 'T3', 'T4'];
 
-const getWeekDates = (weekOffset) => {
+const getWeekDates = (weekOffset: number) => {
   const startOfWeek = new Date();
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7));
   const dates = [];
@@ -19,7 +19,7 @@ const getWeekDates = (weekOffset) => {
 let weekOffset = 0;
 let weekDates = getWeekDates(weekOffset);
 
-const fetchWeekData = async (weekOffset) => {
+const fetchWeekData = async (weekOffset: number) => {
   try {
     const response = await fetch(`http://localhost:4321/api/getWeekData.json?weekOffset=${weekOffset}`);
     const data = await response.json();
@@ -33,10 +33,10 @@ const fetchWeekData = async (weekOffset) => {
 
 // Example weekOffset value
 const currentWeekData = await fetchWeekData(weekOffset);
-const day = 'Monday'; // Example day value
-const turno = 'morning'; // Example turno value
+//const day = 'Monday'; // Example day value
+//const turno = 'morning'; // Example turno value
 
-const formatDate = (date, dayName) => {
+const formatDate = (date: { getDate: () => any; }, dayName: string) => {
         const day = date.getDate();
         return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${day}`;
       };
@@ -72,19 +72,19 @@ const formatDate = (date, dayName) => {
             <tr>
               <th class="px-4 py-2 border-b">Turno</th>
               {weekDates.map((date, index) => (
-                <th key={index} class="px-4 py-2 border-b">{formatDate(date, days[index])}</th>
+                <th class="px-4 py-2 border-b">{formatDate(date, days[index])}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {turnos.map(turno => (
-              <tr key={turno}>
+              <tr>
                 <td class="px-4 py-2 border-b">{turno}</td>
                 {days.map(day => (
-                  <td key={day} class="px-4 py-2 border-b">
+                  <td class="px-4 py-2 border-b">
                     {Array.from({ length: 4 }).map((_, index) => {
                       const value = currentWeekData[`${day}-${turno}-${index}`] || '';
-                      return <div key={index}>{value}</div>;
+                      return <div>{value}</div>;
                     })}
                   </td>
                 ))}
@@ -102,7 +102,7 @@ const formatDate = (date, dayName) => {
     const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
     const turnos = ['T1', 'T2', 'T3', 'T4'];
   
-    const getWeekDates = (weekOffset) => {
+    const getWeekDates = (weekOffset: number) => {
       const startOfWeek = new Date();
       startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7));
       const dates = [];
@@ -114,7 +114,7 @@ const formatDate = (date, dayName) => {
       return dates;
     };
   
-    const fetchWeekData = async (weekOffset) => {
+    const fetchWeekData = async (weekOffset: number) => {
       try {
         const response = await fetch(`/api/getWeekData.json?weekOffset=${weekOffset}`);
         const data = await response.json();
@@ -125,10 +125,11 @@ const formatDate = (date, dayName) => {
       }
     };
   
-    const formatDate = (date, dayName) => {
+    const formatDate = (date: Date, dayName: string): string => {
   const day = date.getDate();
   return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${day}`;
 };
+
 
 const updateWeek = async () => {
   const weekDates = getWeekDates(weekOffset);
