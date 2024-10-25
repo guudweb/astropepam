@@ -1,6 +1,6 @@
 // @ts-check
 import { defineConfig } from "astro/config";
-import vercelServerless from "@astrojs/vercel/serverless";
+import vercel from "@astrojs/vercel/serverless";
 
 import tailwind from "@astrojs/tailwind";
 
@@ -12,5 +12,5 @@ import auth from "auth-astro";
 export default defineConfig({
   integrations: [tailwind(), db(), auth()],
   output: "server",
-  adapter: vercelServerless(),
+  adapter: vercel(),
 });
