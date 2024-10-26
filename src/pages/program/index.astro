@@ -37,31 +37,12 @@ const getWeekDates = (weekOffset: number) => {
 
 let weekOffset = 0;
 let weekDates = getWeekDates(weekOffset);
-
-const handleChange = (e: { target: any; }) => {
-  const target = e.target;
-  if (target.value === "clear") {
-    target.value = ""; // Clear the selection
-    target.dispatchEvent(new Event('change', { bubbles: true })); // Trigger change event to update UI
-  }
-};
-
-const addEventListeners = () => {
-  document.querySelectorAll('select[data-day]').forEach(select => {
-    select.addEventListener('change', handleChange);
-  });
-};
-
-setTimeout(addEventListeners, 0);
-
 ---
 
 
 
 <Layout title="program">
     <div class="container mx-auto mt-8 text-center">
-        
-
       <div class="flex justify-between mb-4">
         <button 
           class="bg-blue-500 text-white px-4 py-2 rounded" 
