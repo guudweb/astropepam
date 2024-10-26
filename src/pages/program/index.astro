@@ -37,12 +37,17 @@ const getWeekDates = (weekOffset: number) => {
 
 let weekOffset = 0;
 let weekDates = getWeekDates(weekOffset);
+
+
+
 ---
 
 
 
 <Layout title="program">
     <div class="container mx-auto mt-8 text-center">
+        
+
       <div class="flex justify-between mb-4">
         <button 
           class="bg-blue-500 text-white px-4 py-2 rounded" 
@@ -166,10 +171,7 @@ const saveWeekData = async () => {
 document.addEventListener('DOMContentLoaded', () => {
   const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 
-  const modal = document.getElementById('userModal');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  const userSelectButtons = document.querySelectorAll('.user-select-btn');
-  const addUserButtons = document.querySelectorAll('select');
+
   const prevWeekBtn = document.getElementById('prevWeekBtn');
   const nextWeekBtn = document.getElementById('nextWeekBtn');
   const saveBtn = document.getElementById('saveBtn'); // Get the save button
@@ -207,20 +209,27 @@ document.addEventListener('DOMContentLoaded', () => {
     updateWeekDates();
     await loadWeekData();
   });
+
+
+  const modal = document.getElementById('userModal');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const userSelectButtons = document.querySelectorAll('.user-select-btn');
+  const addUserButtons = document.querySelectorAll('select');
+  
   addUserButtons.forEach(select => {
-  select.addEventListener('change', (event) => {
-    const target = event.target as HTMLSelectElement;
-    if (target.value === 'add') {
-      const day = select.dataset.day;
-      const turno = select.dataset.turno;
-      const index = select.dataset.index;
-      modal.classList.remove('hidden');
-      modal.dataset.day = day;
-      modal.dataset.turno = turno;
-      modal.dataset.index = index;
-    }
+    select.addEventListener('change', (event) => {
+      const target = event.target as HTMLSelectElement;
+      if (target.value === 'add') {
+        const day = select.dataset.day;
+        const turno = select.dataset.turno;
+        const index = select.dataset.index;
+        modal.classList.remove('hidden');
+        modal.dataset.day = day;
+        modal.dataset.turno = turno;
+        modal.dataset.index = index;
+      }
+    });
   });
-});
 
 
   closeModalBtn.addEventListener('click', () => {
@@ -232,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const target = event.target as HTMLElement;
     const userName = (target.dataset as DOMStringMap).username;
     
-    const modal = document.querySelector('.modal') as HTMLElement;
+    const modal = document.getElementById('userModal') as HTMLElement;
     const day = (modal.dataset as DOMStringMap).day;
     const turno = (modal.dataset as DOMStringMap).turno;
     const index = (modal.dataset as DOMStringMap).index;
@@ -244,9 +253,13 @@ document.addEventListener('DOMContentLoaded', () => {
     select.appendChild(option);
     select.value = userName;
 
+
+
     modal.classList.add('hidden');
   });
 });
+
+
 
 
   // Add event listener to the save button
