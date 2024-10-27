@@ -43,11 +43,8 @@ let weekDates = getWeekDates(weekOffset);
 ---
 
 
-
 <Layout title="program">
     <div class="container mx-auto mt-8 text-center">
-        
-
       <div class="flex justify-between mb-4">
         <button 
           class="bg-blue-500 text-white px-4 py-2 rounded" 
@@ -102,9 +99,7 @@ let weekDates = getWeekDates(weekOffset);
   ))}
 </table>
             </div>
-          ))}
-          
-          
+          ))}   
         </div>
         <!-- Modal -->
         <div id="userModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
@@ -131,13 +126,8 @@ let weekDates = getWeekDates(weekOffset);
           </div>
       </div> 
   </Layout>
-  
-
 <script>
    let weekOffset = 0; // Define weekOffset in the global scope
-   
-   
-   
 const loadWeekData = async () => {
   const response = await fetch(`/api/getWeekData.json?weekOffset=${weekOffset}`);
   const currentWeekData = await response.json();
@@ -149,7 +139,6 @@ const loadWeekData = async () => {
     select.value = value;
   });
 };
-
 const saveWeekData = async () => {
   const currentWeekData = {};
   document.querySelectorAll('select').forEach(select => {
@@ -158,7 +147,6 @@ const saveWeekData = async () => {
     const index = select.dataset.index;
     currentWeekData[`${day}-${turno}-${index}`] = select.value;
   });
-
   await fetch('/api/saveWeekData.json', {
     method: 'POST',
     headers: {
@@ -167,15 +155,11 @@ const saveWeekData = async () => {
     body: JSON.stringify({ weekOffset, weekData: currentWeekData }),
   });
 };
-
 document.addEventListener('DOMContentLoaded', () => {
   const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-
-
   const prevWeekBtn = document.getElementById('prevWeekBtn');
   const nextWeekBtn = document.getElementById('nextWeekBtn');
   const saveBtn = document.getElementById('saveBtn'); // Get the save button
-
   const getWeekDates = (weekOffset: number): Date[] => {
   const startOfWeek = new Date();
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7));
@@ -187,35 +171,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   return dates;
 };
-
-
   const updateWeekDates = () => {
     const dates = getWeekDates(weekOffset);
     document.querySelectorAll('.week-date').forEach((element, index) => {
       element.textContent = `${days[index].charAt(0).toUpperCase() + days[index].slice(1)} - ${dates[index].toLocaleDateString()}`;
     });
   };
-
   prevWeekBtn.addEventListener('click', async () => {
-    await saveWeekData();
+    //await saveWeekData();
     weekOffset -= 1;
     updateWeekDates();
     await loadWeekData();
   });
-
   nextWeekBtn.addEventListener('click', async () => {
-    await saveWeekData();
+   // await saveWeekData();
     weekOffset += 1;
     updateWeekDates();
     await loadWeekData();
   });
-
-
   const modal = document.getElementById('userModal');
   const closeModalBtn = document.getElementById('closeModalBtn');
   const userSelectButtons = document.querySelectorAll('.user-select-btn');
   const addUserButtons = document.querySelectorAll('select');
-  
   addUserButtons.forEach(select => {
     select.addEventListener('change', (event) => {
       const target = event.target as HTMLSelectElement;
@@ -230,38 +207,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-
-
   closeModalBtn.addEventListener('click', () => {
     modal.classList.add('hidden');
   });
-
   userSelectButtons.forEach(button => {
   button.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
     const userName = (target.dataset as DOMStringMap).username;
-    
     const modal = document.getElementById('userModal') as HTMLElement;
     const day = (modal.dataset as DOMStringMap).day;
     const turno = (modal.dataset as DOMStringMap).turno;
     const index = (modal.dataset as DOMStringMap).index;
-    
     const select = document.querySelector(`select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`) as HTMLSelectElement;
     const option = document.createElement('option');
     option.value = userName;
     option.text = userName;
     select.appendChild(option);
     select.value = userName;
-
-
-
     modal.classList.add('hidden');
   });
 });
-
-
-
-
   // Add event listener to the save button
   saveBtn.addEventListener('click', async () => {
     await saveWeekData();
@@ -269,10 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load week data when the page loads
     window.addEventListener('load', async () => {
-    updateWeekDates();
+    //updateWeekDates();
     await loadWeekData();
   });
-
-
 });
 </script>
