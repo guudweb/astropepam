@@ -5,11 +5,6 @@ interface Props {
 }
 
 const { title } = Astro.props;
-const {isLoggedIn, isAdmin, user} = Astro.locals
-
-if(!isLoggedIn) {
-	return Astro.redirect('/signin')
-}
 ---
 
 <!doctype html>
