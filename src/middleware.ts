@@ -8,7 +8,7 @@ export const onRequest = defineMiddleware(
     async ({url, locals, redirect, request}, next) => {
 
         const notAuthenticateRoutes = ['/signin', '/signup']
-        const authenticateRoutes = ['/', '/data', '/program',]
+        const authenticateRoutes = ['/', '/data', '/program']
 
         const session = await getSession(request)
         const isLoggedIn = !!session // El doble (!!) sirve para que session se convierta en True o False
