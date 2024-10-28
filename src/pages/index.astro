@@ -1,18 +1,30 @@
 ---
+import LoginForm from "../components/LoginForm.astro"
 import Layout from "../layouts/Layout.astro"
+
+const {isAdmin, user} = Astro.locals
+
 ---
 
 <Layout title="Inicio">
-	<div class="flex space-x-4">
-		<a href="/login" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-		  Login Form
-		</a>
-		<a href="/program" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-		  Programa
-		</a>
-		<a href="/data" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-		  Data
-		</a>
-	  </div>
-	  
+	<button id="logout" class="text-red-500 font-bold text-2xl">Cerrar Sesión</button>
+	<h1>Bienvenido {user?.name}</h1>
+	{
+		isAdmin && <h1>Soy Admin :D</h1>
+	}
+	<LoginForm/>
 </Layout>
+
+<script>
+
+	const {signOut} = await import('auth-astro/client')
+
+	const logout = document.querySelector('#logout')
+
+	logout?.addEventListener('click', async (e) => {
+		e.preventDefault()
+		await signOut()
+		window.location.replace('/signin')
+	})
+
+</script>
