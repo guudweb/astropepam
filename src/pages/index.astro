@@ -1,9 +1,31 @@
 ---
-import DataView from "../components/DataView.astro"
+import { getSession } from "auth-astro/server"
 import LoginForm from "../components/LoginForm.astro"
 import Layout from "../layouts/Layout.astro"
+
+const {isAdmin, user} = Astro.locals
+
 ---
 
 <Layout title="Inicio">
+	<button id="logout" class="text-red-500 font-bold text-2xl">Cerrar Sesión</button>
+	<h1>Bienvenido {user?.name}</h1>
+	{
+		isAdmin && <h1>Soy Admin :D</h1>
+	}
 	<LoginForm/>
 </Layout>
+
+<script>
+
+	const {signOut} = await import('auth-astro/client')
+
+	const logout = document.querySelector('#logout')
+
+	logout?.addEventListener('click', async (e) => {
+		e.preventDefault()
+		await signOut()
+		window.location.replace('/signin')
+	})
+
+</script>
