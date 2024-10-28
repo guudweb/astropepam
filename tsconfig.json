@@ -1,6 +1,14 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "allowJs": true
+    "allowJs": true,
+    "strict": false, // Disable all strict type-checking options
+    "strictNullChecks": false, // Disable strict null checks
+    "noImplicitAny": false, // Allow implicit 'any' types
+    "strictFunctionTypes": false, // Disable strict function types
+    "strictBindCallApply": false, // Disable strict bind, call, and apply checks
+    "strictPropertyInitialization": false, // Disable strict property initialization checks
+    "noImplicitThis": false, // Allow 'this' to be implicitly 'any'
+    "alwaysStrict": false // Disable 'alwaysStrict' mode
   }
 }

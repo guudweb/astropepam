@@ -1,0 +1,185 @@
+---
+import Layout from "../../layouts/Layout.astro"
+
+const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+const turnos = ['T1', 'T2', 'T3', 'T4'];
+
+const getWeekDates = (weekOffset: number) => {
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7));
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + i);
+    dates.push(date);
+  }
+  return dates;
+};
+
+let weekOffset = 0;
+let weekDates = getWeekDates(weekOffset);
+
+const fetchWeekData = async (weekOffset: number) => {
+  try {
+    const response = await fetch(`http://localhost:4321/api/getWeekData.json?weekOffset=${weekOffset}`);
+    const data = await response.json();
+    //console.log(data); // Log the data to check its structure
+    return data;
+  } catch (error) {
+    console.error('Error fetching week data:', error);
+    return {};
+  }
+};
+
+// Example weekOffset value
+const currentWeekData = await fetchWeekData(weekOffset);
+//const day = 'Monday'; // Example day value
+//const turno = 'morning'; // Example turno value
+
+const formatDate = (date: { getDate: () => any; }, dayName: string) => {
+        const day = date.getDate();
+        return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${day}`;
+      };
+---
+
+<Layout title="program">
+    <div class="container mx-auto mt-8 text-center">
+      <div class="flex justify-between mb-4">
+        <button 
+          class="bg-blue-500 text-white px-4 py-2 rounded" 
+          id="prevWeekBtn"
+        >
+          Semana Anterior
+        </button>
+        <button 
+          class="bg-blue-500 text-white px-4 py-2 rounded" 
+          id="nextWeekBtn"
+        >
+          Semana Siguiente
+        </button>
+      </div>
+      <a href="/program"><button 
+        class="bg-green-500 text-white px-4 py-2 rounded mb-4" 
+        id="CalenderViewBtn"
+      >
+        Program View
+      </button></a>
+
+      
+      <div id="calendarView">
+        <table class="min-w-full bg-white border border-gray-200 mb-4">
+          <thead>
+            <tr>
+              <th class="px-4 py-2 border-b">Turno</th>
+              {weekDates.map((date, index) => (
+                <th class="px-4 py-2 border-b">{formatDate(date, days[index])}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {turnos.map(turno => (
+              <tr>
+                <td class="px-4 py-2 border-b">{turno}</td>
+                {days.map(day => (
+                  <td class="px-4 py-2 border-b">
+                    {Array.from({ length: 4 }).map((_, index) => {
+                      const value = currentWeekData[`${day}-${turno}-${index}`] || '';
+                      return <div>{value}</div>;
+                    })}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+  </Layout>
+  
+  <script>
+    let weekOffset = 0; // Define weekOffset in the global scope
+  
+    const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+    const turnos = ['T1', 'T2', 'T3', 'T4'];
+  
+    const getWeekDates = (weekOffset: number) => {
+      const startOfWeek = new Date();
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7));
+      const dates = [];
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(startOfWeek);
+        date.setDate(startOfWeek.getDate() + i);
+        dates.push(date);
+      }
+      return dates;
+    };
+  
+    const fetchWeekData = async (weekOffset: number) => {
+      try {
+        const response = await fetch(`/api/getWeekData.json?weekOffset=${weekOffset}`);
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Error fetching week data:', error);
+        return {};
+      }
+    };
+  
+    const formatDate = (date: Date, dayName: string): string => {
+  const day = date.getDate();
+  return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${day}`;
+};
+
+
+const updateWeek = async () => {
+  const weekDates = getWeekDates(weekOffset);
+  const weekData = await fetchWeekData(weekOffset);
+  const calendarView = document.getElementById('calendarView');
+  calendarView.innerHTML = `
+    <table class="min-w-full bg-white border border-gray-200 mb-4">
+      <thead>
+        <tr>
+          <th class="px-4 py-2 border-b">Turno</th>
+          ${weekDates.map((date, index) => `<th class="px-4 py-2 border-b">${formatDate(date, days[index])}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${turnos.map(turno => `
+          <tr>
+            <td class="px-4 py-2 border-b">${turno}</td>
+            ${days.map(day => `
+              <td class="px-4 py-2 border-b">
+                ${Array.from({ length: 4 }).map((_, index) => {
+                  const value = weekData[`${day}-${turno}-${index}`] || '';
+                  return `<div>${value}</div>`;
+                }).join('')}
+              </td>
+            `).join('')}
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+};
+
+  
+    document.addEventListener('DOMContentLoaded', () => {
+      const prevWeekBtn = document.getElementById('prevWeekBtn');
+      const nextWeekBtn = document.getElementById('nextWeekBtn');
+  
+      prevWeekBtn.addEventListener('click', () => {
+        weekOffset--;
+        updateWeek();
+      });
+  
+      nextWeekBtn.addEventListener('click', () => {
+        weekOffset++;
+        updateWeek();
+      });
+  
+      // Initial load
+      updateWeek();
+    });
+  </script>
+  
+  
