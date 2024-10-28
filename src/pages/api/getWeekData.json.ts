@@ -15,6 +15,5 @@ export const GET: APIRoute = async ({ request }) => {
     .from(WeekData)
     .where(eq(WeekData.weekOffset, weekOffset))
     .execute();
-
   return new Response(JSON.stringify(result[0]?.data || {}), { status: 200 });
 };

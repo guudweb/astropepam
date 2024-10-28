@@ -1,0 +1,51 @@
+{
+	"version": 3,
+	"routes": [
+		{
+			"src": "^/_astro/(.*)$",
+			"headers": {
+				"cache-control": "public, max-age=31536000, immutable"
+			},
+			"continue": true
+		},
+		{
+			"handle": "filesystem"
+		},
+		{
+			"src": "^\\/_image$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/api\\/auth(?:\\/(.*?))?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/api\\/getWeekData\\.json\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/api\\/saveWeekData\\.json\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/data\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/login\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/program\\/CalenderView\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/program\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/$",
+			"dest": "_render"
+		}
+	]
+}
