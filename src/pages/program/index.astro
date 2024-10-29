@@ -1,35 +1,49 @@
 ---
-import Layout from "../../layouts/Layout.astro"
-import { db, Usuario } from 'astro:db';
+import Layout from "../../layouts/Layout.astro";
+import { db, Usuario } from "astro:db";
 
 const allUsers = await db.select().from(Usuario);
 
 const getUsersForTurno = (day: string, turno: string) => {
-  return allUsers.filter(user => {
-    const disponibilidad = typeof user.disponibilidad === 'string' ? JSON.parse(user.disponibilidad) : {};
-    return disponibilidad[day] && disponibilidad[day].includes(turno);
-  }).map(user => ({
-    ...user,
-    telefono: user.telefono
-  }));
+  return allUsers
+    .filter((user) => {
+      const disponibilidad =
+        typeof user.disponibilidad === "string"
+          ? JSON.parse(user.disponibilidad)
+          : {};
+      return disponibilidad[day] && disponibilidad[day].includes(turno);
+    })
+    .map((user) => ({
+      ...user,
+      telefono: user.telefono,
+    }));
 };
 
-
-const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-const turnos = ['T1', 'T2', 'T3', 'T4'];
+const days = [
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+  "domingo",
+];
+const turnos = ["T1", "T2", "T3", "T4"];
 
 const usersDisponibilidad = {};
 
-days.forEach(day => {
+days.forEach((day) => {
   usersDisponibilidad[day] = {};
-  turnos.forEach(turno => {
+  turnos.forEach((turno) => {
     usersDisponibilidad[day][turno] = getUsersForTurno(day, turno);
   });
 });
 
 const getWeekDates = (weekOffset: number) => {
   const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7));
+  startOfWeek.setDate(
+    startOfWeek.getDate() - startOfWeek.getDay() + 1 + weekOffset * 7
+  );
   const dates = [];
   for (let i = 0; i < 7; i++) {
     const date = new Date(startOfWeek);
@@ -41,149 +55,163 @@ const getWeekDates = (weekOffset: number) => {
 
 let weekOffset = 0;
 let weekDates = getWeekDates(weekOffset);
-
-
-
 ---
 
-
 <Layout title="program">
-    <div class="container mx-auto mt-8 text-center">
-      <div class="flex justify-between mb-4">
-        <button 
-          class="bg-blue-500 text-white px-4 py-2 rounded" 
-          id="prevWeekBtn"
-        >
-          Semana Anterior
-        </button>
-        <button 
-          class="bg-blue-500 text-white px-4 py-2 rounded" 
-          id="nextWeekBtn"
-        >
-          Semana Siguiente
-        </button>
-      </div>
-      <a href="/program/CalenderView"><button 
-        class="bg-green-500 text-white px-4 py-2 rounded mb-4" 
+  <div class="container mx-auto mt-8 text-center">
+    <div class="flex justify-between mb-4">
+      <button class="bg-blue-500 text-white px-4 py-2 rounded" id="prevWeekBtn">
+        Semana Anterior
+      </button>
+      <button class="bg-blue-500 text-white px-4 py-2 rounded" id="nextWeekBtn">
+        Semana Siguiente
+      </button>
+    </div>
+    <a href="/program/CalenderView"
+      ><button
+        class="bg-green-500 text-white px-4 py-2 rounded mb-4"
         id="CalenderViewBtn"
       >
-        Calender View
-      </button></a>
-       <button class="bg-blue-500  text-white px-4 py-2 rounded mb-4"  id="saveBtn">Save Changes</button>
-      <div id="currentView">
-        <!-- Your current view code here -->
-        {days.map((day, index) => (
-            <div  class="mb-8">
-              <h2 class="text-xl font-bold mb-4 week-date">
-                {day.charAt(0).toUpperCase() + day.slice(1)} - {weekDates[index].toLocaleDateString()}
-              </h2>
-              <table>
-                {turnos.map(turno => (
-                  <tr>
-                    <td class="px-4 py-2 border-b">{turno}</td>
-                    <td class="px-4 py-2 border-b">
-                      {[...Array(4)].map((_, index) => (
-                        <div class="inline-block mr-2">
-                          <select 
-                            class="border border-gray-300 rounded px-2 py-1" 
-                            data-day={day} 
-                            data-turno={turno} 
-                            data-index={index}
-                          >
-                            <option value="">No disponible</option>
-                            {usersDisponibilidad[day][turno].map(({ nombre }) => (
-                              <option value={nombre}>{nombre}</option>
-                            ))}
-                            <option value="add">Añadir usuario</option>
-                          </select>
-                        </div>
-                      ))}
-                    </td>
-                  </tr>
-                ))}
-              </table>
-                          </div>
-                        ))}   
+        Ver Calendario
+      </button></a
+    >
+    <button class="bg-blue-500 text-white px-4 py-2 rounded mb-4" id="saveBtn"
+      >Guardar Cambios</button
+    >
+    <div id="currentView">
+      <!-- Your current view code here -->
+      {
+        days.map((day, index) => (
+          <div class="mb-8">
+            <h2 class="text-xl font-bold mb-4 week-date">
+              {day.charAt(0).toUpperCase() + day.slice(1)} -{" "}
+              {weekDates[index].toLocaleDateString()}
+            </h2>
+            <table>
+              {turnos.map((turno) => (
+                <tr>
+                  <td class="px-4 py-2 border-b">{turno}</td>
+                  <td class="px-4 py-2 border-b">
+                    {[...Array(4)].map((_, index) => (
+                      <div class="inline-block mr-2">
+                        <select
+                          class="border border-gray-300 rounded px-2 py-1"
+                          data-day={day}
+                          data-turno={turno}
+                          data-index={index}
+                        >
+                          <option value="">No asignado</option>
+                          {usersDisponibilidad[day][turno].map(({ nombre }) => (
+                            <option value={nombre}>{nombre}</option>
+                          ))}
+                          <option value="add">Añadir usuario</option>
+                        </select>
                       </div>
-        <!-- Modal -->
-        <div id="userModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
-          <div class="bg-white p-4 rounded shadow-lg">
-            <h2 class="text-xl mb-4">Seleccionar Usuario</h2>
-            <ul id="userList" class="max-h-60 overflow-y-auto">
-              {allUsers.map(user => (
-                <li class="mb-2">
-                  <button 
-                    class="bg-blue-500 text-white px-2 py-1 rounded user-select-btn" 
-                    data-username={user.nombre}
-                  >
-                    {user.nombre}
-                  </button>
-                </li>
+                    ))}
+                  </td>
+                </tr>
               ))}
-            </ul>
-            <button 
-              class="mt-4 bg-red-500 text-white px-4 py-2 rounded" 
-              id="closeModalBtn"
-            >
-              Cerrar
-            </button>
+            </table>
           </div>
-      </div> 
-  </Layout>
+        ))
+      }
+    </div>
+    <!-- Modal -->
+    <div
+      id="userModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden"
+    >
+      <div class="bg-white p-4 rounded shadow-lg">
+        <h2 class="text-xl mb-4">Seleccionar Usuario</h2>
+        <ul id="userList" class="max-h-60 overflow-y-auto">
+          {
+            allUsers.map((user) => (
+              <li class="mb-2">
+                <button
+                  class="bg-blue-500 text-white px-2 py-1 rounded user-select-btn"
+                  data-username={user.nombre}
+                >
+                  {user.nombre}
+                </button>
+              </li>
+            ))
+          }
+        </ul>
+        <button
+          class="mt-4 bg-red-500 text-white px-4 py-2 rounded"
+          id="closeModalBtn"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
   <script>
     // Define weekOffset and days in the global scope
     let weekOffset = 0;
-    const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-  
+    const days = [
+      "lunes",
+      "martes",
+      "miércoles",
+      "jueves",
+      "viernes",
+      "sábado",
+      "domingo",
+    ];
+
     // Function to load week data
     const loadWeekData = async () => {
       try {
-        const response = await fetch(`/api/getWeekData.json?weekOffset=${weekOffset}`);
+        const response = await fetch(
+          `/api/getWeekData.json?weekOffset=${weekOffset}`
+        );
         const currentWeekData = await response.json();
         //console.log('Fetched data:', currentWeekData); // Log the fetched data
-        document.querySelectorAll('select').forEach(select => {
+        document.querySelectorAll("select").forEach((select) => {
           const day = select.dataset.day;
           const turno = select.dataset.turno;
           const index = select.dataset.index;
-          const value = currentWeekData[`${day}-${turno}-${index}`] || '';
-        //  console.log(`Setting value for ${day}-${turno}-${index}: ${value}`); // Log each value being set
+          const value = currentWeekData[`${day}-${turno}-${index}`] || "";
+          //  console.log(`Setting value for ${day}-${turno}-${index}: ${value}`); // Log each value being set
           select.value = value;
         });
       } catch (error) {
-        console.error('Error loading week data:', error); // Log any errors
+        console.error("Error loading week data:", error); // Log any errors
       }
     };
-  
+
     // Function to save week data
     const saveWeekData = async () => {
       const currentWeekData = {};
-      document.querySelectorAll('select').forEach(select => {
+      document.querySelectorAll("select").forEach((select) => {
         const day = select.dataset.day;
         const turno = select.dataset.turno;
         const index = select.dataset.index;
         currentWeekData[`${day}-${turno}-${index}`] = select.value;
       });
-      await fetch('/api/saveWeekData.json', {
-        method: 'POST',
+      await fetch("/api/saveWeekData.json", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ weekOffset, weekData: currentWeekData }),
       });
     };
-  
+
     // Function to update week dates in the UI
     const updateWeekDates = () => {
       const dates = getWeekDates(weekOffset);
-      document.querySelectorAll('.week-date').forEach((element, index) => {
+      document.querySelectorAll(".week-date").forEach((element, index) => {
         element.textContent = `${days[index].charAt(0).toUpperCase() + days[index].slice(1)} - ${dates[index].toLocaleDateString()}`;
       });
     };
-  
+
     // Function to get week dates
     const getWeekDates = (weekOffset: number) => {
       const startOfWeek = new Date();
-      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7));
+      startOfWeek.setDate(
+        startOfWeek.getDate() - startOfWeek.getDay() + 1 + weekOffset * 7
+      );
       const dates = [];
       for (let i = 0; i < 7; i++) {
         const date = new Date(startOfWeek);
@@ -192,76 +220,78 @@ let weekDates = getWeekDates(weekOffset);
       }
       return dates;
     };
-  
+
     // Load week data when the DOM is fully loaded
-    document.addEventListener('DOMContentLoaded', async () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       //console.log('DOM fully loaded and parsed'); // Log to confirm event listener is working
       await loadWeekData();
-  
-      const prevWeekBtn = document.getElementById('prevWeekBtn');
-      const nextWeekBtn = document.getElementById('nextWeekBtn');
-      const saveBtn = document.getElementById('saveBtn'); // Get the save button
-  
+
+      const prevWeekBtn = document.getElementById("prevWeekBtn");
+      const nextWeekBtn = document.getElementById("nextWeekBtn");
+      const saveBtn = document.getElementById("saveBtn"); // Get the save button
+
       // Add event listeners for week navigation buttons
-      prevWeekBtn.addEventListener('click', async () => {
+      prevWeekBtn.addEventListener("click", async () => {
         weekOffset -= 1;
         updateWeekDates();
         await loadWeekData();
       });
-  
-      nextWeekBtn.addEventListener('click', async () => {
+
+      nextWeekBtn.addEventListener("click", async () => {
         weekOffset += 1;
         updateWeekDates();
         await loadWeekData();
       });
-  
+
       // Add event listener for save button
-      saveBtn.addEventListener('click', async () => {
+      saveBtn.addEventListener("click", async () => {
         await saveWeekData();
       });
-  
+
       // Modal and user selection logic
-      const modal = document.getElementById('userModal');
-      const closeModalBtn = document.getElementById('closeModalBtn');
-      const userSelectButtons = document.querySelectorAll('.user-select-btn');
-      const addUserButtons = document.querySelectorAll('select');
-  
-      addUserButtons.forEach(select => {
-        select.addEventListener('change', (event) => {
+      const modal = document.getElementById("userModal");
+      const closeModalBtn = document.getElementById("closeModalBtn");
+      const userSelectButtons = document.querySelectorAll(".user-select-btn");
+      const addUserButtons = document.querySelectorAll("select");
+
+      addUserButtons.forEach((select) => {
+        select.addEventListener("change", (event) => {
           const target = event.target as HTMLSelectElement;
-          if (target.value === 'add') {
+          if (target.value === "add") {
             const day = select.dataset.day;
             const turno = select.dataset.turno;
             const index = select.dataset.index;
-            modal.classList.remove('hidden');
+            modal.classList.remove("hidden");
             modal.dataset.day = day;
             modal.dataset.turno = turno;
             modal.dataset.index = index;
           }
         });
       });
-  
-      closeModalBtn.addEventListener('click', () => {
-        modal.classList.add('hidden');
+
+      closeModalBtn.addEventListener("click", () => {
+        modal.classList.add("hidden");
       });
-  
-      userSelectButtons.forEach(button => {
-        button.addEventListener('click', (event) => {
+
+      userSelectButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
           const target = event.target as HTMLElement;
           const userName = (target.dataset as DOMStringMap).username;
-          const modal = document.getElementById('userModal') as HTMLElement;
+          const modal = document.getElementById("userModal") as HTMLElement;
           const day = (modal.dataset as DOMStringMap).day;
           const turno = (modal.dataset as DOMStringMap).turno;
           const index = (modal.dataset as DOMStringMap).index;
-          const select = document.querySelector(`select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`) as HTMLSelectElement;
-          const option = document.createElement('option');
+          const select = document.querySelector(
+            `select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
+          ) as HTMLSelectElement;
+          const option = document.createElement("option");
           option.value = userName;
           option.text = userName;
           select.appendChild(option);
           select.value = userName;
-          modal.classList.add('hidden');
+          modal.classList.add("hidden");
         });
       });
     });
   </script>
-  
+</Layout>
