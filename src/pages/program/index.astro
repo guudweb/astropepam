@@ -8,8 +8,12 @@ const getUsersForTurno = (day: string, turno: string) => {
   return allUsers.filter(user => {
     const disponibilidad = typeof user.disponibilidad === 'string' ? JSON.parse(user.disponibilidad) : {};
     return disponibilidad[day] && disponibilidad[day].includes(turno);
-  });
+  }).map(user => ({
+    ...user,
+    telefono: user.telefono
+  }));
 };
+
 
 const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 const turnos = ['T1', 'T2', 'T3', 'T4'];
@@ -136,13 +140,13 @@ let weekDates = getWeekDates(weekOffset);
       try {
         const response = await fetch(`/api/getWeekData.json?weekOffset=${weekOffset}`);
         const currentWeekData = await response.json();
-        console.log('Fetched data:', currentWeekData); // Log the fetched data
+        //console.log('Fetched data:', currentWeekData); // Log the fetched data
         document.querySelectorAll('select').forEach(select => {
           const day = select.dataset.day;
           const turno = select.dataset.turno;
           const index = select.dataset.index;
           const value = currentWeekData[`${day}-${turno}-${index}`] || '';
-          console.log(`Setting value for ${day}-${turno}-${index}: ${value}`); // Log each value being set
+        //  console.log(`Setting value for ${day}-${turno}-${index}: ${value}`); // Log each value being set
           select.value = value;
         });
       } catch (error) {
@@ -177,7 +181,7 @@ let weekDates = getWeekDates(weekOffset);
     };
   
     // Function to get week dates
-    const getWeekDates = (weekOffset) => {
+    const getWeekDates = (weekOffset: number) => {
       const startOfWeek = new Date();
       startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1 + (weekOffset * 7));
       const dates = [];
@@ -191,7 +195,7 @@ let weekDates = getWeekDates(weekOffset);
   
     // Load week data when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', async () => {
-      console.log('DOM fully loaded and parsed'); // Log to confirm event listener is working
+      //console.log('DOM fully loaded and parsed'); // Log to confirm event listener is working
       await loadWeekData();
   
       const prevWeekBtn = document.getElementById('prevWeekBtn');
