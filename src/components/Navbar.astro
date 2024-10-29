@@ -1,23 +1,20 @@
----
-
----
-
-
 <div class="bg-cyan-600 w-full flex justify-between items-center p-5">
-    <a href="/" class="text-xl text-white font-semibold">PPAM - Malabo</a>
-    <button id="logout" class="border-2 border-white px-5 py-2 rounded-lg text-white text-lg hover:bg-white hover:text-cyan-600 transition-colors">Cerrar Sesión</button>
+  <a href="/" class="text-xl text-white font-semibold">PPAM - Malabo</a>
+  <button
+    id="logout"
+    class="border-2 border-white px-5 py-2 rounded-lg text-white text-lg hover:bg-white hover:text-cyan-600 transition-colors"
+    >Cerrar Sesión</button
+  >
 </div>
 
 <script>
+  const { signOut } = await import("auth-astro/client");
 
-	const {signOut} = await import('auth-astro/client')
+  const logout = document.querySelector("#logout");
 
-	const logout = document.querySelector('#logout')
-
-	logout?.addEventListener('click', async (e) => {
-		e.preventDefault()
-		await signOut()
-		window.location.replace('/signin')
-	})
-
+  logout?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    await signOut();
+    window.location.replace("/signin");
+  });
 </script>
