@@ -8,21 +8,21 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", async () => {
-    try {
-      const { signOut } = await import("auth-astro/client");
+  // document.addEventListener("DOMContentLoaded", async () => {
+  // try {
+  //   const { signOut } = await import("auth-astro/client");
 
-      const logout = document.querySelector("#logout");
+  //  const logout = document.querySelector("#logout");
 
-      if (logout) {
-        logout.addEventListener("click", async (e) => {
-          e.preventDefault();
-          await signOut();
-          window.location.replace("/signin");
-        });
-      }
-    } catch (error) {
-      console.error("Error importing auth-astro/client:", error);
-    }
-  });
+  //  if (logout) {
+  //   logout.addEventListener("click", async (e) => {
+  //    e.preventDefault();
+  //     await signOut();
+  //      window.location.replace("/signin");
+  //   });
+  //  }
+  //  } catch (error) {
+  //  console.error("Error importing auth-astro/client:", error);
+  //}
+  //});
 </script>
