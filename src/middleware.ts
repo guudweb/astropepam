@@ -9,6 +9,7 @@ export const onRequest = defineMiddleware(
 
         const notAuthenticateRoutes = ['/signin', '/signup']
         const authenticateRoutes = ['/', '/data', '/program',]
+        const adminRoutes = ['/program', '/data']
 
         const session = await getSession(request)
         const isLoggedIn = !!session // El doble (!!) sirve para que session se convierta en True o False
@@ -35,6 +36,10 @@ export const onRequest = defineMiddleware(
 
         if(!isLoggedIn && authenticateRoutes.includes(url.pathname)) {
             return redirect('/signin')
+        }
+
+        if(!locals.isAdmin && adminRoutes.includes(url.pathname)) {
+            return redirect('/')
         }
         
 
