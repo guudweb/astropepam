@@ -38,9 +38,9 @@ export const onRequest = defineMiddleware(
             return redirect('/signin')
         }
 
-        if(!locals.isAdmin && adminRoutes.includes(url.pathname)) {
-            return redirect('/')
-        }
+        // if(!locals.isAdmin && adminRoutes.includes(url.pathname)) {
+        //     return redirect('/')
+        // }
         
 
         return next()
