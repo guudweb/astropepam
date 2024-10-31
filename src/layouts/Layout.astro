@@ -1,5 +1,5 @@
 ---
-import Navbar from "../components/Navbar.astro";
+import Navbar from "../components/Navbar.tsx";
 
 interface Props {
   title: string;
@@ -20,7 +20,7 @@ const { title } = Astro.props;
   <body>
     <main class="flex flex-col h-screen bg-slate text-gray-900">
       <nav>
-        <Navbar />
+        <Navbar client:load/>
       </nav>
       <slot />
     </main>
