@@ -8,21 +8,25 @@
 </div>
 
 <script>
-  // document.addEventListener("DOMContentLoaded", async () => {
-  // try {
-  //   const { signOut } = await import("auth-astro/client");
 
-  //  const logout = document.querySelector("#logout");
+  const signOutBtn = document.querySelector('#logout') as HTMLButtonElement;
 
-  //  if (logout) {
-  //   logout.addEventListener("click", async (e) => {
-  //    e.preventDefault();
-  //     await signOut();
-  //      window.location.replace("/signin");
-  //   });
-  //  }
-  //  } catch (error) {
-  //  console.error("Error importing auth-astro/client:", error);
-  //}
-  //});
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const { signOut } = await import("auth-astro/client");
+      const logoutButton = document.querySelector("#logout");
+
+      if (logoutButton) {
+        logoutButton.addEventListener("click", async (e) => {
+          e.preventDefault();
+          await signOut();
+          window.location.replace("/signin");
+        });
+      }
+    } catch (error) {
+      console.error("Error importing auth-astro/client:", error);
+    }
+  });
+
+
 </script>
