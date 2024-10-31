@@ -3,6 +3,15 @@ import Credentials from "@auth/core/providers/credentials";
 import { db, eq, Usuario } from "astro:db";
 import { defineConfig } from "auth-astro";
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  userName: string;
+}
+
+
 export default defineConfig({
   providers: [
     //TODO Sesion con proveedores externos
@@ -14,28 +23,31 @@ export default defineConfig({
     //? Sesión con credenciales
     Credentials({
       credentials: {
-        email: { label: "Email", type: "Email" },
-        password: { label: "Password", type: "Password" },
+        email: {},
+        password: {},
       },
       authorize: async ({ email, password }) => {
         const [user] = await db
           .select()
           .from(Usuario)
-          .where(eq(Usuario.correo, `${email}`));
+          .where(eq(Usuario.userName, `${email}`));
+
 
         if (!user || password !== user.contraseña) {
+          console.log(user);
           console.log("Correo o contraseña incorrectos");
           return null;
         }
 
-        const userData = {
-          id: user.user_id,
+        const userData: User = {
+          id: user.user_id.toString(),
           name: user.nombre,
           email: user.correo,
           role: user.role,
+          userName: user.userName
         };
 
-        return userData as Object;
+        return userData
       },
     }),
   ],
@@ -49,7 +61,6 @@ export default defineConfig({
     session: ({ session, token }) => {
       session.user = token.user as AdapterUser;
       console.log({ session: session.user });
-
       return session;
     },
   },

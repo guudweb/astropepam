@@ -15,6 +15,7 @@ const Usuario = defineTable({
     privilegios: column.json(),
     disponibilidad: column.json(),
     isActive: column.boolean({ default: true }),
+    userName: column.text()
   },
 });
 

@@ -16,13 +16,13 @@ import AuthLayout from "../layouts/AuthLayout.astro";
     <div class="max-w-5xl mx-auto mt-5 bg-white p-5 rounded-lg shadow-lg">
         <form class="space-y-4 w-full">
             <div class="space-y-2">
-                <label for="email" class="text-gray-700">Tu correo</label>
+                <label for="username" class="text-gray-700">Tu Usuario</label>
                 <input
-                    name="email"
+                    name="username"
                     class="w-full h-10 border-2 border-gray-300 p-5 rounded-lg focus:outline-none"
                     type="text"
-                    id="email"
-                    placeholder="correo@gmail.com"
+                    id="username"
+                    placeholder="ondo5521"
                 />
             </div>
             <div class="space-y-2">
@@ -144,14 +144,14 @@ import AuthLayout from "../layouts/AuthLayout.astro";
 
         try {
             const resp = await signIn("credentials", {
-                email: formData.get("email") as string,
+                email: formData.get("username") as string,
                 password: formData.get("password") as string,
                 redirect: false,
             });
 
             if (!resp) {
                 window.location.replace("/");
-            } else {
+            } else {            
                 notyf.error("Usuario o contraseña incorrectos");
                 btnSubmit.removeAttribute("disabled");
                 loginText.classList.remove("hidden");
