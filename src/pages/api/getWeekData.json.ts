@@ -4,16 +4,30 @@ import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
-  const weekOffsetParam = url.searchParams.get("weekOffset");
-  if (weekOffsetParam === null) {
-    return new Response("weekOffset parameter is missing", { status: 400 });
+  const dateParam = url.searchParams.get("date");
+  if (dateParam === null) {
+    return new Response("date parameter is missing", { status: 400 });
   }
-  const weekOffset = parseInt(weekOffsetParam, 10);
+  const date = new Date(dateParam);
+
+  // Ensure the date is a valid Date object
+  if (isNaN(date.getTime())) {
+    return new Response("Invalid date format", { status: 400 });
+  }
+
+  // Calculate the start date of the week
+  const startOfWeek = new Date(date);
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+
+  console.log("Fetching data for start of week:", startOfWeek); // Add this line
 
   const result = await db
     .select()
     .from(WeekData)
-    .where(eq(WeekData.weekOffset, weekOffset))
+    .where(eq(WeekData.date, startOfWeek))
     .execute();
+
+  console.log("Database query result:", result); // Add this line
+
   return new Response(JSON.stringify(result[0]?.data || {}), { status: 200 });
 };

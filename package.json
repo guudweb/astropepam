@@ -22,7 +22,6 @@
     "astro": "^4.16.6",
     "auth-astro": "^4.1.2",
     "dependencies": "^0.0.1",
-    "drizzle-orm": "^0.35.3",
     "notyf": "^3.10.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

@@ -15,7 +15,7 @@ const Usuario = defineTable({
     privilegios: column.json(),
     disponibilidad: column.json(),
     isActive: column.boolean({ default: true }),
-    userName: column.text()
+    userName: column.text(),
   },
 });
 
@@ -30,11 +30,23 @@ const disponibilidad = defineTable({
 
 const WeekData = defineTable({
   columns: {
-    weekOffset: column.number({ primaryKey: true }),
+    id: column.number({ primaryKey: true, autoIncrement: true }),
+    date: column.date(),
     data: column.json(),
   },
 });
 
+const UserHistory = defineTable({
+  columns: {
+    id: column.number({ primaryKey: true, autoIncrement: true }),
+    userName: column.text(),
+    date: column.date(),
+    day: column.text(),
+    turno: column.text(),
+    indexValue: column.number(),
+  },
+});
+
 export default defineDb({
-  tables: { Usuario, disponibilidad, WeekData },
+  tables: { Usuario, disponibilidad, WeekData, UserHistory },
 });

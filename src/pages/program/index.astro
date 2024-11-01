@@ -79,7 +79,6 @@ let weekDates = getWeekDates(weekOffset);
       >Guardar Cambios</button
     >
     <div id="currentView">
-      <!-- Your current view code here -->
       {
         days.map((day, index) => (
           <div class="mb-8">
@@ -99,6 +98,9 @@ let weekDates = getWeekDates(weekOffset);
                           data-day={day}
                           data-turno={turno}
                           data-index={index}
+                          data-date={
+                            weekDates[index].toISOString().split("T")[0]
+                          }
                         >
                           <option value="">No asignado</option>
                           {usersDisponibilidad[day][turno].map(({ nombre }) => (
@@ -116,182 +118,206 @@ let weekDates = getWeekDates(weekOffset);
         ))
       }
     </div>
-    <!-- Modal -->
-    <div
-      id="userModal"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden"
-    >
-      <div class="bg-white p-4 rounded shadow-lg">
-        <h2 class="text-xl mb-4">Seleccionar Usuario</h2>
-        <ul id="userList" class="max-h-60 overflow-y-auto">
-          {
-            allUsers.map((user) => (
-              <li class="mb-2">
-                <button
-                  class="bg-blue-500 text-white px-2 py-1 rounded user-select-btn"
-                  data-username={user.nombre}
-                >
-                  {user.nombre}
-                </button>
-              </li>
-            ))
-          }
-        </ul>
-        <button
-          class="mt-4 bg-red-500 text-white px-4 py-2 rounded"
-          id="closeModalBtn"
-        >
-          Cerrar
-        </button>
-      </div>
+  </div>
+  <!-- Modal -->
+  <div
+    id="userModal"
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden"
+  >
+    <div class="bg-white p-4 rounded shadow-lg">
+      <h2 class="text-xl mb-4">Seleccionar Usuario</h2>
+      <ul id="userList" class="max-h-60 overflow-y-auto">
+        {
+          allUsers.map((user) => (
+            <li class="mb-2">
+              <button
+                class="bg-blue-500 text-white px-2 py-1 rounded user-select-btn"
+                data-username={user.nombre}
+              >
+                {user.nombre}
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+      <button
+        class="mt-4 bg-red-500 text-white px-4 py-2 rounded"
+        id="closeModalBtn"
+      >
+        Cerrar
+      </button>
     </div>
   </div>
-  <script>
-    // Define weekOffset and days in the global scope
-    let weekOffset = 0;
-    const days = [
-      "lunes",
-      "martes",
-      "miercoles",
-      "jueves",
-      "viernes",
-      "sabado",
-      "domingo",
-    ];
+</Layout>
+<script>
+  let currentDate = new Date();
+  const days = [
+    "lunes",
+    "martes",
+    "miercoles",
+    "jueves",
+    "viernes",
+    "sabado",
+    "domingo",
+  ];
 
-    // Function to load week data
-    const loadWeekData = async () => {
-      try {
-        const response = await fetch(
-          `/api/getWeekData.json?weekOffset=${weekOffset}`
-        );
-        const currentWeekData = await response.json();
-        //console.log('Fetched data:', currentWeekData); // Log the fetched data
-        document.querySelectorAll("select").forEach((select) => {
-          const day = select.dataset.day;
-          const turno = select.dataset.turno;
-          const index = select.dataset.index;
-          const value = currentWeekData[`${day}-${turno}-${index}`] || "";
-          //  console.log(`Setting value for ${day}-${turno}-${index}: ${value}`); // Log each value being set
-          select.value = value;
-        });
-      } catch (error) {
-        console.error("Error loading week data:", error); // Log any errors
-      }
-    };
+  // Function to load week data
+  const loadWeekData = async () => {
+    // Calculate the start date of the week
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
 
-    // Function to save week data
-    const saveWeekData = async () => {
-      const currentWeekData = {};
+    try {
+      const response = await fetch(
+        `/api/getWeekData.json?date=${startOfWeek.toISOString().split("T")[0]}`
+      );
+      const currentWeekData = await response.json();
       document.querySelectorAll("select").forEach((select) => {
         const day = select.dataset.day;
         const turno = select.dataset.turno;
         const index = select.dataset.index;
-        currentWeekData[`${day}-${turno}-${index}`] = select.value;
+        const value = currentWeekData[`${day}-${turno}-${index}`] || "";
+        select.value = value;
       });
-      await fetch("/api/saveWeekData.json", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ weekOffset, weekData: currentWeekData }),
-      });
-    };
+    } catch (error) {
+      console.error("Error loading week data:", error);
+    }
+  };
 
-    // Function to update week dates in the UI
-    const updateWeekDates = () => {
-      const dates = getWeekDates(weekOffset);
-      document.querySelectorAll(".week-date").forEach((element, index) => {
-        element.textContent = `${days[index].charAt(0).toUpperCase() + days[index].slice(1)} - ${dates[index].toLocaleDateString()}`;
-      });
-    };
+  // Function to save week data
+  const saveWeekData = async () => {
+    const currentWeekData = {};
+    document.querySelectorAll("select").forEach(async (select) => {
+      const day = select.dataset.day;
+      const turno = select.dataset.turno;
+      const index = select.dataset.index;
+      const userName = select.value;
 
-    // Function to get week dates
-    const getWeekDates = (weekOffset: number) => {
-      const startOfWeek = new Date();
-      startOfWeek.setDate(
-        startOfWeek.getDate() - startOfWeek.getDay() + 1 + weekOffset * 7
-      );
-      const dates = [];
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(startOfWeek);
-        date.setDate(startOfWeek.getDate() + i);
-        dates.push(date);
+      if (userName) {
+        // Only save if a user is selected
+        currentWeekData[`${day}-${turno}-${index}`] = userName;
+
+        // Save user selection to UserHistory table
+        await fetch("/api/saveUserHistory.json", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userName,
+            date: currentDate.toISOString().split("T")[0],
+            day,
+            turno,
+            indexValue: index,
+          }),
+        });
       }
-      return dates;
-    };
-
-    // Load week data when the DOM is fully loaded
-    document.addEventListener("DOMContentLoaded", async () => {
-      //console.log('DOM fully loaded and parsed'); // Log to confirm event listener is working
-      await loadWeekData();
-
-      const prevWeekBtn = document.getElementById("prevWeekBtn");
-      const nextWeekBtn = document.getElementById("nextWeekBtn");
-      const saveBtn = document.getElementById("saveBtn"); // Get the save button
-
-      // Add event listeners for week navigation buttons
-      prevWeekBtn.addEventListener("click", async () => {
-        weekOffset -= 1;
-        updateWeekDates();
-        await loadWeekData();
-      });
-
-      nextWeekBtn.addEventListener("click", async () => {
-        weekOffset += 1;
-        updateWeekDates();
-        await loadWeekData();
-      });
-
-      // Add event listener for save button
-      saveBtn.addEventListener("click", async () => {
-        await saveWeekData();
-      });
-
-      // Modal and user selection logic
-      const modal = document.getElementById("userModal");
-      const closeModalBtn = document.getElementById("closeModalBtn");
-      const userSelectButtons = document.querySelectorAll(".user-select-btn");
-      const addUserButtons = document.querySelectorAll("select");
-
-      addUserButtons.forEach((select) => {
-        select.addEventListener("change", (event) => {
-          const target = event.target as HTMLSelectElement;
-          if (target.value === "add") {
-            const day = select.dataset.day;
-            const turno = select.dataset.turno;
-            const index = select.dataset.index;
-            modal.classList.remove("hidden");
-            modal.dataset.day = day;
-            modal.dataset.turno = turno;
-            modal.dataset.index = index;
-          }
-        });
-      });
-
-      closeModalBtn.addEventListener("click", () => {
-        modal.classList.add("hidden");
-      });
-
-      userSelectButtons.forEach((button) => {
-        button.addEventListener("click", (event) => {
-          const target = event.target as HTMLElement;
-          const userName = (target.dataset as DOMStringMap).username;
-          const modal = document.getElementById("userModal") as HTMLElement;
-          const day = (modal.dataset as DOMStringMap).day;
-          const turno = (modal.dataset as DOMStringMap).turno;
-          const index = (modal.dataset as DOMStringMap).index;
-          const select = document.querySelector(
-            `select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
-          ) as HTMLSelectElement;
-          const option = document.createElement("option");
-          option.value = userName;
-          option.text = userName;
-          select.appendChild(option);
-          select.value = userName;
-          modal.classList.add("hidden");
-        });
-      });
     });
-  </script>
-</Layout>
+
+    // Calculate the start date of the week
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+
+    await fetch("/api/saveWeekData.json", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        date: startOfWeek.toISOString().split("T")[0],
+        weekData: currentWeekData,
+      }),
+    });
+  };
+
+  // Function to update week dates in the UI
+  const updateWeekDates = () => {
+    const dates = getWeekDates(currentDate);
+    document.querySelectorAll(".week-date").forEach((element, index) => {
+      element.textContent = `${days[index].charAt(0).toUpperCase() + days[index].slice(1)} - ${dates[index].toLocaleDateString()}`;
+    });
+  };
+
+  // Function to get week dates
+  const getWeekDates = (currentDate) => {
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  // Load week data when the DOM is fully loaded
+  document.addEventListener("DOMContentLoaded", async () => {
+    await loadWeekData();
+    const prevWeekBtn = document.getElementById("prevWeekBtn");
+    const nextWeekBtn = document.getElementById("nextWeekBtn");
+    const saveBtn = document.getElementById("saveBtn");
+
+    // Add event listeners for week navigation buttons
+    prevWeekBtn.addEventListener("click", async () => {
+      currentDate.setDate(currentDate.getDate() - 7);
+      updateWeekDates();
+      await loadWeekData();
+    });
+    nextWeekBtn.addEventListener("click", async () => {
+      currentDate.setDate(currentDate.getDate() + 7);
+      updateWeekDates();
+      await loadWeekData();
+    });
+
+    // Add event listener for save button
+    saveBtn.addEventListener("click", async () => {
+      await saveWeekData();
+    });
+  });
+
+  // Modal and user selection logic
+  const modal = document.getElementById("userModal");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const userSelectButtons = document.querySelectorAll(".user-select-btn");
+  const addUserButtons = document.querySelectorAll("select");
+
+  addUserButtons.forEach((select) => {
+    select.addEventListener("change", (event) => {
+      const target = event.target as HTMLSelectElement;
+      if (target.value === "add") {
+        const day = select.dataset.day;
+        const turno = select.dataset.turno;
+        const index = select.dataset.index;
+        modal.classList.remove("hidden");
+        modal.dataset.day = day;
+        modal.dataset.turno = turno;
+        modal.dataset.index = index;
+      }
+    });
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+  });
+
+  userSelectButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const target = event.target as HTMLElement;
+      const userName = (target.dataset as DOMStringMap).username;
+      const modal = document.getElementById("userModal") as HTMLElement;
+      const day = (modal.dataset as DOMStringMap).day;
+      const turno = (modal.dataset as DOMStringMap).turno;
+      const index = (modal.dataset as DOMStringMap).index;
+      const select = document.querySelector(
+        `select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
+      ) as HTMLSelectElement;
+      const option = document.createElement("option");
+      option.value = userName;
+      option.text = userName;
+      select.appendChild(option);
+      select.value = userName;
+      modal.classList.add("hidden");
+    });
+  });
+</script>

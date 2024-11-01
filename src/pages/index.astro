@@ -1,41 +1,48 @@
 ---
-import Program from "../components/icons/Program.astro"
-import Time from "../components/icons/Time.astro"
-import Users from "../components/icons/Users.astro"
-import IndexCard from "../components/IndexCard.astro"
-import Layout from "../layouts/Layout.astro"
+import Program from "../components/icons/Program.astro";
+import Time from "../components/icons/Time.astro";
+import Users from "../components/icons/Users.astro";
+import IndexCard from "../components/IndexCard.astro";
+import Layout from "../layouts/Layout.astro";
 
-const {isAdmin, user} = Astro.locals
-
-
+const { isAdmin, user } = Astro.locals;
 ---
 
 <Layout title="Inicio">
-
-	<section class="flex flex-wrap justify-center items-center flex-1 gap-x-10 gap-y-5 my-10 md:mt-0">
-		{isAdmin && (
-			<IndexCard
-			href="/data"
-			title="Lista de usuarios"
-			subtitle="Organiza, edita y elimina todos los usuarios del PPAM."
-			>
-				<Users className="size-28 text-cyan-600 mx-auto group-hover:text-white"/>
-			</IndexCard>
-		)}
-		<IndexCard
-			href="/"
-			title="Disponibilidad"
-			subtitle="Edita tu disponibilidad para el PPAM."
-		>
-			<Time className="size-28 text-cyan-600 mx-auto group-hover:text-white"/>
-		</IndexCard>
-		<IndexCard
-			href={isAdmin ? '/program' : 'program/CalenderView'}
-			title="Programa PPAM"
-			subtitle="Consulta el programa de PPAM para ver todos los participantes."
-		>
-			<Program className="size-28 text-cyan-600 mx-auto group-hover:text-white"/>
-		</IndexCard>
-	</section>
+  <section
+    class="flex flex-wrap justify-center items-center flex-1 gap-x-10 gap-y-5 my-10 md:mt-0"
+  >
+    {
+      isAdmin && (
+        <IndexCard
+          href="/data"
+          title="Lista de usuarios"
+          subtitle="Organiza, edita y elimina todos los usuarios del PPAM."
+        >
+          <Users className="size-28 text-cyan-600 mx-auto group-hover:text-white" />
+        </IndexCard>
+      )
+    }
+    <IndexCard
+      href="/"
+      title="Disponibilidad"
+      subtitle="Edita tu disponibilidad para el PPAM."
+    >
+      <Time className="size-28 text-cyan-600 mx-auto group-hover:text-white" />
+    </IndexCard>
+    <IndexCard
+      href={isAdmin ? "/program" : "program/CalenderView"}
+      title="Programa PPAM"
+      subtitle="Consulta el programa de PPAM para ver todos los participantes."
+    >
+      <Program
+        className="size-28 text-cyan-600 mx-auto group-hover:text-white"
+      />
+    </IndexCard>
+    <a href="/user-history">
+      <button class="bg-blue-500 text-white px-4 py-2 rounded">
+        Historial de Users
+      </button>
+    </a>
+  </section>
 </Layout>
-

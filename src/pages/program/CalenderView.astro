@@ -35,7 +35,7 @@ const { isAdmin } = Astro.locals;
     >
     </div>
     <script>
-      let weekOffset = 0; // Define weekOffset in the global scope
+      let currentDate = new Date(); // Define currentDate in the global scope
       const days = [
         "lunes",
         "martes",
@@ -53,12 +53,14 @@ const { isAdmin } = Astro.locals;
         T4: "15:30 - 17:30",
       };
 
-      const fetchWeekData = async (weekOffset: number) => {
+      const fetchWeekData = async (date: Date) => {
         try {
+          console.log("Fetching week data for date:", date); // Add this line
           const response = await fetch(
-            `/api/getWeekData.json?weekOffset=${weekOffset}`
+            `/api/getWeekData.json?date=${date.toISOString().split("T")[0]}`
           );
           const data = await response.json();
+          console.log("Fetched week data:", data); // Add this line
           return data;
         } catch (error) {
           console.error("Error fetching week data:", error);
@@ -66,12 +68,14 @@ const { isAdmin } = Astro.locals;
         }
       };
 
-      const fetchPhoneNumber = async (nombre: string) => {
+      const fetchPhoneNumber = async (nombre) => {
         try {
+          console.log("Fetching phone number for:", nombre); // Add this line
           const response = await fetch(
             `/api/getUserPhoneNumber.json?nombre=${nombre}`
           );
           const data = await response.json();
+          console.log("Fetched phone number:", data.telefono); // Add this line
           return data.telefono;
         } catch (error) {
           console.error("Error fetching phone number:", error);
@@ -79,7 +83,7 @@ const { isAdmin } = Astro.locals;
         }
       };
 
-      const showPhoneNumber = (phoneNumber: string, event: MouseEvent) => {
+      const showPhoneNumber = (phoneNumber, event) => {
         const popup = document.getElementById("phoneNumberPopup");
         popup.innerText = phoneNumber;
         popup.style.top = `${event.clientY}px`;
@@ -93,8 +97,10 @@ const { isAdmin } = Astro.locals;
       };
 
       const updateWeek = async () => {
-        const weekDates = getWeekDates(weekOffset);
-        const weekData = await fetchWeekData(weekOffset);
+        console.log("Updating week for date:", currentDate); // Add this line
+        const weekDates = getWeekDates(currentDate);
+        const weekData = await fetchWeekData(currentDate);
+        console.log("Week data to display:", weekData); // Add this line
         const calendarView = document.getElementById("calendarView");
         calendarView.innerHTML = `
           <div class="hidden md:block">
@@ -133,7 +139,7 @@ const { isAdmin } = Astro.locals;
               </tbody>
             </table>
           </div>
-          <div class="md:hidden">
+                    <div class="md:hidden">
             ${days
               .map(
                 (day) => `
@@ -178,9 +184,8 @@ const { isAdmin } = Astro.locals;
           const userElement = user as HTMLElement;
           userElement.addEventListener("click", async (event) => {
             const nombre = userElement.dataset.nombre;
-            //  console.log(`Fetching phone number for: ${nombre}`); // Debugging step
+            console.log("User clicked:", nombre); // Add this line
             const phoneNumber = await fetchPhoneNumber(nombre);
-            //  console.log(`Fetched phone number: ${phoneNumber}`); // Debugging step
             showPhoneNumber(phoneNumber, event);
           });
         });
@@ -193,11 +198,9 @@ const { isAdmin } = Astro.locals;
         });
       };
 
-      const getWeekDates = (weekOffset: number) => {
-        const startOfWeek = new Date();
-        startOfWeek.setDate(
-          startOfWeek.getDate() - startOfWeek.getDay() + 1 + weekOffset * 7
-        );
+      const getWeekDates = (currentDate) => {
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
         const dates = [];
         for (let i = 0; i < 7; i++) {
           const date = new Date(startOfWeek);
@@ -207,22 +210,24 @@ const { isAdmin } = Astro.locals;
         return dates;
       };
 
-      const formatDate = (date: { getDate: () => any }, dayName: string) => {
+      const formatDate = (date, dayName) => {
         const day = date.getDate();
         return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${day}`;
       };
+
       document.addEventListener("DOMContentLoaded", () => {
         const prevWeekBtn = document.getElementById("prevWeekBtn");
         const nextWeekBtn = document.getElementById("nextWeekBtn");
 
         prevWeekBtn.addEventListener("click", () => {
-          weekOffset--;
+          currentDate.setDate(currentDate.getDate() - 7);
           updateWeek();
         });
         nextWeekBtn.addEventListener("click", () => {
-          weekOffset++;
+          currentDate.setDate(currentDate.getDate() + 7);
           updateWeek();
         });
+
         // Initial load
         updateWeek();
       });
