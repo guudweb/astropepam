@@ -23,20 +23,38 @@ import Layout from "../layouts/Layout.astro";
       const userHistory = await response.json();
       const tbody = document.getElementById("user-history-body");
 
-      userHistory.forEach(
-        (entry: { userName: any; date: any; day: any; turno: any }) => {
-          const row = document.createElement("tr");
-          const weekStartDate = new Date(entry.date);
-          const formattedWeek = `Semana del ${weekStartDate.getDate().toString().padStart(2, "0")}/${(weekStartDate.getMonth() + 1).toString().padStart(2, "0")}/${weekStartDate.getFullYear()}`;
-          row.innerHTML = `
-            <td>${entry.userName}</td>
-            <td>${formattedWeek}</td>
-            <td>${entry.day}</td>
-            <td>${entry.turno}</td>
-          `;
-          tbody.appendChild(row);
+      const groupedHistory = userHistory.reduce((acc, entry) => {
+        const weekStartDate = new Date(entry.date);
+        const formattedWeek = `Semana del ${weekStartDate.getDate().toString().padStart(2, "0")}/${(weekStartDate.getMonth() + 1).toString().padStart(2, "0")}/${weekStartDate.getFullYear()}`;
+        if (!acc[entry.userName]) {
+          acc[entry.userName] = {};
         }
-      );
+        if (!acc[entry.userName][formattedWeek]) {
+          acc[entry.userName][formattedWeek] = [];
+        }
+        acc[entry.userName][formattedWeek].push({
+          day: entry.day,
+          turno: entry.turno,
+        });
+        return acc;
+      }, {});
+
+      Object.keys(groupedHistory).forEach((userName) => {
+        let firstRow = true;
+        Object.keys(groupedHistory[userName]).forEach((week) => {
+          groupedHistory[userName][week].forEach((entry) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${firstRow ? userName : ""}</td>
+              <td>${week}</td>
+              <td>${entry.day}</td>
+              <td>${entry.turno}</td>
+            `;
+            tbody.appendChild(row);
+            firstRow = false;
+          });
+        });
+      });
     });
   </script>
 </Layout>
