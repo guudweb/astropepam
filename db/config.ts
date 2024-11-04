@@ -1,5 +1,14 @@
 import { defineDb, defineTable, column } from "astro:db";
 
+const Congregacion = defineTable({
+  columns: {
+    id: column.number({ primaryKey: true, autoIncrement: true }),
+    nombre: column.text(),
+    diaReunion: column.text(),
+    turnoReunion: column.text(),
+  },
+});
+
 const Usuario = defineTable({
   columns: {
     user_id: column.number({ primaryKey: true }),
@@ -7,7 +16,7 @@ const Usuario = defineTable({
     contraseña: column.text(),
     telefono: column.number(),
     correo: column.text(),
-    congregacion: column.text(),
+    congregacion: column.number({ references: () => Congregacion.columns.id }),
     sexo: column.text(),
     role: column.text(),
     estado_civil: column.text(),
@@ -48,5 +57,5 @@ const UserHistory = defineTable({
 });
 
 export default defineDb({
-  tables: { Usuario, disponibilidad, WeekData, UserHistory },
+  tables: { Usuario, disponibilidad, WeekData, UserHistory, Congregacion },
 });
