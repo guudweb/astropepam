@@ -1,10 +1,14 @@
 ---
 import  { DataView }  from "../components/DataView.tsx"
+
 import Layout from "../layouts/Layout.astro"
+
 
 
 ---
 
 <Layout title="data">
-    <DataView client:only/>
+    <section class="max-w-7xl mx-auto mt-10">
+        <DataView client:load/>
+    </section>
 </Layout>
