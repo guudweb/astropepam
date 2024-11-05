@@ -13,11 +13,12 @@ export async function GET({ url }) {
     .limit(limit)
     .offset(offset)
     .execute();
-
+    console.log(comments);
+    
   // Consulta para contar el total de usuarios
   const allUsers = await db.select().from(Usuario).execute();
   const total = allUsers.length; // Contamos el total de usuarios
-
+  
   return new Response(
     JSON.stringify({
       data: comments,

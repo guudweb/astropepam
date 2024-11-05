@@ -7,7 +7,10 @@ const useFetchUsers = (limit: number) => {
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [day, setDay] = useState<string | null>(null);
+  const [turn, setTurn] = useState<string | null>(null);
 
+  // Función principal de obtención de datos
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -24,6 +27,7 @@ const useFetchUsers = (limit: number) => {
     }
   };
 
+  // Función de búsqueda por término
   const fetchSearchResults = async () => {
     setIsLoading(true);
     try {
@@ -39,15 +43,41 @@ const useFetchUsers = (limit: number) => {
       setIsLoading(false);
     }
   };
-  
 
-  useEffect(() => {
-    if (searchTerm) {
-      fetchSearchResults(); // Llama a la función de búsqueda si hay un término de búsqueda
-    } else {
-      fetchData(); // Llama a la función de datos si no hay término de búsqueda
+  // Nueva función para filtrar por día y turno
+  const filterUsers = async () => {
+    setIsLoading(true);
+    try {
+      const url = new URL(`/api/getFilteredUser.json`, window.location.origin);
+      url.searchParams.append("page", page.toString());
+      url.searchParams.append("limit", limit.toString());
+      if (searchTerm) url.searchParams.append("q", searchTerm);
+      if (day) url.searchParams.append("day", day);
+      if (turn) url.searchParams.append("turn", turn);
+
+      const response = await fetch(url.toString());
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      setComments(data.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [searchTerm, page]); // Dependemos de searchTerm y page
+  };
+
+  // Lógica principal de selección de la función a ejecutar
+  useEffect(() => {
+    if (day || turn) {
+      filterUsers();
+    } else if (searchTerm) {
+      fetchSearchResults();
+    } else {
+      fetchData();
+    }
+  }, [searchTerm, day, turn, page]);
 
   const handleNextPage = () => {
     setPage((prevPage) => prevPage + 1);
@@ -57,11 +87,28 @@ const useFetchUsers = (limit: number) => {
     setPage((prevPage) => Math.max(prevPage - 1, 1));
   };
 
+  const handleSearchTermChange = (term: string) => {
+    setSearchTerm(term);
+    setPage(1); // Reinicia la página a 1 en cada búsqueda
+  };
+
+  const handleDayChange = (selectedDay: string) => {
+    setDay(selectedDay);
+    setPage(1); // Reinicia la página a 1 al cambiar el día
+  };
+
+  const handleTurnChange = (selectedTurn: string) => {
+    setTurn(selectedTurn);
+    setPage(1); // Reinicia la página a 1 al cambiar el turno
+  };
+
   return {
     comments,
     isLoading,
     page,
-    setSearchTerm,
+    setSearchTerm: handleSearchTermChange,
+    setDay: handleDayChange,
+    setTurn: handleTurnChange,
     handleNextPage,
     handlePreviousPage,
   };
