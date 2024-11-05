@@ -1,5 +1,5 @@
 // src/pages/api/getUsersByAvailability.js
-import { db, Usuario } from 'astro:db';
+import { Congregacion, db, eq, Usuario } from 'astro:db';
 
 export async function GET({ url }) {
   const page = parseInt(url.searchParams.get('page')) || 1;
@@ -18,10 +18,19 @@ export async function GET({ url }) {
 
   try {
     // Obtiene todos los usuarios
-    const allUsers = await db.select().from(Usuario).execute();
+    const allUsers = await db
+    .select()
+    .from(Usuario)
+    .leftJoin(Congregacion, eq(Usuario.congregacion, Congregacion.id),)
+    .execute();
+
+    const allUsersWithCongregation = allUsers.map(user => ({
+      ...user.Usuario,
+      congregacion: user.Congregacion
+    }));
 
     // Filtra los usuarios según el día y el turno en la disponibilidad
-    const filteredUsers = allUsers
+    const filteredUsers = allUsersWithCongregation
       .filter((user) => {
         const disponibilidad = typeof user.disponibilidad === 'string' ? JSON.parse(user.disponibilidad) : {};
         return disponibilidad[day] && disponibilidad[day].includes(turn);

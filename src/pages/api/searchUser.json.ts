@@ -1,5 +1,5 @@
 // src/pages/api/searchUsers.ts
-import { db, like, Usuario } from 'astro:db';
+import { Congregacion, db, eq, like, Usuario } from 'astro:db';
 
 export async function GET({ url }) {
   const query = url.searchParams.get('q') || ''; // Obtiene el parámetro de búsqueda 'q'
@@ -8,15 +8,15 @@ export async function GET({ url }) {
   const offset = (page - 1) * limit;
 
   // Consulta para buscar usuarios por nombre
-  const users = await db
+  const usersWithCongregation = await db
     .select()
     .from(Usuario)
     .where(like(Usuario.nombre, `%${query}%`)) // Filtra por nombre usando LIKE
+    .leftJoin(Congregacion, eq(Usuario.congregacion, Congregacion.id))
     .limit(limit)
     .offset(offset)
     .execute();
   
-  console.log(users);
   
   // Consulta para contar el total de usuarios que coinciden con la búsqueda
   const allUsers = await db
@@ -27,9 +27,14 @@ export async function GET({ url }) {
   
   const total = allUsers.length; // Contamos el total de usuarios que coinciden
 
+  const comments = usersWithCongregation.map(user => ({
+    ...user.Usuario,
+    congregacion: user.Congregacion
+  }));
+
   return new Response(
     JSON.stringify({
-      data: users,
+      data: comments,
       total,
     }),
     {
