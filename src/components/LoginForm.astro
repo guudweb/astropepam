@@ -1,61 +1,59 @@
 ---
-import { db, Usuario } from 'astro:db';
+// import { db, Usuario } from 'astro:db';
 
-if (Astro.request.method === 'POST') {
-  // Parse form data
-  const formData = await Astro.request.formData();
-  const correo = formData.get('correo') as string;
-  const telefono = formData.get('telefono') as string;
-  const nombre = formData.get('nombre') as string;
-  const contraseña = formData.get('contraseña') as string;
-  const congregacion = formData.get('congregacion') as string;
-  const estado_civil = formData.get('estado_civil') as string;
-  const nombre_conyuge = formData.get('nombre_conyuge') as string;
-  const sexo = formData.get('sexo') as string;
-  const role = formData.get('role') as string;
-  const privilegios = formData.getAll('privilegios'); // Get all selected checkboxes
+// if (Astro.request.method === 'POST') {
+//   // Parse form data
+//   const formData = await Astro.request.formData();
+//   const correo = formData.get('correo') as string;
+//   const telefono = formData.get('telefono') as string;
+//   const nombre = formData.get('nombre') as string;
+//   const contraseña = formData.get('contraseña') as string;
+//   const congregacion = formData.get('congregacion') as string;
+//   const estado_civil = formData.get('estado_civil') as string;
+//   const nombre_conyuge = formData.get('nombre_conyuge') as string;
+//   const sexo = formData.get('sexo') as string;
+//   const role = formData.get('role') as string;
+//   const privilegios = formData.getAll('privilegios'); // Get all selected checkboxes
 
-  // Collect disponibilidad data
-  const disponibilidad = {
-    lunes: formData.getAll('lunes_turnos'),
-    martes: formData.getAll('martes_turnos'),
-    miercoles: formData.getAll('miercoles_turnos'),
-    jueves: formData.getAll('jueves_turnos'),
-    viernes: formData.getAll('viernes_turnos'),
-    sabado: formData.getAll('sabado_turnos'),
-    domingo: formData.getAll('domingo_turnos')
-  };
+//   // Collect disponibilidad data
+//   const disponibilidad = {
+//     lunes: formData.getAll('lunes_turnos'),
+//     martes: formData.getAll('martes_turnos'),
+//     miercoles: formData.getAll('miercoles_turnos'),
+//     jueves: formData.getAll('jueves_turnos'),
+//     viernes: formData.getAll('viernes_turnos'),
+//     sabado: formData.getAll('sabado_turnos'),
+//     domingo: formData.getAll('domingo_turnos')
+//   };
 
-  console.log('Form Data:', { correo, telefono, nombre, contraseña, congregacion, estado_civil, nombre_conyuge, sexo, role, privilegios, disponibilidad }); // Log form data
-
-  if (typeof correo === 'string' && typeof telefono === 'string' && typeof nombre === 'string' && typeof contraseña === 'string' && typeof sexo === 'string' && typeof role === 'string') {
-    try {
-      // Insert form data into the Usuario table
-      await db.insert(Usuario).values({
-        correo,
-        telefono: parseInt(telefono, 10), // Convert to number
-        nombre,
-        contraseña,
-        congregacion,
-        estado_civil,
-        nombre_conyuge,
-        sexo,
-        role,
-        privilegios: JSON.stringify(privilegios), // Store as JSON string
-        disponibilidad: JSON.stringify(disponibilidad) // Store as JSON string
-      });
-      console.log('Data inserted successfully');
-    } catch (error) {
-      console.error('Error inserting data:', error);
-    }
-  } else {
-    console.error('Invalid form data');
-  }
-}
+//   if (typeof correo === 'string' && typeof telefono === 'string' && typeof nombre === 'string' && typeof contraseña === 'string' && typeof sexo === 'string' && typeof role === 'string') {
+//     try {
+//       // Insert form data into the Usuario table
+//       await db.insert(Usuario).values({
+//         correo,
+//         telefono: parseInt(telefono, 10), // Convert to number
+//         nombre,
+//         contraseña,
+//         congregacion,
+//         estado_civil,
+//         nombre_conyuge,
+//         sexo,
+//         role,
+//         privilegios: JSON.stringify(privilegios), // Store as JSON string
+//         disponibilidad: JSON.stringify(disponibilidad) // Store as JSON string
+//       });
+//       console.log('Data inserted successfully');
+//     } catch (error) {
+//       console.error('Error inserting data:', error);
+//     }
+//   } else {
+//     console.error('Invalid form data');
+//   }
+// }
 
 ---
 
-<div class="mx-auto mt-9 w-full max-w-2xl">
+<!-- <div class="mx-auto mt-9 w-full max-w-2xl">
   <form method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 grid grid-cols-2 gap-4">
     <div class="mb-4">
       <label class="block text-gray-700 text-sm font-bold mb-2" for="correo">
@@ -148,9 +146,10 @@ if (Astro.request.method === 'POST') {
       </div>
       
     </div>
+-->
 
           <!-- Disponibilidad fields -->
-          <div class="mb-4 col-span-2">
+          <!-- <div class="mb-4 col-span-2">
             <label class="block text-gray-700 text-sm font-bold mb-2">
               Disponibilidad
             </label>
@@ -171,9 +170,9 @@ if (Astro.request.method === 'POST') {
                         <input type="checkbox" name="lunes_turnos" value="T4"> T4
                       </label>
                     </div>
-                  </div>
+                  </div> -->
               <!-- Tuesday -->
-              <div>
+              <!-- <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">Martes</label>
                 <div class="flex flex-wrap">
                   <label class="mr-4">
@@ -189,9 +188,9 @@ if (Astro.request.method === 'POST') {
                     <input type="checkbox" name="martes_turnos" value="T4"> T4
                   </label>
                 </div>
-              </div>
+              </div> -->
               <!-- Wednesday -->
-              <div>
+              <!-- <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">Miércoles</label>
                 <div class="flex flex-wrap">
                   <label class="mr-4">
@@ -207,9 +206,9 @@ if (Astro.request.method === 'POST') {
                     <input type="checkbox" name="miercoles_turnos" value="T4"> T4
                   </label>
                 </div>
-              </div>
+              </div> -->
               <!-- Thursday -->
-              <div>
+              <!-- <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">Jueves</label>
                 <div class="flex flex-wrap">
                   <label class="mr-4">
@@ -225,7 +224,7 @@ if (Astro.request.method === 'POST') {
                     <input type="checkbox" name="jueves_turnos" value="T4"> T4
                   </label>
                 </div>
-              </div>
+              </div> -->
               <!-- Friday -->
               <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">Viernes</label>
