@@ -4,10 +4,10 @@ export interface User {
     contraseña:     string;
     telefono:       string;
     correo:         string;
-    congregacion:   string;
-    sexo:           Sexo;
-    role:           Role;
-    estado_civil:   EstadoCivil;
+    congregacion:   Congregacion;
+    sexo:           string;
+    role:           string;
+    estado_civil:   string;
     nombre_conyuge: null;
     privilegios:    null;
     disponibilidad: string;
@@ -15,16 +15,9 @@ export interface User {
     userName:       string;
 }
 
-export enum EstadoCivil {
-    Soltero = "soltero",
-}
-
-export enum Role {
-    User = "user",
-    Admin = "admin",
-}
-
-export enum Sexo {
-    F = "F",
-    M = "M",
+export interface Congregacion {
+    id:           number;
+    nombre:       string;
+    diaReunion:   string;
+    turnoReunion: string;
 }

@@ -9,7 +9,8 @@ interface TableProps {
 }
 
 export const TableUser: React.FC<TableProps> = ({comments, isLoading}) => {
-    console.log(isLoading);
+    console.log(comments);
+    
     
     return (
         <table className="w-full text-sm text-left rtl:text-right text-gray-500">

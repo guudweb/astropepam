@@ -77,6 +77,7 @@ const useFetchUsers = (limit: number) => {
     } else {
       fetchData();
     }
+    
   }, [searchTerm, day, turn, page]);
 
   const handleNextPage = () => {

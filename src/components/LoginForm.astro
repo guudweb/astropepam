@@ -26,7 +26,6 @@ if (Astro.request.method === 'POST') {
     domingo: formData.getAll('domingo_turnos')
   };
 
-  console.log('Form Data:', { correo, telefono, nombre, contraseña, congregacion, estado_civil, nombre_conyuge, sexo, role, privilegios, disponibilidad }); // Log form data
 
   if (typeof correo === 'string' && typeof telefono === 'string' && typeof nombre === 'string' && typeof contraseña === 'string' && typeof sexo === 'string' && typeof role === 'string') {
     try {
@@ -44,8 +43,6 @@ if (Astro.request.method === 'POST') {
         privilegios: JSON.stringify(privilegios), // Store as JSON string
         disponibilidad: JSON.stringify(disponibilidad) // Store as JSON string
       });
-      console.log('Data inserted successfully');
-    } catch (error) {
       console.error('Error inserting data:', error);
     }
   } else {

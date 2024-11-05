@@ -34,7 +34,6 @@ export default defineConfig({
 
 
         if (!user || password !== user.contraseña) {
-          console.log(user);
           console.log("Correo o contraseña incorrectos");
           return null;
         }
@@ -60,7 +59,6 @@ export default defineConfig({
     },
     session: ({ session, token }) => {
       session.user = token.user as AdapterUser;
-      console.log({ session: session.user });
       return session;
     },
   },
