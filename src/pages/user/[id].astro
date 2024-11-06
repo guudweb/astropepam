@@ -1,0 +1,175 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { db } from "astro:db";
+import { Usuario, eq } from "astro:db";
+import { Congregacion } from "astro:db";
+import Check from "../../components/icons/Check.astro";
+import Cross from "../../components/icons/Cross.astro";
+import Disponibility from "../../components/Disponibility";
+
+
+
+const { id } = Astro.params;
+
+const [userWhitCongregation] = await db
+    .select()
+    .from(Usuario)
+    .where(eq(Usuario.user_id, Number(id)))
+    .leftJoin(Congregacion, eq(Usuario.congregacion, Congregacion.id));
+
+const congregacionData = await db.select().from(Congregacion);
+
+const user = userWhitCongregation.Usuario;
+const congregacion = userWhitCongregation.Congregacion;
+
+---
+
+<Layout title="Edita tu disponibilidad y más cosas | PPAM Malabo">
+    <section class="max-w-2xl mx-auto mt-10">
+        <h1 class=" text-2xl md:text-4xl text-center text-pretty mb-5 font-bold uppercase">Edita la información de tu cuenta</h1>
+        <form class="bg-white p-5 rounded-lg shadow-lg">
+            <div class="mb-5">
+                <label
+                    for="name"
+                    class="block mb-2 text-sm font-medium text-gray-900"
+                    >Nombre</label
+                >
+                <input
+                    type="text"
+                    id="name"
+                    class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    placeholder="Pedro Ondo"
+                    required
+                    value={user.nombre}
+                />
+            </div>
+            <div class="mb-5">
+                <label
+                    for="password"
+                    class="block mb-2 text-sm font-medium text-gray-900"
+                    >Contraseña</label
+                >
+                <input
+                    type="text"
+                    id="password"
+                    class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    placeholder="Pon la contraseña que desees"
+                    required
+                    value={user.contraseña}
+                />
+            </div>
+            <div class="mb-5">
+                <label
+                    for="phone"
+                    class="block mb-2 text-sm font-medium text-gray-900"
+                    >Teléfono</label
+                >
+                <input
+                    type="text"
+                    id="phone"
+                    class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    placeholder="222587412"
+                    required
+                    value={user.telefono}
+                />
+            </div>
+            <div class="mb-5">
+                <label
+                    for="email"
+                    class="block mb-2 text-sm font-medium text-gray-900"
+                    >Email</label
+                >
+                <input
+                    type="email"
+                    id="email"
+                    class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    placeholder="ppam@malabo.com"
+                    required
+                    value={user.correo}
+                />
+            </div>
+
+            <div class="mb-5">
+                <label
+                    for="email"
+                    class="block mb-2 text-sm font-medium text-gray-900"
+                    >Congregación</label
+                >
+                <select
+                    class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                >
+                    {
+                        congregacionData.map((item) => (
+                            <option
+                                value={item.id}
+                                selected={user.congregacion === item.id}
+                            >
+                                {item.nombre}
+                            </option>
+                        ))
+                    }
+                </select>
+            </div>
+
+            <div class="mb-5">
+                <h5 class="block mb-4 text-sm font-medium text-gray-900">
+                    ¿Estoy disponible?
+                </h5>
+                <label
+                    class="inline-flex items-center cursor-pointer space-x-2"
+                >
+                    <div class="bg-red-200 rounded-full p-1">
+                        <Cross className="size-4 text-red-700" />
+                    </div>
+                    <input
+                        type="checkbox"
+                        checked={user.isActive}
+                        class="sr-only peer"
+                    />
+                    <div
+                        class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"
+                    >
+                    </div>
+                    <div class="bg-green-200 rounded-full p-1">
+                        <Check className="size-4 text-green-700" />
+                    </div>
+                </label>
+            </div>
+            <div class="mb-5">
+                <label
+                    for="sexo"
+                    class="block mb-2 text-sm font-medium text-gray-900"
+                    >Sexo</label
+                >
+                <select
+                    id="sexo"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                >
+                    <option selected={user.sexo === "M"} value="M">Masculino</option>
+                    <option selected={user.sexo === "F"} value="F">Femenino</option>
+                </select>
+            </div>
+            <div class="mb-5">
+                <label
+                    for="countries"
+                    class="block mb-2 text-sm font-medium text-gray-900"
+                    >Estado Civil</label
+                >
+                <select
+                    id="countries"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                >
+                    <option selected={user.estado_civil === "casado"} value="casado">Casado</option>
+                    <option selected={user.estado_civil === "soltero"} value="soltero">Soltero</option>
+                </select>
+            </div>
+
+            <div class="mb-5">
+                <h5 class="block mb-4 text-sm font-medium text-gray-900">Disponibilidad</h5>
+                <Disponibility disponibilidad={user.disponibilidad} client:load/>
+            </div>
+
+            <button class="bg-cyan-600 rounded-lg px-4 py-2 w-full text-white hover:bg-cyan-700 transition-colors">Editar Usuario</button>
+        </form>
+    </section>
+</Layout>

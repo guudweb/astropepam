@@ -4,6 +4,9 @@ import Time from "../components/icons/Time.astro";
 import Users from "../components/icons/Users.astro";
 import IndexCard from "../components/IndexCard.astro";
 import Layout from "../layouts/Layout.astro";
+import { getSession } from 'auth-astro/server';
+
+const session = await getSession(Astro.request);
 
 const { isAdmin, user } = Astro.locals;
 ---
@@ -24,7 +27,7 @@ const { isAdmin, user } = Astro.locals;
       )
     }
     <IndexCard
-      href="/"
+      href={`user/${session.user.id}`}
       title="Disponibilidad"
       subtitle="Edita tu disponibilidad para el PPAM."
     >
