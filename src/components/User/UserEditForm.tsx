@@ -5,7 +5,7 @@ import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
 
 
-export const UserEditForm = ({ user, congregacionData }) => {
+export const UserEditForm = ({ user, congregacionData, session }) => {
     const [nombre, setNombre] = useState(user.nombre || "");
     const [contraseña, setContraseña] = useState(user.contraseña || "");
     const [telefono, setTelefono] = useState(user.telefono || "");
@@ -231,7 +231,7 @@ export const UserEditForm = ({ user, congregacionData }) => {
                 </select>
             </div>
             {
-                user.role === 'admin' || user.role === 'superadmin' && (
+                session.user.role === 'admin' || session.user.role === 'superadmin' && (
                     <div className="mb-5 ">
                         <label htmlFor="rol" className="block mb-2 text-sm font-medium text-gray-900">Rol del usuario (Solo Admins)</label>
                         <select
