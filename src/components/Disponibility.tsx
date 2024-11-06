@@ -4,8 +4,8 @@ import useAvailability from '../hooks/useAvailability ';
 const daysOfWeek = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
 const turnos = ["T1", "T2", "T3", "T4"];
 
-const Disponibility = ({ disponibilidad  }) => {
-  const { availability, handleCheckboxChange } = useAvailability(disponibilidad)
+const Disponibility = ({ disponibilidad, onChange  }) => {
+  const { availability, handleCheckboxChange } = useAvailability(disponibilidad, onChange)
 
   return (
     <div>

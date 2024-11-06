@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Disponibility from "../Disponibility";
 import useAvailability from "../../hooks/useAvailability ";
 import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
+
 
 export const UserEditForm = ({ user, congregacionData }) => {
     const [nombre, setNombre] = useState(user.nombre || "");
@@ -13,8 +14,12 @@ export const UserEditForm = ({ user, congregacionData }) => {
     const [isActive, setIsActive] = useState(user.isActive || false);
     const [sexo, setSexo] = useState(user.sexo || "M");
     const [estadoCivil, setEstadoCivil] = useState(user.estadoCivil || "soltero");
-    const { availability } = useAvailability(user.disponibilidad)
     const [role, setRole] = useState(user.role || "user")
+    const [availability, setAvailability] = useState(user.disponibilidad || {});
+
+    const handleDisponibilityChange = useCallback((newAvailability) => {
+        setAvailability(newAvailability);
+    }, []);
 
     const notyf = new Notyf({
         duration: 4000,
@@ -64,7 +69,7 @@ export const UserEditForm = ({ user, congregacionData }) => {
             if (response.ok) {
                 const updatedUser = await response.json();
                 notyf.success("Usuario actualizado correctamente");
-                // Aquí puedes hacer alguna acción adicional, como actualizar el estado o redirigir
+
             } else {
                 notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
                 console.error("Error al actualizar el usuario:", response.statusText);
@@ -206,7 +211,7 @@ export const UserEditForm = ({ user, congregacionData }) => {
 
             <div className="mb-10">
                 <h5 className="block mb-4 text-sm font-medium text-gray-900">Disponibilidad</h5>
-                <Disponibility disponibilidad={user.disponibilidad} />
+                <Disponibility disponibilidad={user.disponibilidad} onChange={handleDisponibilityChange} />
             </div>
 
             <div className="mb-5 ">
