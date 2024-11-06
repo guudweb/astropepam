@@ -249,7 +249,7 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
                             </div>
                         )
                         : (
-                            <span>Editar Usuario</span>
+                            <span>Guardar cambios</span>
                         )
                 }
             </button>
