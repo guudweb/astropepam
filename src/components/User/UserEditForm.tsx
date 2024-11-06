@@ -22,6 +22,8 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
         setAvailability(newAvailability);
     }, []);
 
+
+    
     const notyf = new Notyf({
         duration: 4000,
         position: {
@@ -217,21 +219,8 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
                 <Disponibility disponibilidad={user.disponibilidad} onChange={handleDisponibilityChange} />
             </div>
 
-            <div className="mb-5 ">
-                <label htmlFor="rol" className="block mb-2 text-sm font-medium text-gray-900">Rol del usuario (Solo Admins)</label>
-                <select
-                    id="rol"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                >
-                    <option value="superadmin">Super Admin</option>
-                    <option value="admin">Admin</option>
-                    <option value="user">User</option>
-                </select>
-            </div>
             {
-                session.user.role === 'admin' || session.user.role === 'superadmin' && (
+                session.user.role === 'admin' &&(
                     <div className="mb-5 ">
                         <label htmlFor="rol" className="block mb-2 text-sm font-medium text-gray-900">Rol del usuario (Solo Admins)</label>
                         <select
@@ -260,7 +249,7 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
                             </div>
                         )
                         : (
-                            <span>Editar Usuario</span>
+                            <span>Guardar cambios</span>
                         )
                 }
             </button>
