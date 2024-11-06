@@ -59,6 +59,7 @@ export default defineConfig({
     },
     session: ({ session, token }) => {
       session.user = token.user as AdapterUser;
+      
       return session;
     },
   },

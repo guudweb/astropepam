@@ -15,7 +15,6 @@ export async function GET({ url }) {
     .offset(offset)
     .execute();
     
-  console.log("Usuarios con congregación:", usersWithCongregation); // Para depurar
   // Consulta para contar el total de usuarios
   const allUsers = await db.select().from(Usuario).execute();
   const total = allUsers.length; // Contamos el total de usuarios

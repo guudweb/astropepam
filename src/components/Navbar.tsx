@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Spinner from './Spinner.astro';
 
+
 export default function Navbar() {
 
   const [loading, setLoading] = useState<boolean>(false)
