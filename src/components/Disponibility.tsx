@@ -1,32 +1,11 @@
 import { useState, useEffect } from 'react';
+import useAvailability from '../hooks/useAvailability ';
 
 const daysOfWeek = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
 const turnos = ["T1", "T2", "T3", "T4"];
 
-const Disponibility = ({ disponibilidad }) => {
-  const [availability, setAvailability] = useState({});
-
-
-
-
-
-  useEffect(() => {
-    // Parsear la cadena JSON para obtener la disponibilidad inicial
-    const parsedAvailability = JSON.parse(disponibilidad);
-    setAvailability(parsedAvailability);
-  }, [disponibilidad]);
-
-  const handleCheckboxChange = (day, turno) => {
-    setAvailability(prev => {
-      const currentTurns = prev[day] || [];
-      return {
-        ...prev,
-        [day]: currentTurns.includes(turno)
-          ? currentTurns.filter(t => t !== turno) // Elimina turno si está seleccionado
-          : [...currentTurns, turno]              // Agrega turno si no está
-      };
-    });
-  };
+const Disponibility = ({ disponibilidad, onChange  }) => {
+  const { availability, handleCheckboxChange } = useAvailability(disponibilidad, onChange)
 
   return (
     <div>

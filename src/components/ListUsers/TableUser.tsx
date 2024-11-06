@@ -9,7 +9,6 @@ interface TableProps {
 }
 
 export const TableUser: React.FC<TableProps> = ({comments, isLoading}) => {
-    console.log(comments);
     
     
     return (
