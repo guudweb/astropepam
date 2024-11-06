@@ -220,7 +220,7 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
             </div>
 
             {
-                session.user.role === 'admin' || session.user.role === 'superadmin' && (
+                session.user.role === 'admin' &&(
                     <div className="mb-5 ">
                         <label htmlFor="rol" className="block mb-2 text-sm font-medium text-gray-900">Rol del usuario (Solo Admins)</label>
                         <select
