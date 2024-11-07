@@ -1,4 +1,5 @@
 ---
+import CreateUser from "../components/icons/CreateUser.astro";
 import Program from "../components/icons/Program.astro";
 import Time from "../components/icons/Time.astro";
 import Users from "../components/icons/Users.astro";
@@ -24,6 +25,14 @@ const { isAdmin, user } = Astro.locals;
         >
           <Users className="size-28 text-cyan-600 mx-auto group-hover:text-white" />
         </IndexCard>
+        <IndexCard
+          href="/create-user"
+          title="Crear usuarios"
+          subtitle="Crea los nuevos voluntarios para el PPAM"
+        >
+          <CreateUser className="size-28 text-cyan-600 mx-auto group-hover:text-white" />
+        </IndexCard>
+        
       )
     }
     <IndexCard

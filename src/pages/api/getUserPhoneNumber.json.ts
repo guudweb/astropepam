@@ -1,5 +1,4 @@
-import { db, Usuario } from "astro:db";
-import { eq } from "drizzle-orm";
+import { db, Usuario, eq } from "astro:db";
 import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async ({ request }) => {

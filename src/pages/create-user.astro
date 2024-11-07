@@ -1,0 +1,24 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { UserCreateForm } from '../components/User/UserCreateForm'
+import { db } from "astro:db";
+import { Congregacion } from "astro:db";
+
+
+
+
+
+const congregacionData = await db.select().from(Congregacion);
+---
+
+
+
+<Layout
+    title="Crea nuevos usuarios | PPAM Malabo"
+>
+
+    <section class="max-w-2xl mx-auto mt-10">
+        <h1 class="text-center text-4xl font-bold uppercase">Crear nuevos Usuarios</h1>
+        <UserCreateForm congregacionData={congregacionData} client:only/>
+    </section>
+</Layout>

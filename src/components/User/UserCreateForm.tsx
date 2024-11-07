@@ -5,25 +5,26 @@ import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
 
 
-export const UserEditForm = ({ user = null, congregacionData, session }) => {
-    const [nombre, setNombre] = useState(user.nombre || "");
-    const [contraseña, setContraseña] = useState(user.contraseña || "");
-    const [telefono, setTelefono] = useState(user.telefono || "");
-    const [correo, setCorreo] = useState(user.correo || "");
-    const [congregacion, setCongregacion] = useState(user.congregacion || "");
-    const [isActive, setIsActive] = useState(user.isActive || false);
-    const [sexo, setSexo] = useState(user.sexo || "M");
-    const [estadoCivil, setEstadoCivil] = useState(user.estadoCivil || "soltero");
-    const [role, setRole] = useState(user.role || "user")
-    const [availability, setAvailability] = useState(user.disponibilidad || {});
+export const UserCreateForm = ({ congregacionData }) => {
+    const [nombre, setNombre] = useState("");
+    const [contraseña, setContraseña] = useState("");
+    const [telefono, setTelefono] = useState("");
+    const [correo, setCorreo] = useState("");
+    const [congregacion, setCongregacion] = useState("");
+    const [isActive, setIsActive] = useState(false);
+    const [sexo, setSexo] = useState("");
+    const [estadoCivil, setEstadoCivil] = useState("");
+    const [role, setRole] = useState("")
     const [loading, setLoading] = useState(false)
 
-    const handleDisponibilityChange = useCallback((newAvailability) => {
-        setAvailability(newAvailability);
-    }, []);
+    const [availability, setAvailability] = useState('{}');
+
+    const handleAvailabilityChange = (newAvailability) => {
+        setAvailability(JSON.stringify(newAvailability));
+    };
 
 
-    
+
     const notyf = new Notyf({
         duration: 4000,
         position: {
@@ -32,16 +33,7 @@ export const UserEditForm = ({ user = null, congregacionData, session }) => {
         }
     });
 
-    useEffect(() => {
-        setNombre(user.nombre || "");
-        setContraseña(user.contraseña || "");
-        setTelefono(user.telefono || "");
-        setCorreo(user.correo || "");
-        setCongregacion(user.congregacion || "");
-        setIsActive(user.isActive || false);
-        setSexo(user.sexo || "M");
-        setEstadoCivil(user.estadoCivil || "soltero");
-    }, [user]);
+
 
 
     const handleSubmit = async (e) => {
@@ -52,7 +44,7 @@ export const UserEditForm = ({ user = null, congregacionData, session }) => {
             contraseña,
             telefono,
             correo,
-            congregacion: congregacion || null,
+            congregacion,
             isActive,
             sexo,
             estadoCivil,
@@ -60,28 +52,31 @@ export const UserEditForm = ({ user = null, congregacionData, session }) => {
             role
         };
 
-        try {
-            const response = await fetch(`/api/user/${user.user_id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(userData)
-            });
+        // try {
+        //     const response = await fetch(`/api/user/${user.user_id}`, {
+        //         method: 'PUT',
+        //         headers: {
+        //             'Content-Type': 'application/json'
+        //         },
+        //         body: JSON.stringify(userData)
+        //     });
 
-            if (response.ok) {
-                const updatedUser = await response.json();
-                notyf.success("Usuario actualizado correctamente");
+        //     if (response.ok) {
+        //         const updatedUser = await response.json();
+        //         notyf.success("Usuario actualizado correctamente");
 
-            } else {
-                notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
-                console.error("Error al actualizar el usuario:", response.statusText);
-            }
-        } catch (error) {
-            notyf.error("Error del servidor");
-        } finally {
-            setLoading(false)
-        }
+        //     } else {
+        //         notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
+        //         console.error("Error al actualizar el usuario:", response.statusText);
+        //     }
+        // } catch (error) {
+        //     notyf.error("Error del servidor");
+        // } finally {
+        //     setLoading(false)
+        // }
+
+        console.log(userData);
+        
     }
 
     return (
@@ -142,6 +137,7 @@ export const UserEditForm = ({ user = null, congregacionData, session }) => {
                     value={congregacion}
                     onChange={(e) => setCongregacion(e.target.value)}
                 >
+                    <option value="" disabled> --- Seleccione una opción ---</option>
                     {congregacionData.map((item) => (
                         <option value={item.id} key={item.id}>{item.nombre}</option>
                     ))}
@@ -196,6 +192,7 @@ export const UserEditForm = ({ user = null, congregacionData, session }) => {
                     value={sexo}
                     onChange={(e) => setSexo(e.target.value)}
                 >
+                    <option value="" disabled> --- Seleccione una opción ---</option>
                     <option value="M">Masculino</option>
                     <option value="F">Femenino</option>
                 </select>
@@ -209,6 +206,7 @@ export const UserEditForm = ({ user = null, congregacionData, session }) => {
                     value={estadoCivil}
                     onChange={(e) => setEstadoCivil(e.target.value)}
                 >
+                    <option value="" disabled>-- Selecciona una opción</option>
                     <option value="casado">Casado</option>
                     <option value="soltero">Soltero</option>
                 </select>
@@ -216,26 +214,24 @@ export const UserEditForm = ({ user = null, congregacionData, session }) => {
 
             <div className="mb-10">
                 <h5 className="block mb-4 text-sm font-medium text-gray-900">Disponibilidad</h5>
-                <Disponibility disponibilidad={user.disponibilidad} onChange={(newAvailability) => handleDisponibilityChange(newAvailability)} />
+                <Disponibility disponibilidad={availability} onChange={(newAvailability) => handleAvailabilityChange(newAvailability)} />
             </div>
 
-            {
-                session.user.role === 'admin' &&(
-                    <div className="mb-5 ">
-                        <label htmlFor="rol" className="block mb-2 text-sm font-medium text-gray-900">Rol del usuario (Solo Admins)</label>
-                        <select
-                            id="rol"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                        >
-                            <option value="superadmin">Super Admin</option>
-                            <option value="admin">Admin</option>
-                            <option value="user">User</option>
-                        </select>
-                    </div>
-                )
-            }
+
+            <div className="mb-5 ">
+                <label htmlFor="rol" className="block mb-2 text-sm font-medium text-gray-900">Rol del usuario (Solo Admins)</label>
+                <select
+                    id="rol"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                >
+                    <option value="" disabled> --- Seleccione una opción ---</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                </select>
+            </div>
+
 
             <button disabled={loading} type="submit" className="flex justify-center bg-cyan-600 rounded-lg px-4 py-2 w-full text-white hover:bg-cyan-700 transition-colors disabled:bg-gray-400">
                 {
