@@ -9,7 +9,7 @@ export const TableData: React.FC<Props> = ({ comments }) => {
     return (
         <>
             {comments.map((user: User) => (
-                <tr className="bg-white border-b hover:bg-gray-200 transition-colors" key={user.userName}>
+                <tr className="bg-white border-b hover:bg-gray-200 transition-colors" key={user.user_id}>
                     <TableRow
                         text={user.nombre || 'Sin Nombre'} // Manejo de nombre
                         className="whitespace-nowrap text-gray-900 font-medium"
