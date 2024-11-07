@@ -5,6 +5,7 @@ import Users from "../components/icons/Users.astro";
 import IndexCard from "../components/IndexCard.astro";
 import Layout from "../layouts/Layout.astro";
 import { getSession } from 'auth-astro/server';
+import CreateUser from "../components/icons/CreateUser.astro";
 
 const session = await getSession(Astro.request);
 
@@ -23,6 +24,13 @@ const { isAdmin, user } = Astro.locals;
           subtitle="Organiza, edita y elimina todos los usuarios del PPAM."
         >
           <Users className="size-28 text-cyan-600 mx-auto group-hover:text-white" />
+        </IndexCard>
+        <IndexCard
+          href="/create-user"
+          title="Crear Usuarios"
+          subtitle="Crea los nuevos usuarios del PPAM."
+        >
+          <CreateUser className="size-28 text-cyan-600 mx-auto group-hover:text-white" />
         </IndexCard>
       )
     }
