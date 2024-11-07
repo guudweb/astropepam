@@ -1,26 +1,26 @@
 import { useState, useEffect } from 'react';
 
 const useAvailability = (initialAvailability, onChange) => {
-  const [availability, setAvailability] = useState({});
+  const [availability, setAvailability] = useState(() => 
+    initialAvailability ? JSON.parse(initialAvailability) : {}
+  );
 
+  // Llama a onChange cada vez que availability cambia, fuera del renderizado
   useEffect(() => {
-    const parsedAvailability = JSON.parse(initialAvailability);
-    setAvailability(parsedAvailability);
-  }, [initialAvailability]);
-
-  useEffect(() => {
-    onChange(availability); // Emitir cambios a través de `onChange` cuando `availability` cambie
+    if (onChange) {
+      onChange(availability);
+    }
   }, [availability, onChange]);
 
   const handleCheckboxChange = (day, turno) => {
     setAvailability(prev => {
-      const currentTurns = prev[day] || [];
-      return {
+      const updatedAvailability = {
         ...prev,
-        [day]: currentTurns.includes(turno)
-          ? currentTurns.filter(t => t !== turno)
-          : [...currentTurns, turno]
+        [day]: prev[day]?.includes(turno)
+          ? prev[day].filter(t => t !== turno)
+          : [...(prev[day] || []), turno]
       };
+      return updatedAvailability;
     });
   };
 
