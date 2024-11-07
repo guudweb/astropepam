@@ -1,5 +1,5 @@
-import { db, WeekData } from "astro:db";
-import { eq } from "drizzle-orm";
+import { db, WeekData, eq } from "astro:db";
+
 import type { APIRoute } from "astro";
 
 export const POST: APIRoute = async ({ request }) => {
