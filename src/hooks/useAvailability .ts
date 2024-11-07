@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 
 const useAvailability = (initialAvailability, onChange) => {
-  const [availability, setAvailability] = useState(initialAvailability || {});
+  const [availability, setAvailability] = useState(() => 
+    initialAvailability ? JSON.parse(initialAvailability) : {}
+  );
 
+  // Llama a onChange cada vez que availability cambia, fuera del renderizado
   useEffect(() => {
-    setAvailability(JSON.parse(initialAvailability || '{}'));
-  }, [initialAvailability]);
+    if (onChange) {
+      onChange(availability);
+    }
+  }, [availability, onChange]);
 
   const handleCheckboxChange = (day, turno) => {
     setAvailability(prev => {
@@ -15,8 +20,6 @@ const useAvailability = (initialAvailability, onChange) => {
           ? prev[day].filter(t => t !== turno)
           : [...(prev[day] || []), turno]
       };
-      // Llamamos a onChange solo después de que `availability` se haya actualizado
-      onChange(updatedAvailability);
       return updatedAvailability;
     });
   };
