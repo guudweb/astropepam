@@ -43,3 +43,26 @@ export const PUT: APIRoute = async ({ request, params }) => {
         return new Response(JSON.stringify({ error: "Error al actualizar el usuario." }), { status: 500 });
     }
 };
+
+
+export const DELETE: APIRoute = async ({ request, params }) => {
+
+    const id = params.id;
+
+    const user = await db.select().from(Usuario).where(eq(Usuario.user_id, Number(id)));
+
+    if(!user) {
+        return new Response(null, {
+            status: 404,
+            statusText: 'Not found'
+        });
+    }
+
+    try {
+         await db.delete(Usuario).where(eq(Usuario.user_id, Number(id)));
+        return new Response(JSON.stringify(user), { status: 200 });
+    } catch (error) {
+        console.error("Error al eliminar el usuario:", error);
+        return new Response(JSON.stringify({ error: "Error al eliminar el usuario." }), { status: 500 });
+    }
+}

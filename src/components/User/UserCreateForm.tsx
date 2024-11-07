@@ -44,6 +44,7 @@ export const UserCreateForm = ({ congregacionData }) => {
 
 
     const handleSubmit = async (e) => {
+
         e.preventDefault();
         setLoading(true)
         const userData = {
@@ -83,6 +84,7 @@ export const UserCreateForm = ({ congregacionData }) => {
             if (response.ok) {
                 const newUser = await response.json();
                 notyf.success("Usuario actualizado correctamente");
+                
 
             } else {
                 notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
@@ -94,6 +96,7 @@ export const UserCreateForm = ({ congregacionData }) => {
             setLoading(false)
         }
     }
+
 
     return (
         <form className="bg-white p-5 rounded-lg shadow-lg" onSubmit={handleSubmit}>
