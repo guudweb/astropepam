@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Disponibility from "../Disponibility";
 import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
@@ -6,6 +6,7 @@ import "notyf/notyf.min.css";
 
 export const UserCreateForm = ({ congregacionData }) => {
     const [nombre, setNombre] = useState("");
+    const [userName, setUserName] = useState("");
     const [contraseña, setContraseña] = useState("");
     const [telefono, setTelefono] = useState("");
     const [correo, setCorreo] = useState("");
@@ -13,6 +14,8 @@ export const UserCreateForm = ({ congregacionData }) => {
     const [isActive, setIsActive] = useState(false);
     const [sexo, setSexo] = useState("");
     const [estadoCivil, setEstadoCivil] = useState("");
+    const [conyuje, setConyuje] = useState("");
+    const [show, setShow] = useState(false)
     const [role, setRole] = useState("")
     const [availability, setAvailability] = useState('{}');
     const [loading, setLoading] = useState(false)
@@ -31,45 +34,65 @@ export const UserCreateForm = ({ congregacionData }) => {
         }
     });
 
+    useEffect(() => {
+        if (estadoCivil === 'casado') {
+            setShow(true)
+        } else {
+            setShow(false)
+        }
+    }, [estadoCivil])
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true)
         const userData = {
             nombre,
+            userName,
             contraseña,
             telefono,
             correo,
-            congregacion: congregacion || null,
             isActive,
             sexo,
             estadoCivil,
-            availability,
-            role
+            conyuje,
+            congregacion: +congregacion,
+            availability: JSON.stringify(availability),
+            role,
         };
 
-        // try {
-        //     const response = await fetch(`/api/user/${user.user_id}`, {
-        //         method: 'PUT',
-        //         headers: {
-        //             'Content-Type': 'application/json'
-        //         },
-        //         body: JSON.stringify(userData)
-        //     });
+        if (!telefono || !correo || !sexo || !estadoCivil || !congregacion || !availability || !role || !contraseña || !userName || !nombre) {
+            notyf.error("Todos los campos son obligatorios")
+            setLoading(false)
+            return
+        }
 
-        //     if (response.ok) {
-        //         const updatedUser = await response.json();
-        //         notyf.success("Usuario actualizado correctamente");
+        console.log(userData);
+        
 
-        //     } else {
-        //         notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
-        //         console.error("Error al actualizar el usuario:", response.statusText);
-        //     }
-        // } catch (error) {
-        //     notyf.error("Error del servidor");
-        // } finally {
-        //     setLoading(false)
-        // }
+
+        try {
+            const response = await fetch(`/api/createUser`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (response.ok) {
+                const newUser = await response.json();
+                notyf.success("Usuario actualizado correctamente");
+
+            } else {
+                notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
+                console.error("Error al actualizar el usuario:", response.statusText);
+            }
+        } catch (error) {
+            notyf.error("Error del servidor");
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -81,7 +104,6 @@ export const UserCreateForm = ({ congregacionData }) => {
                     id="name"
                     className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     placeholder="Pedro Ondo"
-                    required
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
                 />
@@ -93,9 +115,19 @@ export const UserCreateForm = ({ congregacionData }) => {
                     id="password"
                     className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     placeholder="Pon la contraseña que desees"
-                    required
                     value={contraseña}
                     onChange={(e) => setContraseña(e.target.value)}
+                />
+            </div>
+            <div className="mb-5">
+                <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-900">Nombre de usuario</label>
+                <input
+                    type="text"
+                    id="username"
+                    className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    placeholder="dani52"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
                 />
             </div>
             <div className="mb-5">
@@ -105,7 +137,6 @@ export const UserCreateForm = ({ congregacionData }) => {
                     id="phone"
                     className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     placeholder="222587412"
-                    required
                     value={telefono}
                     onChange={(e) => setTelefono(e.target.value)}
                 />
@@ -117,7 +148,6 @@ export const UserCreateForm = ({ congregacionData }) => {
                     id="email"
                     className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     placeholder="ppam@malabo.com"
-                    required
                     value={correo}
                     onChange={(e) => setCorreo(e.target.value)}
                 />
@@ -139,7 +169,7 @@ export const UserCreateForm = ({ congregacionData }) => {
 
             <div className="mb-5">
                 <h5 className="block mb-4 text-sm font-medium text-gray-900">
-                    ¿Estoy disponible?
+                    ¿Está disponible?
                 </h5>
                 <label
                     className="inline-flex items-center cursor-pointer space-x-2"
@@ -205,6 +235,22 @@ export const UserCreateForm = ({ congregacionData }) => {
                 </select>
             </div>
 
+            {
+                show && (
+                    <div className="mb-10">
+                        <label htmlFor="conyuje" className="block mb-2 text-sm font-medium text-gray-900">Nombre del Conyuje</label>
+                        <input
+                            type="text"
+                            id="conyuje"
+                            className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                            placeholder="Juanita Oyana"
+                            required
+                            value={conyuje}
+                            onChange={(e) => setConyuje(e.target.value)}
+                        />
+                    </div>
+                )
+            }
             <div className="mb-10">
                 <h5 className="block mb-4 text-sm font-medium text-gray-900">Disponibilidad</h5>
                 <Disponibility disponibilidad={availability} onChange={(newAvailability) => handleDisponibilityChange(newAvailability)} />
@@ -212,7 +258,7 @@ export const UserCreateForm = ({ congregacionData }) => {
 
 
             <div className="mb-5 ">
-                <label htmlFor="rol" className="block mb-2 text-sm font-medium text-gray-900">Rol del usuario (Solo Admins)</label>
+                <label htmlFor="rol" className="block mb-2 text-sm font-medium text-gray-900">Rol del usuario</label>
                 <select
                     id="rol"
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
