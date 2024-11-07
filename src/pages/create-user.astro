@@ -2,8 +2,16 @@
 import { db, Congregacion } from "astro:db";
 import { UserCreateForm } from "../components/User/UserCreateForm";
 import Layout from "../layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
 
 const congregacionData = await db.select().from(Congregacion);
+
+const {isAdmin} = Astro.locals
+
+
+if(!isAdmin) {
+    Astro.redirect('/')
+}
 ---
 
 
