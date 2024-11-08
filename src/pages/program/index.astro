@@ -114,7 +114,7 @@ let weekDates = getWeekDates(weekOffset);
                           }
                         >
                           {" "}
-                          <option value="">No asignado</option>{" "}
+                          {/* Opción para dejar el select vacío */}{" "}
                           {usersDisponibilidad[day][turno].map(
                             ({ nombre, Congregacion }) => (
                               <option
@@ -127,7 +127,8 @@ let weekDates = getWeekDates(weekOffset);
                             )
                           )}{" "}
                           <option value="add">Añadir usuario</option>{" "}
-                        </select>{" "}
+                          <option value="" />{" "}
+                        </select>
                         <span
                           class="icon"
                           id={`icon-${day}-${turno}-${index}`}
@@ -294,7 +295,6 @@ let weekDates = getWeekDates(weekOffset);
   };
 
   // Load week data when the DOM is fully loaded
-
   document.addEventListener("DOMContentLoaded", async () => {
     await loadWeekData();
     const prevWeekBtn = document.getElementById("prevWeekBtn");
@@ -342,25 +342,76 @@ let weekDates = getWeekDates(weekOffset);
         select.value = value;
       }
 
+      // Verificar si el select no está vacío
+      if (select.value) {
+        // Verificar si el usuario está en la lista de opciones del select
+        const userName = select.value;
+        const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
+        const isInOptions = Array.from(select.options).some(
+          (option) => option.value === userName
+        );
+
+        if (!isInOptions) {
+          icon.innerHTML = "🚫"; // Icono para no disponible
+        } else {
+          icon.innerHTML = ""; // Limpiar icono si está disponible
+        }
+
+        // Verificar si el usuario ya está asignado en otro turno de la semana
+        const assignedTurns = [];
+        document.querySelectorAll("select").forEach((otherSelect) => {
+          if (otherSelect !== select && otherSelect.value === userName) {
+            const otherDay = otherSelect.dataset.day;
+            const otherTurno = otherSelect.dataset.turno;
+            assignedTurns.push(`${otherDay} en el turno ${otherTurno}`);
+          }
+        });
+
+        if (assignedTurns.length > 0) {
+          icon.innerHTML += "⚠️"; // Icono para ya asignado
+          // alert(
+          //   `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
+          // );
+        }
+      }
+
       // Agregar evento change
-      select.addEventListener("change", () => checkAvailability(select));
+      select.addEventListener("change", () => {
+        // Verificar si el select no está vacío
+        if (select.value) {
+          // Verificar si el usuario está en la lista de opciones del select
+          const userName = select.value;
+          const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
+          const isInOptions = Array.from(select.options).some(
+            (option) => option.value === userName
+          );
+
+          if (!isInOptions) {
+            icon.innerHTML = "🚫"; // Icono para no disponible
+          } else {
+            icon.innerHTML = ""; // Limpiar icono si está disponible
+          }
+
+          // Verificar si el usuario ya está asignado en otro turno de la semana
+          const assignedTurns = [];
+          document.querySelectorAll("select").forEach((otherSelect) => {
+            if (otherSelect !== select && otherSelect.value === userName) {
+              const otherDay = otherSelect.dataset.day;
+              const otherTurno = otherSelect.dataset.turno;
+              assignedTurns.push(`${otherDay} en el turno ${otherTurno}`);
+            }
+          });
+
+          if (assignedTurns.length > 0) {
+            icon.innerHTML += "⚠️"; // Icono para ya asignado
+            alert(
+              `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
+            );
+          }
+        }
+      });
     });
   });
-
-  async function fetchWeekData(date: Date) {
-    try {
-      console.log("Fetching week data for date:", date);
-      const response = await fetch(
-        `/api/getWeekData.json?date=${date.toISOString().split("T")[0]}`
-      );
-      const data = await response.json();
-      console.log("Fetched week data:", data);
-      return data;
-    } catch (error) {
-      console.error("Error fetching week data:", error);
-      return {};
-    }
-  }
 
   function checkAvailability(select: HTMLSelectElement) {
     const day = select.dataset.day;
@@ -400,6 +451,32 @@ let weekDates = getWeekDates(weekOffset);
       alert(
         `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
       );
+    }
+
+    // Verificar si el usuario está en la lista de opciones del select
+    const isInOptions = Array.from(select.options).some(
+      (option) => option.value === userName
+    );
+
+    if (!isInOptions) {
+      icon.innerHTML = "🚫"; // Icono para no disponible
+    } else {
+      icon.innerHTML = ""; // Limpiar icono si está disponible
+    }
+  }
+
+  async function fetchWeekData(date: Date) {
+    try {
+      console.log("Fetching week data for date:", date);
+      const response = await fetch(
+        `/api/getWeekData.json?date=${date.toISOString().split("T")[0]}`
+      );
+      const data = await response.json();
+      console.log("Fetched week data:", data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching week data:", error);
+      return {};
     }
   }
 
