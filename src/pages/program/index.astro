@@ -85,47 +85,59 @@ let weekDates = getWeekDates(weekOffset);
     </a>
     <div id="currentView">
       {
-        days.map((day, index) => (
+        days.map((day, dayIndex) => (
           <div class="mb-8">
+            {" "}
             <h2 class="text-xl font-bold mb-4 week-date">
+              {" "}
               {day.charAt(0).toUpperCase() + day.slice(1)} -{" "}
-              {weekDates[index].toLocaleDateString()}
-            </h2>
+              {weekDates[dayIndex].toLocaleDateString()}{" "}
+            </h2>{" "}
             <table>
+              {" "}
               {turnos.map((turno) => (
                 <tr>
-                  <td class="px-4 py-2 border-b">{turno}</td>
+                  {" "}
+                  <td class="px-4 py-2 border-b">{turno}</td>{" "}
                   <td class="px-4 py-2 border-b">
+                    {" "}
                     {[...Array(4)].map((_, index) => (
                       <div class="inline-block mr-2">
+                        {" "}
                         <select
                           class="border border-gray-300 rounded px-2 py-1"
                           data-day={day}
                           data-turno={turno}
                           data-index={index}
                           data-date={
-                            weekDates[index].toISOString().split("T")[0]
+                            weekDates[dayIndex].toISOString().split("T")[0]
                           }
                         >
-                          <option value="">No asignado</option>
+                          {" "}
+                          <option value="">No asignado</option>{" "}
                           {usersDisponibilidad[day][turno].map(
-                            ({ nombre, congregacion }) => (
+                            ({ nombre, Congregacion }) => (
                               <option
                                 value={nombre}
-                                data-congregacion={congregacion}
+                                data-congregacion-id={Congregacion}
                               >
-                                {nombre}
+                                {" "}
+                                {nombre}{" "}
                               </option>
                             )
-                          )}
-                          <option value="add">Añadir usuario</option>
-                        </select>
+                          )}{" "}
+                          <option value="add">Añadir usuario</option>{" "}
+                        </select>{" "}
+                        <span
+                          class="icon"
+                          id={`icon-${day}-${turno}-${index}`}
+                        />{" "}
                       </div>
-                    ))}
-                  </td>
+                    ))}{" "}
+                  </td>{" "}
                 </tr>
-              ))}
-            </table>
+              ))}{" "}
+            </table>{" "}
           </div>
         ))
       }
@@ -269,7 +281,7 @@ let weekDates = getWeekDates(weekOffset);
   };
 
   // Function to get week dates
-  const getWeekDates = (currentDate) => {
+  const getWeekDates = (currentDate: string | number | Date) => {
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
     const dates = [];
@@ -282,6 +294,7 @@ let weekDates = getWeekDates(weekOffset);
   };
 
   // Load week data when the DOM is fully loaded
+
   document.addEventListener("DOMContentLoaded", async () => {
     await loadWeekData();
     const prevWeekBtn = document.getElementById("prevWeekBtn");
@@ -304,7 +317,91 @@ let weekDates = getWeekDates(weekOffset);
     saveBtn.addEventListener("click", async () => {
       await saveWeekData();
     });
+
+    // Set initial values of the selects based on fetched week data
+    const weekData = await fetchWeekData(new Date());
+
+    document.querySelectorAll("select").forEach((select) => {
+      const day = select.dataset.day;
+      const turno = select.dataset.turno;
+      const index = select.dataset.index;
+
+      if (weekData[`${day}-${turno}-${index}`]) {
+        const value = weekData[`${day}-${turno}-${index}`];
+        const optionExists = Array.from(select.options).some(
+          (option) => option.value === value
+        );
+
+        if (!optionExists) {
+          const newOption = document.createElement("option");
+          newOption.value = value;
+          newOption.text = value;
+          select.appendChild(newOption);
+        }
+
+        select.value = value;
+      }
+
+      // Agregar evento change
+      select.addEventListener("change", () => checkAvailability(select));
+    });
   });
+
+  async function fetchWeekData(date: Date) {
+    try {
+      console.log("Fetching week data for date:", date);
+      const response = await fetch(
+        `/api/getWeekData.json?date=${date.toISOString().split("T")[0]}`
+      );
+      const data = await response.json();
+      console.log("Fetched week data:", data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching week data:", error);
+      return {};
+    }
+  }
+
+  function checkAvailability(select: HTMLSelectElement) {
+    const day = select.dataset.day;
+    const turno = select.dataset.turno;
+    const index = select.dataset.index;
+    const userName = select.value;
+    const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
+
+    const usersDisponibilidad = {};
+
+    // Verificar si el usuario está disponible
+    const isAvailable =
+      usersDisponibilidad[day] &&
+      usersDisponibilidad[day][turno] &&
+      usersDisponibilidad[day][turno].some(
+        (user: { nombre: any }) => user.nombre === userName
+      );
+
+    if (!isAvailable) {
+      icon.innerHTML = "🚫"; // Icono para no disponible
+    } else {
+      icon.innerHTML = ""; // Limpiar icono si está disponible
+    }
+
+    // Verificar si el usuario ya está asignado en otro turno de la semana
+    const assignedTurns = [];
+    document.querySelectorAll("select").forEach((otherSelect) => {
+      if (otherSelect !== select && otherSelect.value === userName) {
+        const otherDay = otherSelect.dataset.day;
+        const otherTurno = otherSelect.dataset.turno;
+        assignedTurns.push(`${otherDay} en el turno ${otherTurno}`);
+      }
+    });
+
+    if (assignedTurns.length > 0) {
+      icon.innerHTML += "⚠️"; // Icono para ya asignado
+      alert(
+        `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
+      );
+    }
+  }
 
   // Modal and user selection logic
   const modal = document.getElementById("userModal");
