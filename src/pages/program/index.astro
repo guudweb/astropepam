@@ -144,7 +144,7 @@ let weekDates = getWeekDates(weekOffset);
                 <button
                   class="bg-blue-500 text-white px-2 py-1 rounded user-select-btn"
                   data-username={user.nombre}
-                  data-congregacion={user.congregacion}
+                  data-congregacion-id={user.Congregacion}
                 >
                   {user.nombre}
                 </button>
@@ -177,225 +177,250 @@ let weekDates = getWeekDates(weekOffset);
       </div>
     </div>
   </div>
-  <script>
-    let currentDate = new Date();
-    const days = [
-      "lunes",
-      "martes",
-      "miercoles",
-      "jueves",
-      "viernes",
-      "sabado",
-      "domingo",
-    ];
+</Layout>
 
-    // Function to load week data
-    const loadWeekData = async () => {
-      // Calculate the start date of the week
-      const startOfWeek = new Date(currentDate);
-      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+<script>
+  let currentDate = new Date();
+  const days = [
+    "lunes",
+    "martes",
+    "miercoles",
+    "jueves",
+    "viernes",
+    "sabado",
+    "domingo",
+  ];
 
-      try {
-        const response = await fetch(
-          `/api/getWeekData.json?date=${startOfWeek.toISOString().split("T")[0]}`
-        );
-        const currentWeekData = await response.json();
-        document.querySelectorAll("select").forEach((select) => {
-          const day = select.dataset.day;
-          const turno = select.dataset.turno;
-          const index = select.dataset.index;
-          const value = currentWeekData[`${day}-${turno}-${index}`] || "";
-          select.value = value;
-        });
-      } catch (error) {
-        console.error("Error loading week data:", error);
-      }
-    };
+  // Function to load week data
+  const loadWeekData = async () => {
+    // Calculate the start date of the week
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
 
-    // Function to save week data
-    const saveWeekData = async () => {
-      const currentWeekData = {};
-      const startOfWeek = new Date(currentDate);
-      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
-      const weekDate = startOfWeek.toISOString().split("T")[0];
-
-      document.querySelectorAll("select").forEach(async (select) => {
+    try {
+      const response = await fetch(
+        `/api/getWeekData.json?date=${startOfWeek.toISOString().split("T")[0]}`
+      );
+      const currentWeekData = await response.json();
+      document.querySelectorAll("select").forEach((select) => {
         const day = select.dataset.day;
         const turno = select.dataset.turno;
         const index = select.dataset.index;
-        const userName = select.value;
-
-        if (userName) {
-          // Only save if a user is selected
-          currentWeekData[`${day}-${turno}-${index}`] = userName;
-
-          // Save user selection to UserHistory table
-          await fetch("/api/saveUserHistory.json", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              userName,
-              date: weekDate, // Use the week date
-              day,
-              turno,
-              indexValue: index,
-            }),
-          });
-        }
+        const value = currentWeekData[`${day}-${turno}-${index}`] || "";
+        select.value = value;
       });
+    } catch (error) {
+      console.error("Error loading week data:", error);
+    }
+  };
 
-      await fetch("/api/saveWeekData.json", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          date: weekDate, // Use the same week date
-          weekData: currentWeekData,
-        }),
-      });
-    };
+  // Function to save week data
+  const saveWeekData = async () => {
+    const currentWeekData = {};
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+    const weekDate = startOfWeek.toISOString().split("T")[0];
 
-    // Function to update week dates in the UI
-    const updateWeekDates = () => {
-      const dates = getWeekDates(currentDate);
-      document.querySelectorAll(".week-date").forEach((element, index) => {
-        element.textContent = `${days[index].charAt(0).toUpperCase() + days[index].slice(1)} - ${dates[index].toLocaleDateString()}`;
-      });
-    };
+    document.querySelectorAll("select").forEach(async (select) => {
+      const day = select.dataset.day;
+      const turno = select.dataset.turno;
+      const index = select.dataset.index;
+      const userName = select.value;
 
-    // Function to get week dates
-    const getWeekDates = (currentDate) => {
-      const startOfWeek = new Date(currentDate);
-      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
-      const dates = [];
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(startOfWeek);
-        date.setDate(startOfWeek.getDate() + i);
-        dates.push(date);
+      if (userName) {
+        // Only save if a user is selected
+        currentWeekData[`${day}-${turno}-${index}`] = userName;
+
+        // Save user selection to UserHistory table
+        await fetch("/api/saveUserHistory.json", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userName,
+            date: weekDate, // Use the week date
+            day,
+            turno,
+            indexValue: index,
+          }),
+        });
       }
-      return dates;
-    };
+    });
 
-    // Load week data when the DOM is fully loaded
-    document.addEventListener("DOMContentLoaded", async () => {
+    await fetch("/api/saveWeekData.json", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        date: weekDate, // Use the same week date
+        weekData: currentWeekData,
+      }),
+    });
+  };
+
+  // Function to update week dates in the UI
+  const updateWeekDates = () => {
+    const dates = getWeekDates(currentDate);
+    document.querySelectorAll(".week-date").forEach((element, index) => {
+      element.textContent = `${days[index].charAt(0).toUpperCase() + days[index].slice(1)} - ${dates[index].toLocaleDateString()}`;
+    });
+  };
+
+  // Function to get week dates
+  const getWeekDates = (currentDate) => {
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  // Load week data when the DOM is fully loaded
+  document.addEventListener("DOMContentLoaded", async () => {
+    await loadWeekData();
+    const prevWeekBtn = document.getElementById("prevWeekBtn");
+    const nextWeekBtn = document.getElementById("nextWeekBtn");
+    const saveBtn = document.getElementById("saveBtn");
+
+    // Add event listeners for week navigation buttons
+    prevWeekBtn.addEventListener("click", async () => {
+      currentDate.setDate(currentDate.getDate() - 7);
+      updateWeekDates();
       await loadWeekData();
-      const prevWeekBtn = document.getElementById("prevWeekBtn");
-      const nextWeekBtn = document.getElementById("nextWeekBtn");
-      const saveBtn = document.getElementById("saveBtn");
-
-      // Add event listeners for week navigation buttons
-      prevWeekBtn.addEventListener("click", async () => {
-        currentDate.setDate(currentDate.getDate() - 7);
-        updateWeekDates();
-        await loadWeekData();
-      });
-      nextWeekBtn.addEventListener("click", async () => {
-        currentDate.setDate(currentDate.getDate() + 7);
-        updateWeekDates();
-        await loadWeekData();
-      });
-
-      // Add event listener for save button
-      saveBtn.addEventListener("click", async () => {
-        await saveWeekData();
-      });
+    });
+    nextWeekBtn.addEventListener("click", async () => {
+      currentDate.setDate(currentDate.getDate() + 7);
+      updateWeekDates();
+      await loadWeekData();
     });
 
-    // Modal and user selection logic
-    const modal = document.getElementById("userModal");
-    const closeModalBtn = document.getElementById("closeModalBtn");
-    const userSelectButtons = document.querySelectorAll(".user-select-btn");
-    const addUserButtons = document.querySelectorAll("select");
-
-    addUserButtons.forEach((select) => {
-      select.addEventListener("change", (event) => {
-        const target = event.target as HTMLSelectElement;
-        if (target.value === "add") {
-          const day = select.dataset.day;
-          const turno = select.dataset.turno;
-          const index = select.dataset.index;
-          modal.classList.remove("hidden");
-          modal.dataset.day = day;
-          modal.dataset.turno = turno;
-          modal.dataset.index = index;
-        }
-      });
+    // Add event listener for save button
+    saveBtn.addEventListener("click", async () => {
+      await saveWeekData();
     });
+  });
 
-    closeModalBtn.addEventListener("click", () => {
+  // Modal and user selection logic
+  const modal = document.getElementById("userModal");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const userSelectButtons = document.querySelectorAll(".user-select-btn");
+  const addUserButtons = document.querySelectorAll("select");
+
+  addUserButtons.forEach((select) => {
+    select.addEventListener("change", (event) => {
+      const target = event.target as HTMLSelectElement;
+      if (target.value === "add") {
+        const day = select.dataset.day;
+        const turno = select.dataset.turno;
+        const index = select.dataset.index;
+        modal.classList.remove("hidden");
+        modal.dataset.day = day;
+        modal.dataset.turno = turno;
+        modal.dataset.index = index;
+      }
+    });
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+  });
+
+  userSelectButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const target = event.target as HTMLElement;
+      const userName = (target.dataset as DOMStringMap).username;
+      const modal = document.getElementById("userModal") as HTMLElement;
+      const day = (modal.dataset as DOMStringMap).day;
+      const turno = (modal.dataset as DOMStringMap).turno;
+      const index = (modal.dataset as DOMStringMap).index;
+      const select = document.querySelector(
+        `select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
+      ) as HTMLSelectElement;
+      const option = document.createElement("option");
+      option.value = userName;
+      option.text = userName;
+      select.appendChild(option);
+      select.value = userName;
       modal.classList.add("hidden");
     });
+  });
 
-    userSelectButtons.forEach((button) => {
-      button.addEventListener("click", (event) => {
-        const target = event.target as HTMLElement;
-        const userName = (target.dataset as DOMStringMap).username;
-        const modal = document.getElementById("userModal") as HTMLElement;
-        const day = (modal.dataset as DOMStringMap).day;
-        const turno = (modal.dataset as DOMStringMap).turno;
-        const index = (modal.dataset as DOMStringMap).index;
-        const select = document.querySelector(
-          `select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
-        ) as HTMLSelectElement;
-        const option = document.createElement("option");
-        option.value = userName;
-        option.text = userName;
-        select.appendChild(option);
-        select.value = userName;
-        modal.classList.add("hidden");
-      });
+  const warningPopup = document.getElementById("warningPopup");
+  const warningMessage = document.getElementById("warningMessage");
+  const closeWarningBtn = document.getElementById("closeWarningBtn");
+
+  closeWarningBtn.addEventListener("click", () => {
+    warningPopup.classList.add("hidden");
+  });
+
+  const showWarningPopup = (message: string) => {
+    warningMessage.textContent = message;
+    warningPopup.classList.remove("hidden");
+  };
+
+  // Lógica de selección de usuario
+  userSelectButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const target = event.target as HTMLElement;
+      const userName = (target.dataset as DOMStringMap).username;
+      const userCongregacionId = (target.dataset as DOMStringMap)
+        .congregacionId;
+
+      // Check if userCongregacionId is defined
+      if (!userCongregacionId) {
+        console.error("userCongregacionId is undefined:", target.dataset);
+        return;
+      }
+
+      const modal = document.getElementById("userModal") as HTMLElement;
+      const day = (modal.dataset as DOMStringMap).day;
+      const turno = (modal.dataset as DOMStringMap).turno;
+      const index = Number((modal.dataset as DOMStringMap).index);
+
+      // Validate dataset values
+      if (!day || !turno || !Number.isFinite(index)) {
+        console.error("Invalid dataset values:", day, turno, index);
+        return;
+      }
+
+      const select = document.querySelector(
+        `select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
+      ) as HTMLSelectElement;
+      const option = document.createElement("option");
+      option.value = userName;
+      option.text = userName;
+      select.appendChild(option);
+      select.value = userName;
+
+      // Fetch congregation details using the congregation ID
+      fetch(
+        `/api/getCongregacionDetails.json?congregacionId=${userCongregacionId}`
+      )
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          const congregacionName = data.nombre; // Assuming 'nombre' is the congregation name field
+          if (data.diaReunion === day && data.turnoReunion === turno) {
+            showWarningPopup(
+              `El usuario ${userName} tiene reunión el ${day} en el turno ${turno} en la congregación ${congregacionName}.`
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Fetch error:", error);
+        });
+
+      modal.classList.add("hidden");
     });
-
-    const warningPopup = document.getElementById("warningPopup");
-    const warningMessage = document.getElementById("warningMessage");
-    const closeWarningBtn = document.getElementById("closeWarningBtn");
-
-    closeWarningBtn.addEventListener("click", () => {
-      warningPopup.classList.add("hidden");
-    });
-
-    const showWarningPopup = (message: string) => {
-      warningMessage.textContent = message;
-      warningPopup.classList.remove("hidden");
-    };
-
-    // Lógica de selección de usuario
-    userSelectButtons.forEach((button) => {
-      button.addEventListener("click", (event) => {
-        const target = event.target as HTMLElement;
-        const userName = (target.dataset as DOMStringMap).username;
-        const userCongregacion = (target.dataset as DOMStringMap).congregacion;
-        const modal = document.getElementById("userModal") as HTMLElement;
-        const day = (modal.dataset as DOMStringMap).day;
-        const turno = (modal.dataset as DOMStringMap).turno;
-        const index = (modal.dataset as DOMStringMap).index;
-        const select = document.querySelector(
-          `select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
-        ) as HTMLSelectElement;
-        const option = document.createElement("option");
-        option.value = userName;
-        option.text = userName;
-        select.appendChild(option);
-        select.value = userName;
-
-        // Fetch congregation details
-        fetch(
-          `/api/getCongregacionDetails.json?congregacion=${userCongregacion}`
-        )
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.diaReunion === day && data.turnoReunion === turno) {
-              showWarningPopup(
-                `El usuario ${userName} tiene reunión el ${day} en el turno ${turno}.`
-              );
-            }
-          });
-
-        modal.classList.add("hidden");
-      });
-    });
-  </script>
-</Layout>
+  });
+</script>

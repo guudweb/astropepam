@@ -16,7 +16,7 @@ const Usuario = defineTable({
     contraseña: column.text(),
     telefono: column.number(),
     correo: column.text(),
-    congregacion: column.number({ references: () => Congregacion.columns.id }),
+    Congregacion: column.number({ references: () => Congregacion.columns.id }),
     sexo: column.text(),
     role: column.text(),
     estado_civil: column.text(),
