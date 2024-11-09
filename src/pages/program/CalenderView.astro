@@ -55,12 +55,11 @@ const { isAdmin } = Astro.locals;
 
       const fetchWeekData = async (date: Date) => {
         try {
-          console.log("Fetching week data for date:", date); // Add this line
           const response = await fetch(
             `/api/getWeekData.json?date=${date.toISOString().split("T")[0]}`
           );
           const data = await response.json();
-          console.log("Fetched week data:", data); // Add this line
+
           return data;
         } catch (error) {
           console.error("Error fetching week data:", error);
@@ -70,12 +69,11 @@ const { isAdmin } = Astro.locals;
 
       const fetchPhoneNumber = async (nombre) => {
         try {
-          console.log("Fetching phone number for:", nombre); // Add this line
           const response = await fetch(
             `/api/getUserPhoneNumber.json?nombre=${nombre}`
           );
           const data = await response.json();
-          console.log("Fetched phone number:", data.telefono); // Add this line
+
           return data.telefono;
         } catch (error) {
           console.error("Error fetching phone number:", error);
@@ -97,10 +95,9 @@ const { isAdmin } = Astro.locals;
       };
 
       const updateWeek = async () => {
-        console.log("Updating week for date:", currentDate); // Add this line
         const weekDates = getWeekDates(currentDate);
         const weekData = await fetchWeekData(currentDate);
-        console.log("Week data to display:", weekData); // Add this line
+
         const calendarView = document.getElementById("calendarView");
         calendarView.innerHTML = `
           <div class="hidden md:block">
@@ -184,7 +181,7 @@ const { isAdmin } = Astro.locals;
           const userElement = user as HTMLElement;
           userElement.addEventListener("click", async (event) => {
             const nombre = userElement.dataset.nombre;
-            console.log("User clicked:", nombre); // Add this line
+
             const phoneNumber = await fetchPhoneNumber(nombre);
             showPhoneNumber(phoneNumber, event);
           });
