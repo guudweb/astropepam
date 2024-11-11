@@ -60,10 +60,16 @@ let weekDates = getWeekDates(weekOffset);
 <Layout title="program">
   <div class="container mx-auto mt-8 text-center">
     <div class="flex justify-between mb-4">
-      <button class="bg-blue-500 text-white px-4 py-2 rounded" id="prevWeekBtn">
+      <button
+        class="bg-blue-500 text-white px-4 py-2 ml-2 rounded"
+        id="prevWeekBtn"
+      >
         Semana Anterior
       </button>
-      <button class="bg-blue-500 text-white px-4 py-2 rounded" id="nextWeekBtn">
+      <button
+        class="bg-blue-500 text-white px-4 py-2 mr-2 rounded"
+        id="nextWeekBtn"
+      >
         Semana Siguiente
       </button>
     </div>
@@ -72,17 +78,26 @@ let weekDates = getWeekDates(weekOffset);
         class="bg-green-500 text-white px-4 py-2 rounded mb-4"
         id="CalenderViewBtn"
       >
-        Ver Calendario
+        Calendario
       </button></a
     >
     <button class="bg-blue-500 text-white px-4 py-2 rounded mb-4" id="saveBtn"
-      >Guardar Cambios</button
+      >Guardar</button
     >
     <a href="/user-history">
       <button class="bg-yellow-500 text-white px-4 py-2 rounded">
-        Historial de Users
+        Historial
       </button>
     </a>
+    <select
+      id="preajustesSelect"
+      class="py-3 px-4 pe-9 block w-fit border-2 border-black-500 ml-2 rounded-lg text-sm text-center focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none"
+    >
+      <option value="" selected>PreAjustes</option>
+      <option value="cargar">Cargar Preajuste</option>
+      <option value="guardar">Guardar Preajuste</option>
+    </select>
+
     <div id="currentView">
       {
         days.map((day, dayIndex) => (
@@ -240,6 +255,69 @@ let weekDates = getWeekDates(weekOffset);
     }
   };
 
+  document
+    .getElementById("preajustesSelect")
+    .addEventListener("change", async (event) => {
+      const target = event.target as HTMLSelectElement;
+      const selectedOption = target.value;
+
+      if (selectedOption === "guardar") {
+        await savePreajustesData();
+        notyf.success(`Preajuste guardado exitosamente`);
+        //alert("Preajuste guardado exitosamente");
+      } else if (selectedOption === "cargar") {
+        const preajusteName = prompt(
+          "Introduce el nombre del preajuste a cargar:"
+        );
+        if (preajusteName) {
+          await loadPreajustesData(preajusteName);
+          //alert("Preajuste cargado exitosamente");
+          notyf.success(`Preajuste cargado exitosamente`);
+        }
+      }
+
+      // Reset the select to the default option
+      target.value = "";
+    });
+
+  //   // Function to load preajustes data
+  const loadPreajustesData = async (
+    preajusteName: string | number | boolean
+  ) => {
+    try {
+      const response = await fetch(
+        `/api/getPreajustesData.json?name=${encodeURIComponent(preajusteName)}`
+      );
+      const preajustesData = await response.json();
+      document.querySelectorAll("select").forEach((select) => {
+        const day = select.dataset.day;
+        const turno = select.dataset.turno;
+        const index = select.dataset.index;
+        const value = preajustesData[`${day}-${turno}-${index}`] || "";
+        select.value = value;
+      });
+    } catch (error) {
+      console.error("Error loading preajustes data:", error);
+    }
+  };
+
+  // // Set initial values of the selects based on fetched preajustes data
+  // const preajustesData = await fetchPreajustesData("NombreDelPreajuste");
+
+  // async function fetchPreajustesData(name: string | number | boolean) {
+  //   try {
+  //     const response = await fetch(
+  //       `/api/getPreajustesData.json?name=${encodeURIComponent(name)}`
+  //     );
+  //     const data = await response.json();
+
+  //     return data;
+  //   } catch (error) {
+  //     console.error("Error fetching preajustes data:", error);
+  //     return {};
+  //   }
+  // }
+
   // Function to save week data
   const saveWeekData = async () => {
     const currentWeekData = {};
@@ -282,6 +360,50 @@ let weekDates = getWeekDates(weekOffset);
       body: JSON.stringify({
         date: weekDate, // Use the same week date
         weekData: currentWeekData,
+      }),
+    });
+  };
+
+  // Function to save preajustes data
+  const savePreajustesData = async () => {
+    const preajustesData = {};
+    const preajusteName = "NombreDelPreajuste"; // Puedes cambiar esto según sea necesario
+
+    document.querySelectorAll("select").forEach(async (select) => {
+      const day = select.dataset.day;
+      const turno = select.dataset.turno;
+      const index = select.dataset.index;
+      const userName = select.value;
+
+      if (userName) {
+        // Only save if a user is selected
+        preajustesData[`${day}-${turno}-${index}`] = userName;
+
+        // Save user selection to UserHistory table
+        await fetch("/api/saveUserHistory.json", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userName,
+            date: new Date().toISOString().split("T")[0], // Use the current date
+            day,
+            turno,
+            indexValue: index,
+          }),
+        });
+      }
+    });
+
+    await fetch("/api/savePreajustesData.json", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: preajusteName, // Use the preajuste name
+        preajusteData: preajustesData,
       }),
     });
   };

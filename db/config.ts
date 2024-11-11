@@ -45,6 +45,14 @@ const WeekData = defineTable({
   },
 });
 
+const Preajustes = defineTable({
+  columns: {
+    id: column.number({ primaryKey: true, autoIncrement: true }),
+    name: column.text(), // Nombre del preajuste
+    data: column.json(), // Datos del preajuste
+  },
+});
+
 const UserHistory = defineTable({
   columns: {
     id: column.number({ primaryKey: true, autoIncrement: true }),
@@ -57,5 +65,12 @@ const UserHistory = defineTable({
 });
 
 export default defineDb({
-  tables: { Usuario, disponibilidad, WeekData, UserHistory, Congregacion },
+  tables: {
+    Usuario,
+    disponibilidad,
+    WeekData,
+    UserHistory,
+    Congregacion,
+    Preajustes,
+  },
 });
