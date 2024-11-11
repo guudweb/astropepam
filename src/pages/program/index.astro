@@ -126,7 +126,9 @@ let weekDates = getWeekDates(weekOffset);
                               </option>
                             )
                           )}{" "}
-                          <option value="add">Añadir usuario</option>{" "}
+                          <option value="add" id="add">
+                            Añadir usuario
+                          </option>{" "}
                           <option value="" />{" "}
                         </select>
                         <span
@@ -156,7 +158,10 @@ let weekDates = getWeekDates(weekOffset);
           class="border border-gray-300 rounded px-2 py-1 mb-4"
           placeholder="Buscar usuario..."
         />
+
+        <!-- Lista de botones de usuarios -->
         <ul id="userList" class="max-h-60 overflow-y-auto">
+          <!-- Aquí se generarán los botones dinámicamente con los usuarios -->
           {
             allUsers.map((user) => (
               <li class="mb-2">
@@ -171,6 +176,7 @@ let weekDates = getWeekDates(weekOffset);
             ))
           }
         </ul>
+
         <button
           class="mt-4 bg-red-500 text-white px-4 py-2 rounded"
           id="closeModalBtn"
@@ -403,58 +409,53 @@ let weekDates = getWeekDates(weekOffset);
     });
   });
 
+  // Function to check user assignment
   function checkUserAssignment(select: HTMLSelectElement) {
-    if (select.value) {
-      // Verificar si el usuario ya está asignado en otro turno de la semana
-      const userName = select.value;
-      const day = select.dataset.day;
-      const turno = select.dataset.turno;
-      const index = select.dataset.index;
-      const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
+    const userName = select.value;
 
-      const assignedTurns = [];
-      document.querySelectorAll("select").forEach((otherSelect) => {
-        if (otherSelect !== select && otherSelect.value === userName) {
-          const otherDay = otherSelect.dataset.day;
-          const otherTurno = otherSelect.dataset.turno;
-          assignedTurns.push(`${otherDay} en el turno ${otherTurno}`);
-        }
-      });
+    // Ignorar si el select está vacío (ningún usuario seleccionado)
+    if (!userName) {
+      return; // Si no hay usuario seleccionado, no hace nada y sale de la función
+    }
 
-      if (assignedTurns.length > 0) {
+    const day = select.dataset.day;
+    const turno = select.dataset.turno;
+    const index = select.dataset.index;
+    const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
+
+    // Verificar si el usuario ya está asignado en otro turno de la semana
+    const assignedTurns: string[] = [];
+    console.log(assignedTurns);
+    console.log("function check");
+
+    document.querySelectorAll("select").forEach((otherSelect) => {
+      if (otherSelect !== select && otherSelect.value === userName) {
+        const otherDay = otherSelect.dataset.day;
+        const otherTurno = otherSelect.dataset.turno;
+        assignedTurns.push(`${otherDay} en el turno ${otherTurno}`);
+      }
+    });
+
+    if (assignedTurns.length > 0) {
+      if (icon) {
         icon.innerHTML = "⚠️"; // Icono para ya asignado
-        notyf.error(
-          `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
-        );
-      } else {
+      }
+      notyf.error(
+        `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
+      );
+    } else {
+      if (icon) {
         icon.innerHTML = ""; // Limpiar icono si no hay conflictos
       }
-    } else {
-      const day = select.dataset.day;
-      const turno = select.dataset.turno;
-      const index = select.dataset.index;
-      const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
-      icon.innerHTML = ""; // Limpiar icono si el select está vacío
     }
   }
-
-  // Agregar evento click para los botones del modal
-  document.querySelectorAll(".user-select-btn").forEach((button) => {
-    button.addEventListener("click", (event) => {
-      const target = event.target as HTMLElement;
-      const userName = target.dataset.username;
-      const select = document.querySelector(
-        "select[data-day][data-turno][data-index]"
-      ) as HTMLSelectElement;
-      select.value = userName;
-      checkUserAssignment(select);
-    });
-  });
 
   // Agregar evento change fuera del evento DOMContentLoaded
   document.querySelectorAll("select").forEach((select) => {
     select.addEventListener("change", () => {
-      checkUserAssignment(select);
+      if (select.value !== "add") {
+        checkUserAssignment(select);
+      }
     });
   });
 
@@ -465,31 +466,6 @@ let weekDates = getWeekDates(weekOffset);
 
   // Set initial values of the selects based on fetched week data
   const weekData = await fetchWeekData(new Date());
-
-  function checkAvailability(select: HTMLSelectElement) {
-    const day = select.dataset.day;
-    const turno = select.dataset.turno;
-    const index = select.dataset.index;
-    const userName = select.value;
-    const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
-
-    // Verificar si el usuario ya está asignado en otro turno de la semana
-    const assignedTurns = [];
-    document.querySelectorAll("select").forEach((otherSelect) => {
-      if (otherSelect !== select && otherSelect.value === userName) {
-        const otherDay = otherSelect.dataset.day;
-        const otherTurno = otherSelect.dataset.turno;
-        assignedTurns.push(`${otherDay} en el turno ${otherTurno}`);
-      }
-    });
-
-    if (assignedTurns.length > 0) {
-      icon.innerHTML += "⚠️"; // Icono para ya asignado
-      alert(
-        `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
-      );
-    }
-  }
 
   async function fetchWeekData(date: Date) {
     try {
@@ -511,17 +487,61 @@ let weekDates = getWeekDates(weekOffset);
   const userSelectButtons = document.querySelectorAll(".user-select-btn");
   const addUserButtons = document.querySelectorAll("select");
 
-  addUserButtons.forEach((select) => {
+  // Manejar la lógica de selección de la opción "add"
+  document.querySelectorAll("select").forEach((select) => {
     select.addEventListener("change", (event) => {
       const target = event.target as HTMLSelectElement;
-      if (target.value === "add") {
+      const selectedOption = target.options[target.selectedIndex];
+
+      if (selectedOption.id === "add") {
         const day = select.dataset.day;
         const turno = select.dataset.turno;
         const index = select.dataset.index;
+
+        // Abrir el modal cuando se seleccione "Añadir usuario"
         modal.classList.remove("hidden");
         modal.dataset.day = day;
         modal.dataset.turno = turno;
         modal.dataset.index = index;
+
+        // Agregar un evento de clic para cada botón de usuario en el modal
+        const userButtons = document.querySelectorAll(
+          "#userList .user-select-btn"
+        );
+        userButtons.forEach((button) => {
+          button.addEventListener("click", function handleUserSelection(event) {
+            const newUserName = button.getAttribute("data-username");
+
+            if (newUserName) {
+              // Actualizar el select con el nuevo nombre de usuario
+              select.value = newUserName;
+
+              // Verificar las asignaciones después de añadir un usuario
+              checkUserAssignment(select);
+
+              // Agregar el nuevo usuario al array assignedTurns
+              const assignedTurns = [];
+              document.querySelectorAll("select").forEach((otherSelect) => {
+                if (
+                  otherSelect !== select &&
+                  otherSelect.value === newUserName
+                ) {
+                  const otherDay = otherSelect.dataset.day;
+                  const otherTurno = otherSelect.dataset.turno;
+                  assignedTurns.push(`${otherDay} en el turno ${otherTurno}`);
+                }
+              });
+
+              // Cerrar el modal después de la selección
+              modal.classList.add("hidden");
+
+              // Eliminar el eventListener para evitar múltiples selecciones
+              userButtons.forEach((btn) => {
+                btn.removeEventListener("click", handleUserSelection);
+              });
+            }
+          });
+        });
       }
     });
   });
