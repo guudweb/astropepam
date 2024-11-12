@@ -20,7 +20,7 @@ const getUsersForTurno = (day: string, turno: string) => {
 };
 
 const days = [
-  //"lunes",
+  // "lunes",
   "martes",
   "miercoles",
   "jueves",
@@ -317,7 +317,7 @@ let weekDates = getWeekDates(weekOffset);
 <script>
   let currentDate = new Date();
   const days = [
-    "lunes",
+    //"lunes",
     "martes",
     "miercoles",
     "jueves",
@@ -402,23 +402,6 @@ let weekDates = getWeekDates(weekOffset);
       console.error("Error loading preajustes data:", error);
     }
   };
-
-  // // Set initial values of the selects based on fetched preajustes data
-  // const preajustesData = await fetchPreajustesData("NombreDelPreajuste");
-
-  // async function fetchPreajustesData(name: string | number | boolean) {
-  //   try {
-  //     const response = await fetch(
-  //       `/api/getPreajustesData.json?name=${encodeURIComponent(name)}`
-  //     );
-  //     const data = await response.json();
-
-  //     return data;
-  //   } catch (error) {
-  //     console.error("Error fetching preajustes data:", error);
-  //     return {};
-  //   }
-  // }
 
   // Function to save week data
   const spinnerOverlay = document.getElementById("spinnerOverlay");
@@ -590,7 +573,7 @@ let weekDates = getWeekDates(weekOffset);
     updateWeekDates();
     await loadWeekData();
     document.querySelectorAll("select").forEach((select) => {
-      checkUserAssignment(select);
+      checkUserAssignmentForBtn(select);
     });
     setInitialSelectValues();
   });
@@ -606,7 +589,7 @@ let weekDates = getWeekDates(weekOffset);
     updateWeekDates();
     await loadWeekData();
     document.querySelectorAll("select").forEach((select) => {
-      checkUserAssignment(select);
+      checkUserAssignmentForBtn(select);
     });
     setInitialSelectValues();
   });
@@ -710,6 +693,44 @@ let weekDates = getWeekDates(weekOffset);
       notyf.error(
         `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
       );
+    } else {
+      if (icon) {
+        icon.innerHTML = ""; // Limpiar icono si no hay conflictos
+      }
+    }
+  }
+
+  // Function to check user assignment for next and prv botons
+  function checkUserAssignmentForBtn(select: HTMLSelectElement) {
+    const userName = select.value;
+
+    // Ignorar si el select está vacío (ningún usuario seleccionado)
+    if (!userName) {
+      return; // Si no hay usuario seleccionado, no hace nada y sale de la función
+    }
+
+    const day = select.dataset.day;
+    const turno = select.dataset.turno;
+    const index = select.dataset.index;
+    const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
+
+    // Verificar si el usuario ya está asignado en otro turno de la semana
+    const assignedTurns: string[] = [];
+    document.querySelectorAll("select").forEach((otherSelect) => {
+      if (otherSelect !== select && otherSelect.value === userName) {
+        const otherDay = otherSelect.dataset.day;
+        const otherTurno = otherSelect.dataset.turno;
+        assignedTurns.push(`${otherDay} en el turno ${otherTurno}`);
+      }
+    });
+
+    if (assignedTurns.length > 0) {
+      if (icon) {
+        icon.innerHTML = "⚠️"; // Icono para ya asignado
+      }
+      // notyf.error(
+      //   `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
+      // );
     } else {
       if (icon) {
         icon.innerHTML = ""; // Limpiar icono si no hay conflictos
