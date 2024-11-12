@@ -12,7 +12,7 @@ export async function GET({ url }) {
     .select()
     .from(Usuario)
     .where(like(Usuario.nombre, `%${query}%`)) // Filtra por nombre usando LIKE
-    .leftJoin(Congregacion, eq(Usuario.Congregacion, Congregacion.id))
+    .leftJoin(Congregacion, eq(Usuario.congregacion, Congregacion.id))
     .limit(limit)
     .offset(offset)
     .execute();

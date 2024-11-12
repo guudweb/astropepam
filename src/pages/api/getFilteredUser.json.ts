@@ -24,7 +24,7 @@ export async function GET({ url }) {
     const allUsers = await db
       .select()
       .from(Usuario)
-      .leftJoin(Congregacion, eq(Usuario.Congregacion, Congregacion.id))
+      .leftJoin(Congregacion, eq(Usuario.congregacion, Congregacion.id))
       .execute();
 
     const allUsersWithCongregation = allUsers.map((user) => ({

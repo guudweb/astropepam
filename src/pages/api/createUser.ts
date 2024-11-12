@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request, params }) => {
       contraseña: contraseña,
       telefono: telefono,
       correo: correo,
-      Congregacion: congregacion,
+      congregacion: congregacion,
       isActive: isActive,
       sexo: sexo,
       estado_civil: estadoCivil,

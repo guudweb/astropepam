@@ -10,7 +10,7 @@ export async function GET({ url }) {
   const usersWithCongregation = await db
     .select()
     .from(Usuario)
-    .leftJoin(Congregacion, eq(Usuario.Congregacion, Congregacion.id))
+    .leftJoin(Congregacion, eq(Usuario.congregacion, Congregacion.id))
     .limit(limit)
     .offset(offset)
     .execute();
