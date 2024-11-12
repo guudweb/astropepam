@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
-import type { User } from "../../interfaces";
-import { LoadingTable } from "./LoadingTable";
-import { TableData } from "./TableData";
-import { TableHead } from "./TableHead";
+import { type User } from '@/interfaces/index'
+import { LoadingTable, TableData, TableHead, MovileData, LoadingMovile } from "@/components/index";
 import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
-import { MovileData } from "./MovileData";
-import { LoadingMovile } from "./LoadingMovile";
+
 
 interface TableProps {
     comments: User[];
@@ -65,7 +62,7 @@ export const TableUser: React.FC<TableProps> = ({ comments, isLoading }) => {
 
     return (
         <>
-           <table className="hidden md:table w-full text-sm text-left rtl:text-right text-gray-500">
+            <table className="hidden md:table w-full text-sm text-left rtl:text-right text-gray-500">
                 <thead className="text-xs uppercase bg-gray-300 text-gray-900">
                     <tr>
                         <TableHead title="Nombre" />

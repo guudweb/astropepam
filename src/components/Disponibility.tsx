@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import useAvailability from '../hooks/useAvailability ';
+import { useAvailability } from '@/hooks/index';
 
 const daysOfWeek = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
 const turnos = ["T1", "T2", "T3", "T4"];
 
-const Disponibility = ({ disponibilidad, onChange  }) => {
+const Disponibility = ({ disponibilidad, onChange }) => {
   const { availability, handleCheckboxChange } = useAvailability(disponibilidad, onChange)
 
   return (
