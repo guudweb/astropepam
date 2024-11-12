@@ -1,12 +1,8 @@
 ---
-import Program from "../components/icons/Program.astro";
-import Time from "../components/icons/Time.astro";
-import Users from "../components/icons/Users.astro";
-import IndexCard from "../components/IndexCard.astro";
-import Layout from "../layouts/Layout.astro";
-import { getSession } from 'auth-astro/server';
-import CreateUser from "../components/icons/CreateUser.astro";
+import { IndexCard, Program, Time, Users, CreateUser } from "@/components/index";
 
+import { Layout } from "@/layouts/index";
+import { getSession } from 'auth-astro/server';
 const session = await getSession(Astro.request);
 
 const { isAdmin, user } = Astro.locals;

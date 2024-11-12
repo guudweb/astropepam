@@ -1,5 +1,5 @@
-import type { User } from "../../interfaces";
-import { TableRow } from "./TableRow";
+import type { User } from "@/interfaces/index";
+import { TableRow } from "@/components/index";
 
 interface Props {
     comments: User[] | [];

@@ -1,10 +1,8 @@
-import { TableUser } from "./ListUsers/TableUser";
-import { PaginationButton } from "./ListUsers/PaginationButton";
-import useFetchUsers from "../hooks/useFetchUsers";
-import { Search } from "./Search";
 import { useState } from "react";
-import { SelectFilter } from "./ListUsers/SelectFilter";
-import { DAYS, TURNS } from "../constants";
+import { PaginationButton, Search, SelectFilter, TableUser } from "@/components/index";
+import { DAYS, TURNS } from "@/constants/index";
+import { useFetchUsers } from "@/hooks/index";
+
 
 
 export const DataView = () => {

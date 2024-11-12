@@ -1,9 +1,8 @@
 ---
 import { db, Congregacion } from "astro:db";
-import { UserCreateForm } from "../components/User/UserCreateForm";
-import Layout from "../layouts/Layout.astro";
-import { getSession } from "auth-astro/server";
-import BackButton from "../components/BackButton.astro";
+import Layout from "@/layouts/Layout.astro";
+import { BackButton,UserCreateForm } from "@/components/index";
+
 
 const congregacionData = await db.select().from(Congregacion);
 
