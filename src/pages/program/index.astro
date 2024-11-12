@@ -58,47 +58,112 @@ let weekDates = getWeekDates(weekOffset);
 ---
 
 <Layout title="program">
-  <div class="container mx-auto mt-8 text-center">
-    <div class="flex justify-between mb-4">
+  <div class="container mx-auto mt-8 px-2 text-center">
+    <div class="flex justify-between mb-5">
       <button
-        class="bg-blue-500 text-white px-4 py-2 ml-2 rounded"
+        class="bg-cyan-600 text-white px-4 py-2 ml-2 rounded h-fit"
         id="prevWeekBtn"
       >
-        Semana Anterior
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="icon icon-tabler icons-tabler-outline icon-tabler-chevrons-left"
+          ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
+            d="M11 7l-5 5l5 5"></path><path d="M17 7l-5 5l5 5"></path></svg
+        >
       </button>
+
+      <div class="flex gap-2">
+        <a href="/program/CalenderView"
+          ><button
+            class="bg-green-500 text-white px-4 py-2 rounded"
+            id="CalenderViewBtn"
+          >
+            Calendario
+          </button></a
+        >
+      </div>
+
       <button
-        class="bg-blue-500 text-white px-4 py-2 mr-2 rounded"
+        class="bg-cyan-600 text-white px-4 py-2 mr-2 rounded h-fit"
         id="nextWeekBtn"
       >
-        Semana Siguiente
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="icon icon-tabler icons-tabler-outline icon-tabler-chevrons-right"
+          ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
+            d="M7 7l5 5l-5 5"></path><path d="M13 7l5 5l-5 5"></path></svg
+        >
       </button>
     </div>
-    <a href="/program/CalenderView"
-      ><button
-        class="bg-green-500 text-white px-4 py-2 rounded mb-4"
-        id="CalenderViewBtn"
-      >
-        Calendario
-      </button></a
-    >
-    <button class="bg-blue-500 text-white px-4 py-2 rounded mb-4" id="saveBtn"
-      >Guardar</button
-    >
-    <a href="/user-history">
-      <button class="bg-yellow-500 text-white px-4 py-2 rounded">
-        Historial
-      </button>
-    </a>
-    <select
-      id="preajustesSelect"
-      class="py-3 px-4 pe-9 block w-fit border-2 border-black-500 ml-2 rounded-lg text-sm text-center focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none"
-    >
-      <option value="" selected>PreAjustes</option>
-      <option value="cargar">Cargar Preajuste</option>
-      <option value="guardar">Guardar Preajuste</option>
-    </select>
 
-    <div id="currentView">
+    <div class="flex gap-2 mb-4 justify-center">
+      <select
+        id="preajustesSelect"
+        class="border-2 border-black-500 ml-2 rounded-md text-sm text-center"
+      >
+        <option value="" selected>PreAjustes</option>
+        <option value="cargar">Cargar Preajuste</option>
+        <option value="guardar">Guardar Preajuste</option>
+      </select>
+      <button
+        class="bg-cyan-600 text-white px-4 py-2 h-full rounded"
+        id="saveBtn"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="icon icon-tabler icons-tabler-outline icon-tabler-device-floppy"
+          ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
+            d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"
+          ></path><path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"
+          ></path><path d="M14 4l0 4l-6 0l0 -4"></path></svg
+        >
+      </button>
+      <a href="/user-history">
+        <button class="bg-yellow-500 text-white px-4 py-2 rounded">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-history"
+            ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
+              d="M12 8l0 4l2 2"></path><path
+              d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"></path></svg
+          >
+        </button>
+      </a>
+    </div>
+
+    <div id="currentView" class="grid justify-center">
       {
         days.map((day, dayIndex) => (
           <div class="mb-8">
@@ -117,10 +182,10 @@ let weekDates = getWeekDates(weekOffset);
                   <td class="px-4 py-2 border-b">
                     {" "}
                     {[...Array(4)].map((_, index) => (
-                      <div class="inline-block mr-2">
+                      <div class="inline-block  mr-2">
                         {" "}
                         <select
-                          class="border border-gray-300 rounded px-2 py-1"
+                          class="border border-gray-300 rounded w-64 px-1 py-2 my-1"
                           data-day={day}
                           data-turno={turno}
                           data-index={index}
@@ -181,7 +246,7 @@ let weekDates = getWeekDates(weekOffset);
             allUsers.map((user) => (
               <li class="mb-2">
                 <button
-                  class="bg-blue-500 text-white w-full px-2 py-1 rounded user-select-btn"
+                  class="bg-cyan-600 text-white w-full px-2 py-1 rounded user-select-btn"
                   data-username={user.nombre}
                   data-congregacion-id={user.congregacion}
                 >
