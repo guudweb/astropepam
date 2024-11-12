@@ -6,6 +6,7 @@ import EyeOpen from "./icons/EyeOpen.astro";
 import Program from "./icons/Program.astro";
 import Time from "./icons/Time.astro";
 import Users from "./icons/Users.astro";
+import Plus from "./icons/Plus.astro";
 import Congregation from "./icons/Congregation.astro";
 import {
     LoadingMovile,
@@ -71,6 +72,7 @@ export {
     CongregationTable,
     CongregationData,
     LoadingCongregationData,
+    Plus,
     MovileData,
     PaginationButton,
     TableData,

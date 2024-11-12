@@ -28,21 +28,23 @@ export const CongregationTable = () => {
                 </tbody>
             </table>
 
-            <table className="md:hidden table w-full text-sm text-left rtl:text-right text-gray-500">
-                <thead className="text-xs uppercase bg-gray-300 text-gray-900">
-                    <tr>
-                        <TableHead title="Información" />
-                        <TableHead title="Acciones" />
-                    </tr>
-                </thead>
-                <tbody>
-                    {
-                        loading
-                            ? <LoadingCongreMovile />
-                            : <CongregationMovile comments={congregaciones} handleClick={handleClick} />
-                    }
-                </tbody>
-            </table>
+            <div className="overflow-x-scroll">
+                <table className="md:hidden table w-full text-sm text-left rtl:text-right text-gray-500">
+                    <thead className="text-xs uppercase bg-gray-300 text-gray-900">
+                        <tr>
+                            <TableHead title="Información" />
+                            <TableHead title="Acciones" />
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            loading
+                                ? <LoadingCongreMovile />
+                                : <CongregationMovile comments={congregaciones} handleClick={handleClick} />
+                        }
+                    </tbody>
+                </table>
+            </div>
         </>
     )
 }
