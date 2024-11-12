@@ -27,8 +27,8 @@ export const MovileData: React.FC<Props> = ({ comments, handleClick }) => {
                                         <span className="flex justify-center items-center bg-red-200 rounded-full size-3" />
                                     )}
                                 </div>
-                                <p className="text-[10px] text-gray-500">{user.congregacion.nombre}</p>
-                                <p className="text-[10px] text-gray-500">{user.telefono}</p>
+                                <p className="text-[14px] text-gray-500">{user.congregacion.nombre}</p>
+                                <p className="text-[14px] text-gray-500">{user.telefono}</p>
                             </div>
                             <div></div>
                     </TableRow>
