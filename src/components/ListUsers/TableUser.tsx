@@ -5,6 +5,8 @@ import { TableData } from "./TableData";
 import { TableHead } from "./TableHead";
 import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
+import { MovileData } from "./MovileData";
+import { LoadingMovile } from "./LoadingMovile";
 
 interface TableProps {
     comments: User[];
@@ -63,7 +65,7 @@ export const TableUser: React.FC<TableProps> = ({ comments, isLoading }) => {
 
     return (
         <>
-            <table className="w-full text-sm text-left rtl:text-right text-gray-500">
+           <table className="hidden md:table w-full text-sm text-left rtl:text-right text-gray-500">
                 <thead className="text-xs uppercase bg-gray-300 text-gray-900">
                     <tr>
                         <TableHead title="Nombre" />
@@ -78,6 +80,22 @@ export const TableUser: React.FC<TableProps> = ({ comments, isLoading }) => {
                         <LoadingTable />
                     ) : (
                         <TableData comments={filteredComments} handleClick={handleClick} />
+                    )}
+                </tbody>
+            </table>
+
+            <table className="table md:hidden w-full text-sm text-left rtl:text-right text-gray-500">
+                <thead className="text-xs uppercase bg-gray-300 text-gray-900">
+                    <tr>
+                        <TableHead title="Información" />
+                        <TableHead title="Acciones" />
+                    </tr>
+                </thead>
+                <tbody>
+                    {isLoading ? (
+                        <LoadingMovile />
+                    ) : (
+                        <MovileData comments={filteredComments} handleClick={handleClick} />
                     )}
                 </tbody>
             </table>
