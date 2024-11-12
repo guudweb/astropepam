@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Disponibility from "../Disponibility";
-import useAvailability from "../../hooks/useAvailability ";
 import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
-import { set } from "astro:schema";
 
 export const UserEditForm = ({ user, congregacionData, session }) => {
   const [nombre, setNombre] = useState(user.nombre || "");

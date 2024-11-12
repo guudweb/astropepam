@@ -18,25 +18,19 @@ export const MovileData: React.FC<Props> = ({ comments, handleClick }) => {
                     <TableRow // Manejo de info
                         className="whitespace-nowrap text-gray-900 font-medium px-[15px]"
                     >
-                        <div className="flex gap-2 items-center">
-                            {/* <div>
-                                <span className="bg-red-500 rounded-full p-2 text-white">C</span>
-                            </div> */}
-                            {/*Para cuando se añada el rol de capitán */}
                             <div className="">
-                                <p className="text-md text-gray-900">{user.nombre}</p>
                                 <div className="flex items-center gap-2">
-                                    <p className="text-[10px] text-gray-500">{user.congregacion.nombre}</p>
+                                    <p className="text-md text-gray-900 text-[17px]">{user.nombre}</p>
                                     {user.isActive ? (
-                                        <span className="flex justify-center items-center bg-green-200 rounded-full size-3"/> 
+                                        <span className="flex justify-center items-center bg-green-200 rounded-full size-3" />
                                     ) : (
-                                        <span className="flex justify-center items-center bg-red-200 rounded-full size-3"/>
+                                        <span className="flex justify-center items-center bg-red-200 rounded-full size-3" />
                                     )}
                                 </div>
+                                <p className="text-[10px] text-gray-500">{user.congregacion.nombre}</p>
                                 <p className="text-[10px] text-gray-500">{user.telefono}</p>
                             </div>
                             <div></div>
-                        </div>
                     </TableRow>
                     <TableRow className="flex gap-x-5">
                         <a href={`/user/${user.user_id}`} className="group">

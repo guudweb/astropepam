@@ -3,25 +3,26 @@ import { db, Congregacion } from "astro:db";
 import { UserCreateForm } from "../components/User/UserCreateForm";
 import Layout from "../layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
+import BackButton from "../components/BackButton.astro";
 
 const congregacionData = await db.select().from(Congregacion);
 
-const {isAdmin} = Astro.locals
+const { isAdmin } = Astro.locals;
 
-
-if(!isAdmin) {
-    Astro.redirect('/')
+if (!isAdmin) {
+    Astro.redirect("/");
 }
 ---
 
-
-
-<Layout
-    title="Crear usuario | PPAM Malabo"
->
+<Layout title="Crear usuario | PPAM Malabo">
     <section class="max-w-2xl mx-auto mt-10">
-        <h1 class="text-center text-4xl font-bold">Crea nuevos usuarios para el PPAM</h1>
-        <UserCreateForm congregacionData={congregacionData} client:only/>
+        <BackButton 
+            href="/"
+            iconsClass="size-10"
+        />
+        <h1 class="text-center text-4xl font-bold">
+            Crea nuevos usuarios para el PPAM
+        </h1>
+        <UserCreateForm congregacionData={congregacionData} client:only />
     </section>
-
 </Layout>
