@@ -3,6 +3,7 @@ import Disponibility from "../Disponibility";
 import useAvailability from "../../hooks/useAvailability ";
 import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
+import { set } from "astro:schema";
 
 export const UserEditForm = ({ user, congregacionData, session }) => {
   const [nombre, setNombre] = useState(user.nombre || "");
@@ -68,6 +69,19 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
       if (response.ok) {
         const updatedUser = await response.json();
         notyf.success("Usuario actualizado correctamente");
+
+        //limpiar todos los campos
+        setNombre("");
+        setCongregacion("")
+        setContraseña("");
+        setTelefono("");
+        setCorreo("");
+        setIsActive(false);
+        setSexo("")
+        setEstadoCivil("")
+        setAvailability("")
+        setRole("");
+        
       } else {
         notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
         console.error("Error al actualizar el usuario:", response.statusText);
@@ -162,6 +176,7 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
           value={congregacion}
           onChange={(e) => setCongregacion(e.target.value)}
         >
+          <option value="" disabled>Sin congregación</option>
           {congregacionData.map((item) => (
             <option value={item.id} key={item.id}>
               {item.nombre}
