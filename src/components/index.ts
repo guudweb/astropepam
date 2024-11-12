@@ -32,8 +32,11 @@ import IndexCard from "./IndexCard.astro";
 import Navbar from "./Navbar";
 import { Search } from "./Search";
 import Spinner from "./Spinner.astro";
-import { CongregationTable } from "./congregation";
-import { CongregationData } from "./congregation";
+import { 
+    CongregationTable, 
+    CongregationData,
+    LoadingCongregationData
+} from "./congregation";
 
 
 
@@ -67,6 +70,7 @@ export {
     Spinner,
     CongregationTable,
     CongregationData,
+    LoadingCongregationData,
     MovileData,
     PaginationButton,
     TableData,

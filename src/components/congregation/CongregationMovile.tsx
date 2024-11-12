@@ -7,22 +7,19 @@ interface Props {
     handleClick: (id: number) => void;
 }
 
-export const CongregationData = ({ comments, handleClick}: Props) => {
+export const CongregationMovile = ({ comments, handleClick}: Props) => {
     return (
         <>
             {comments.map((congregation: Congregation) => (
                 <tr className="bg-white border-b hover:bg-gray-200 transition-colors" key={congregation.id}>
                     <TableRow
-                        text={congregation.nombre}
                         className="whitespace-nowrap text-gray-900 font-medium"
-                    />
-                    <TableRow
-                        text={congregation.diaReunion} 
-                        className="capitalize"
-                    />
-                    <TableRow
-                        text={congregation.turnoReunion} 
-                    />
+                    >
+                        <p className="text-lg text-gray-900">{congregation.nombre}</p>
+                        <p className="text-sm text-gray-500">
+                            <span className="capitalize">{congregation.diaReunion}</span> - <span>{congregation.turnoReunion}</span>
+                        </p>
+                    </TableRow>
                     <TableRow className="flex gap-x-5">
                         <a href="/" className="group">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-7 text-cyan-700 group-hover:scale-110 transition-transform">
