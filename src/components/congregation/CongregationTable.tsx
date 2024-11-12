@@ -1,14 +1,17 @@
 import { TableHead, CongregationData } from "@/components/index"
 import type { Congregation } from "@/interfaces/index";
 import { useEffect, useState } from "react";
+import { LoadingCongregationData } from "./LoadingCongregationData";
 
 
 export const CongregationTable = () => {
 
 
     const [congregaciones, setCongregaciones] = useState<Congregation[]>([])
+    const [loading, setLoading] = useState(true)
 
     const fetchData = async () => {
+        setLoading(true)
         try {
             const res = await fetch('/api/getCongregations')
             const data = await res.json()
@@ -16,6 +19,8 @@ export const CongregationTable = () => {
             setCongregaciones(data)
         } catch (error) {
             console.log(error);
+        }finally {
+            setLoading(false)
         }
     }
 
@@ -39,7 +44,11 @@ export const CongregationTable = () => {
                 </tr>
             </thead>
             <tbody>
-                <CongregationData comments={congregaciones} handleClick={handleClick} />
+                {
+                    loading 
+                    ? <LoadingCongregationData />
+                    : <CongregationData comments={congregaciones} handleClick={handleClick} />
+                }
             </tbody>
         </table>
     )
