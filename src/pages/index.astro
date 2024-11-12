@@ -9,30 +9,30 @@ const { isAdmin, user } = Astro.locals;
 
 <Layout title="Inicio">
   <section
-    class="flex flex-wrap justify-center items-center flex-1 gap-x-10 gap-y-10 my-20 pb-10"
+    class="grid grid-cols-2 px-5 md:flex md:flex-wrap justify-center items-center flex-1 gap-x-10 gap-y-10 my-20 pb-10"
   >
     {
       isAdmin && (
         <IndexCard
           href="/data"
-          title="Lista de usuarios"
+          title="Usuarios"
           subtitle="Organiza, edita y elimina todos los usuarios del PPAM."
         >
-          <Users className="size-28 text-cyan-600 mx-auto group-hover:text-white" />
+          <Users className="size-16 md:size-28 text-cyan-600 mx-auto group-hover:text-white" />
         </IndexCard>
         <IndexCard
           href="/create-user"
           title="Crear Usuarios"
           subtitle="Crea los nuevos usuarios del PPAM."
         >
-          <CreateUser className="size-28 text-cyan-600 mx-auto group-hover:text-white" />
+          <CreateUser className="size-16 md:size-28 text-cyan-600 mx-auto group-hover:text-white" />
         </IndexCard>
         <IndexCard
           href="/congregaciones"
           title="Congregaciones"
           subtitle="Administra, edita y crea congregaciones"
         >
-          <Congregation iconClass="size-28 text-cyan-600 mx-auto group-hover:text-white" />
+          <Congregation iconClass="size-16 md:size-28 text-cyan-600 mx-auto group-hover:text-white" />
         </IndexCard>
       )
     }
@@ -41,7 +41,7 @@ const { isAdmin, user } = Astro.locals;
       title="Disponibilidad"
       subtitle="Edita tu disponibilidad para el PPAM."
     >
-      <Time className="size-28 text-cyan-600 mx-auto group-hover:text-white" />
+      <Time className="size-16 md:size-28 text-cyan-600 mx-auto group-hover:text-white" />
     </IndexCard>
     <IndexCard
       href={isAdmin ? "/program" : "program/CalenderView"}
@@ -49,7 +49,7 @@ const { isAdmin, user } = Astro.locals;
       subtitle="Consulta el programa de PPAM para ver todos los participantes."
     >
       <Program
-        className="size-28 text-cyan-600 mx-auto group-hover:text-white"
+        className="size-16 md:size-28 text-cyan-600 mx-auto group-hover:text-white"
       />
     </IndexCard>
   </section>
