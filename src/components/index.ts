@@ -6,6 +6,8 @@ import EyeOpen from "./icons/EyeOpen.astro";
 import Program from "./icons/Program.astro";
 import Time from "./icons/Time.astro";
 import Users from "./icons/Users.astro";
+import Plus from "./icons/Plus.astro";
+import Congregation from "./icons/Congregation.astro";
 import {
     LoadingMovile,
     LoadingTable,
@@ -31,7 +33,11 @@ import IndexCard from "./IndexCard.astro";
 import Navbar from "./Navbar";
 import { Search } from "./Search";
 import Spinner from "./Spinner.astro";
-
+import { 
+    CongregationTable, 
+    CongregationData,
+    LoadingCongregationData
+} from "./congregation";
 
 
 
@@ -49,6 +55,7 @@ export {
     Program,
     Time,
     Users,
+    Congregation,
     LoadingMovile,
     LoadingTable,
     SelectFilter,
@@ -62,6 +69,10 @@ export {
     Navbar,
     Search,
     Spinner,
+    CongregationTable,
+    CongregationData,
+    LoadingCongregationData,
+    Plus,
     MovileData,
     PaginationButton,
     TableData,

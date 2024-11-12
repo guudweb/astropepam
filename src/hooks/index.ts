@@ -1,6 +1,6 @@
 import useAvailability from "./useAvailability ";
 import useFetchUsers from "./useFetchUsers";
-
+import { useCongregation } from "./useCongregation";
 
 
 
@@ -12,7 +12,8 @@ import useFetchUsers from "./useFetchUsers";
 
 export {
     useAvailability,
-    useFetchUsers
+    useFetchUsers,
+    useCongregation
 }
 
 

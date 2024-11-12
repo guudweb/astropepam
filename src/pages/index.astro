@@ -1,6 +1,5 @@
 ---
-import { IndexCard, Program, Time, Users, CreateUser } from "@/components/index";
-
+import { IndexCard, Program, Time, Users, CreateUser, Congregation } from "@/components/index";
 import { Layout } from "@/layouts/index";
 import { getSession } from 'auth-astro/server';
 const session = await getSession(Astro.request);
@@ -10,7 +9,7 @@ const { isAdmin, user } = Astro.locals;
 
 <Layout title="Inicio">
   <section
-    class=" h-full flex flex-wrap justify-center items-center flex-1 gap-x-10 gap-y-5 my-10 md:mt-0"
+    class="flex flex-wrap justify-center items-center flex-1 gap-x-10 gap-y-10 my-20 pb-10"
   >
     {
       isAdmin && (
@@ -27,6 +26,13 @@ const { isAdmin, user } = Astro.locals;
           subtitle="Crea los nuevos usuarios del PPAM."
         >
           <CreateUser className="size-28 text-cyan-600 mx-auto group-hover:text-white" />
+        </IndexCard>
+        <IndexCard
+          href="/congregaciones"
+          title="Congregaciones"
+          subtitle="Administra, edita y crea congregaciones"
+        >
+          <Congregation iconClass="size-28 text-cyan-600 mx-auto group-hover:text-white" />
         </IndexCard>
       )
     }

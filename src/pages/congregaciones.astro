@@ -1,0 +1,20 @@
+---
+import { Layout } from "@/layouts/index";
+import { CongregationTable, Plus } from "../components";
+
+
+---
+
+
+<Layout
+    title="Administra, edita y crea congregaciones | PPAM Malabo"
+>
+    <section class="max-w-7xl mx-auto mt-10 px-5 md:px-10 pb-10">
+
+        <a href="/" class="bg-cyan-600 py-3 px-5 rounded-lg text-white mb-10 flex items-center w-fit gap-x-2">
+            <Plus className="size-7"/>
+            <span class="text-md font-semibold">Congregación</span>
+        </a>
+        <CongregationTable client:load/> 
+    </section>
+</Layout>
