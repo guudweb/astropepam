@@ -3,9 +3,9 @@ import Layout from "../../layouts/Layout.astro";
 import { db } from "astro:db";
 import { Usuario, eq } from "astro:db";
 import { Congregacion } from "astro:db";
-import { UserEditForm } from '../../components/User/UserEditForm'
+import { UserEditForm } from "../../components/User/UserEditForm";
 import { getSession } from "auth-astro/server";
-
+import BackButton from "../../components/BackButton.astro";
 
 const { id } = Astro.params;
 
@@ -17,29 +17,30 @@ const [userWhitCongregation] = await db
     .where(eq(Usuario.user_id, Number(id)))
     .leftJoin(Congregacion, eq(Usuario.congregacion, Congregacion.id));
 
-
-
 const congregacionData = await db.select().from(Congregacion);
 
 const user = userWhitCongregation.Usuario;
 
-
-
-if(+id !== +session.user.id && session.user.role !== 'admin') {
-    return Astro.redirect('/')
+if (+id !== +session.user.id && session.user.role !== "admin") {
+    return Astro.redirect("/");
 }
-
 ---
 
 <Layout title="Edita tu disponibilidad y más cosas | PPAM Malabo">
     <section class="max-w-2xl mx-auto mt-10">
-        <h1 class=" text-2xl md:text-4xl text-center text-pretty mb-5 font-bold uppercase">Edita la información de tu cuenta</h1>
-        <UserEditForm user={user} congregacionData={congregacionData} session={session} client:only/>
+        <BackButton href="/data" iconsClass="size-10" />
+        <h1
+            class="text-2xl md:text-4xl text-center text-pretty mb-5 font-bold uppercase"
+        >
+            Edita la información de tu cuenta
+        </h1>
+        <UserEditForm
+            user={user}
+            congregacionData={congregacionData}
+            session={session}
+            client:only
+        />
     </section>
 </Layout>
 
-
-
-<script>
-
-</script>
+<script></script>

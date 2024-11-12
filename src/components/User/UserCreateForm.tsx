@@ -88,6 +88,21 @@ export const UserCreateForm = ({ congregacionData }) => {
       if (response.ok) {
         const newUser = await response.json();
         notyf.success("Usuario actualizado correctamente");
+
+        //clean the data
+        setNombre(""),
+        setUserName("")
+        setContraseña("")
+        setAvailability("{}")
+        setCongregacion("")
+        setConyuje("")
+        setCorreo("")
+        setIsActive(false)
+        setSexo("")
+        setEstadoCivil("")
+        setRole("")
+        setTelefono("")
+
       } else {
         notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
         console.error("Error al actualizar el usuario:", response.statusText);
