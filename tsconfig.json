@@ -16,10 +16,10 @@
     "paths": {
       "@/components/*": ["src/components/*"],
       "@/pages/*": ["src/pages/*"],
-      "@/layouts/*" : ["src/layouts/*"],
+      "@/layouts/*": ["src/layouts/*"],
       "@/constants/*": ["src/constants/*"],
       "@/interfaces/*": ["src/interfaces/*"],
-      "@/hooks/*": ["src/hooks/*"],
+      "@/hooks/*": ["src/hooks/*"]
     }
   }
 }

@@ -58,6 +58,9 @@ let weekDates = getWeekDates(weekOffset);
 ---
 
 <Layout title="program">
+  <div id="spinnerOverlay" class="spinner-overlay">
+    <div class="spinner"></div>
+  </div>
   <div class="container mx-auto mt-8 px-2 text-center">
     <div class="flex justify-between mb-5">
       <button
@@ -142,6 +145,7 @@ let weekDates = getWeekDates(weekOffset);
           ></path><path d="M14 4l0 4l-6 0l0 -4"></path></svg
         >
       </button>
+
       <a href="/user-history">
         <button class="bg-yellow-500 text-white px-4 py-2 rounded">
           <svg
@@ -185,7 +189,7 @@ let weekDates = getWeekDates(weekOffset);
                       <div class="inline-block  mr-2">
                         {" "}
                         <select
-                          class="border border-gray-300 rounded w-64 px-1 py-2 my-1"
+                          class="border border-gray-300 focus:border-cyan-700 bg-white rounded-md w-64 px-1 py-2 my-1"
                           data-day={day}
                           data-turno={turno}
                           data-index={index}
@@ -266,6 +270,31 @@ let weekDates = getWeekDates(weekOffset);
       </div>
     </div>
 
+    <!-- Modal de confirmación -->
+    <div
+      id="confirmationModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden"
+    >
+      <div class="bg-white p-8 rounded mx-6 shadow-lg">
+        <h2 class="text-xl mb-4">¿Guardar cambios?</h2>
+        <p class="mb-4">¿Quieres guardar los cambios antes de continuar?</p>
+        <div class="flex justify-end">
+          <button
+            id="cancelBtn"
+            class="bg-red-500 text-white px-4 py-2 rounded mr-2"
+          >
+            No
+          </button>
+          <button
+            id="saveBtnModal"
+            class="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Sí
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Popup de advertencia -->
     <div
       id="warningPopup"
@@ -304,6 +333,9 @@ let weekDates = getWeekDates(weekOffset);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
 
     try {
+      // Show spinner
+      spinnerOverlay.classList.add("active");
+
       const response = await fetch(
         `/api/getWeekData.json?date=${startOfWeek.toISOString().split("T")[0]}`
       );
@@ -315,8 +347,13 @@ let weekDates = getWeekDates(weekOffset);
         const value = currentWeekData[`${day}-${turno}-${index}`] || "";
         select.value = value;
       });
+
+      // Hide spinner
+      spinnerOverlay.classList.remove("active");
     } catch (error) {
       console.error("Error loading week data:", error);
+      // Hide spinner in case of error
+      spinnerOverlay.classList.remove("active");
     }
   };
 
@@ -384,13 +421,18 @@ let weekDates = getWeekDates(weekOffset);
   // }
 
   // Function to save week data
+  const spinnerOverlay = document.getElementById("spinnerOverlay");
+
+  // Function to save week data
   const saveWeekData = async () => {
     const currentWeekData = {};
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
     const weekDate = startOfWeek.toISOString().split("T")[0];
 
-    document.querySelectorAll("select").forEach(async (select) => {
+    const userHistoryPromises = [];
+
+    document.querySelectorAll("select").forEach((select) => {
       const day = select.dataset.day;
       const turno = select.dataset.turno;
       const index = select.dataset.index;
@@ -400,23 +442,41 @@ let weekDates = getWeekDates(weekOffset);
         // Only save if a user is selected
         currentWeekData[`${day}-${turno}-${index}`] = userName;
 
-        // Save user selection to UserHistory table
-        await fetch("/api/saveUserHistory.json", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userName,
-            date: weekDate, // Use the week date
-            day,
-            turno,
-            indexValue: index,
-          }),
-        });
+        // Check if user history record already exists
+        const userHistoryPromise = fetch(
+          `/api/checkUserHistory.json?userName=${userName}&date=${weekDate}&day=${day}&turno=${turno}&indexValue=${index}`
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.exists) {
+              // Save user selection to UserHistory table if it doesn't exist
+              return fetch("/api/saveUserHistory.json", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  userName,
+                  date: weekDate, // Use the week date
+                  day,
+                  turno,
+                  indexValue: index,
+                }),
+              });
+            }
+          });
+
+        userHistoryPromises.push(userHistoryPromise);
       }
     });
 
+    // Show spinner
+    spinnerOverlay.classList.add("active");
+
+    // Wait for all user history checks and saves to complete
+    await Promise.all(userHistoryPromises);
+
+    // Save week data
     await fetch("/api/saveWeekData.json", {
       method: "POST",
       headers: {
@@ -427,6 +487,9 @@ let weekDates = getWeekDates(weekOffset);
         weekData: currentWeekData,
       }),
     });
+
+    // Hide spinner
+    spinnerOverlay.classList.remove("active");
   };
 
   // Function to save preajustes data
@@ -517,21 +580,35 @@ let weekDates = getWeekDates(weekOffset);
   const saveBtn = document.getElementById("saveBtn");
   // Add event listeners for week navigation buttons
   prevWeekBtn.addEventListener("click", async () => {
+    if (hasChanges()) {
+      const shouldSave = await showConfirmationModal();
+      if (shouldSave) {
+        await saveWeekData();
+      }
+    }
     currentDate.setDate(currentDate.getDate() - 7);
     updateWeekDates();
     await loadWeekData();
     document.querySelectorAll("select").forEach((select) => {
       checkUserAssignment(select);
     });
+    setInitialSelectValues();
   });
 
   nextWeekBtn.addEventListener("click", async () => {
+    if (hasChanges()) {
+      const shouldSave = await showConfirmationModal();
+      if (shouldSave) {
+        await saveWeekData();
+      }
+    }
     currentDate.setDate(currentDate.getDate() + 7);
     updateWeekDates();
     await loadWeekData();
     document.querySelectorAll("select").forEach((select) => {
       checkUserAssignment(select);
     });
+    setInitialSelectValues();
   });
 
   import { Notyf } from "notyf";
@@ -545,6 +622,12 @@ let weekDates = getWeekDates(weekOffset);
   // Load week data when the DOM is fully loaded
   document.addEventListener("DOMContentLoaded", async () => {
     await loadWeekData();
+    setTimeout(() => {
+      document.querySelectorAll("select").forEach((select) => {
+        const key = `${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`;
+        initialSelectValues[key] = select.value;
+      });
+    }, 3000);
 
     // Set initial values of the selects based on fetched week data
     const weekData = await fetchWeekData(new Date());
@@ -612,9 +695,6 @@ let weekDates = getWeekDates(weekOffset);
 
     // Verificar si el usuario ya está asignado en otro turno de la semana
     const assignedTurns: string[] = [];
-    console.log(assignedTurns);
-    console.log("function check");
-
     document.querySelectorAll("select").forEach((otherSelect) => {
       if (otherSelect !== select && otherSelect.value === userName) {
         const otherDay = otherSelect.dataset.day;
@@ -648,7 +728,12 @@ let weekDates = getWeekDates(weekOffset);
 
   // Add event listener for save button
   saveBtn.addEventListener("click", async () => {
-    await saveWeekData();
+    try {
+      await saveWeekData();
+      notyf.success("Guardado correctamente");
+    } catch (error) {
+      notyf.error("Error al guardar los datos");
+    }
   });
 
   // Set initial values of the selects based on fetched week data
@@ -829,4 +914,78 @@ let weekDates = getWeekDates(weekOffset);
       modal.classList.add("hidden");
     });
   });
+
+  const confirmationModal = document.getElementById("confirmationModal");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const saveBtnModal = document.getElementById("saveBtnModal");
+  let initialSelectValues = {};
+
+  async function showConfirmationModal() {
+    return new Promise((resolve) => {
+      confirmationModal.classList.remove("hidden");
+      cancelBtn.onclick = () => {
+        confirmationModal.classList.add("hidden");
+        resolve(false);
+      };
+      saveBtnModal.onclick = async () => {
+        confirmationModal.classList.add("hidden");
+        await saveWeekData();
+        resolve(true);
+      };
+    });
+  }
+
+  function hasChanges() {
+    let changes = false;
+    document.querySelectorAll("select").forEach((select) => {
+      const key = `${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`;
+      if (initialSelectValues[key] !== select.value) {
+        changes = true;
+      }
+    });
+    return changes;
+  }
+
+  function setInitialSelectValues() {
+    setTimeout(() => {
+      document.querySelectorAll("select").forEach((select) => {
+        const key = `${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`;
+        initialSelectValues[key] = select.value;
+      });
+    }, 1000);
+  }
 </script>
+
+<style>
+  .spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: #0fa6fd;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .spinner-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Ensure the spinner is on top of other elements */
+  }
+
+  .spinner-overlay.active {
+    display: flex;
+  }
+</style>

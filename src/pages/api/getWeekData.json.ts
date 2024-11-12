@@ -19,15 +19,11 @@ export const GET: APIRoute = async ({ request }) => {
   const startOfWeek = new Date(date);
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
 
-  console.log("Fetching data for start of week:", startOfWeek); // Add this line
-
   const result = await db
     .select()
     .from(WeekData)
     .where(eq(WeekData.date, startOfWeek))
     .execute();
-
-  console.log("Database query result:", result); // Add this line
 
   return new Response(JSON.stringify(result[0]?.data || {}), { status: 200 });
 };

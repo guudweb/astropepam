@@ -14,8 +14,6 @@ export const GET: APIRoute = async ({ request }) => {
     .where(eq(Congregacion.id, parseInt(congregacionParam)))
     .execute();
 
-  console.log("Fetched congregation data:", result);
-
   return new Response(
     JSON.stringify({
       nombre: result[0]?.nombre || "No name available",
