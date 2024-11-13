@@ -39,7 +39,7 @@ const { isAdmin } = Astro.locals;
       const days = [
         "lunes",
         "martes",
-        "miércoles",
+        "miercoles",
         "jueves",
         "viernes",
         "sábado",
@@ -100,82 +100,97 @@ const { isAdmin } = Astro.locals;
 
         const calendarView = document.getElementById("calendarView");
         calendarView.innerHTML = `
-          <div class="hidden md:block">
-            <table class="min-w-full bg-white border border-gray-200 mb-4">
-              <thead>
-                <tr>
-                  <th class="px-4 py-2 border-b">Turno</th>
-                  ${weekDates.map((date, index) => `<th class="px-4 py-2 border-b">${formatDate(date, days[index])}</th>`).join("")}
-                </tr>
-              </thead>
-              <tbody>
-                ${turnos
-                  .map(
-                    (turno) => `
+  <div class="hidden md:block">
+    <table class="min-w-full bg-white border border-gray-200 mb-4">
+      <thead>
+        <tr>
+          <th class="px-4 py-2 border-b">Turno</th>
+          ${weekDates
+            .map((date, index) => {
+              if (days[index] !== "lunes") {
+                return `<th class="px-4 py-2 border-b">${formatDate(date, days[index])}</th>`;
+              }
+              return "";
+            })
+            .join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${turnos
+          .map(
+            (turno, turnoIndex) => `
+          <tr class="${turnoIndex % 2 === 0 ? "bg-gray-100" : "bg-white"}">
+            <td class="px-4 py-2 border-b">${turnoTimes[turno]}</td>
+            ${days
+              .map((day, dayIndex) => {
+                if (day !== "a") {
+                  const date = weekDates[dayIndex];
+                  return `
+                    <td class="px-4 py-2 border-b" data-day="${day}">
+                      ${Array.from({ length: 4 })
+                        .map((_, index) => {
+                          const value =
+                            weekData[`${day}-${turno}-${index}`] || "";
+                          return `<div class="user" data-nombre="${value}" style="margin-bottom: 8px;">${value}</div>`;
+                        })
+                        .join("")}
+                    </td>
+                  `;
+                }
+                return "";
+              })
+              .join("")}
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    </table>
+  </div>
+  <div class="md:hidden">
+    ${days
+      .map((day, dayIndex) => {
+        if (day !== "lunes") {
+          const date = weekDates[dayIndex];
+          return `
+            <div class="mb-4">
+              <h2 class="text-lg font-bold mb-2">${day.charAt(0).toUpperCase() + day.slice(1)}</h2>
+              <table class="min-w-full bg-white border border-gray-200 mb-4">
+                <thead>
                   <tr>
-                    <td class="px-4 py-2 border-b">${turnoTimes[turno]}</td>
-                    ${days
-                      .map(
-                        (day) => `
-                      <td class="px-4 py-2 border-b" data-day="${day}">
+                    <th class="px-4 py-2 border-b">Turno</th>
+                    <th class="px-4 py-2 border-b">${formatDate(date, day)}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${turnos
+                    .map(
+                      (turno, turnoIndex) => `
+                    <tr class="${turnoIndex % 2 === 0 ? "bg-gray-100" : "bg-white"}">
+                      <td class="px-4 py-2 border-b">${turnoTimes[turno]}</td>
+                      <td class="px-4 py-2 border-b">
                         ${Array.from({ length: 4 })
                           .map((_, index) => {
                             const value =
                               weekData[`${day}-${turno}-${index}`] || "";
-                            return `<div class="user" data-nombre="${value}">${value}</div>`;
+                            return `<div class="user" data-nombre="${value}" style="margin-bottom: 8px;">${value}</div>`;
                           })
                           .join("")}
                       </td>
-                    `
-                      )
-                      .join("")}
-                  </tr>
-                `
-                  )
-                  .join("")}
-              </tbody>
-            </table>
-          </div>
-                    <div class="md:hidden">
-            ${days
-              .map(
-                (day) => `
-              <div class="mb-4">
-                <h2 class="text-lg font-bold mb-2">${day.charAt(0).toUpperCase() + day.slice(1)}</h2>
-                <table class="min-w-full bg-white border border-gray-200 mb-4">
-                  <thead>
-                    <tr>
-                      <th class="px-4 py-2 border-b">Turno</th>
-                      <th class="px-4 py-2 border-b">${formatDate(weekDates[days.indexOf(day)], day)}</th>
                     </tr>
-                  </thead>
-                  <tbody>
-                    ${turnos
-                      .map(
-                        (turno) => `
-                      <tr>
-                        <td class="px-4 py-2 border-b">${turnoTimes[turno]}</td>
-                        <td class="px-4 py-2 border-b">
-                          ${Array.from({ length: 4 })
-                            .map((_, index) => {
-                              const value =
-                                weekData[`${day}-${turno}-${index}`] || "";
-                              return `<div class="user" data-nombre="${value}">${value}</div>`;
-                            })
-                            .join("")}
-                        </td>
-                      </tr>
-                    `
-                      )
-                      .join("")}
-                  </tbody>
-                </table>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        `;
+                  `
+                    )
+                    .join("")}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+        return "";
+      })
+      .join("")}
+  </div>
+`;
 
         document.querySelectorAll(".user").forEach((user) => {
           const userElement = user as HTMLElement;
