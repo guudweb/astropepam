@@ -8,6 +8,7 @@ interface Props {
 }
 
 export const CongregationData = ({ comments, handleClick}: Props) => {
+
     return (
         <>
             {comments.map((congregation: Congregation) => (
