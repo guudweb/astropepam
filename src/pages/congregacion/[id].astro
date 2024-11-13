@@ -1,0 +1,20 @@
+---
+import { EditForm } from "@/components/congregation/EditForm";
+import { BackButton, Spinner } from "@/components/index";
+
+import { Layout } from "@/layouts/index";
+
+const {id} = Astro.params
+---
+
+<Layout title="Edita las congregaciones | PPAM Malabo">
+    <section class="max-w-7xl mx-auto mt-10 px-5 md:px-10 pb-10">
+        <BackButton href="/congregaciones" iconsClass="size-10" />
+        <h1 class="text-center text-4xl font-semibold uppercase">
+            Editar la congregación
+        </h1>
+
+        <EditForm client:only id={id}/>
+    </section>
+</Layout>
+

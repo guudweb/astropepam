@@ -36,8 +36,12 @@ import Spinner from "./Spinner.astro";
 import { 
     CongregationTable, 
     CongregationData,
-    LoadingCongregationData
+    LoadingCongregationData,
+    CongregationMovile,
+    LoadingCongreMovile,
 } from "./congregation";
+
+import { Modal } from "./Modal";
 
 
 
@@ -73,6 +77,9 @@ export {
     CongregationData,
     LoadingCongregationData,
     Plus,
+    Modal,
+    CongregationMovile,
+    LoadingCongreMovile,
     MovileData,
     PaginationButton,
     TableData,
