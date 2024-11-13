@@ -38,7 +38,7 @@ export const EditForm = ({ id }: Props) => {
     }, [id]); // La dependencia `id` asegura que solo se haga la llamada cuando el `id` cambie
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white p-5 rounded-lg shadow-lg w-1/2 mx-auto mt-10">
+        <form onSubmit={handleSubmit} className="bg-white p-5 rounded-lg shadow-lg w-full md:w-1/2 mx-auto mt-10">
             <div className="mb-5">
                 <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-900">
                     Nombre Congregación
