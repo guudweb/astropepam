@@ -51,7 +51,7 @@ export const UserCreateForm = ({ congregacionData }) => {
       isActive,
       sexo,
       estadoCivil,
-      conyuje,
+      conyuje: conyuje ?? null,
       congregacion: +congregacion,
       availability: JSON.stringify(availability),
       role,

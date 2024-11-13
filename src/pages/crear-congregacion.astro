@@ -1,0 +1,159 @@
+---
+import { Layout } from "@/layouts/index";
+import { BackButton, Spinner } from "@/components/index";
+---
+
+<Layout title="Crea nuevas congregaciones | PPAM Malabo">
+    <section class="max-w-7xl mx-auto mt-10 px-5 md:px-10 pb-10">
+        <BackButton href="/congregaciones" iconsClass="size-10" />
+
+        <h1 class="text-center text-4xl font-semibold uppercase">
+            Crear una nueva congregación
+        </h1>
+
+        <form class="bg-white p-5 rounded-lg shadow-lg w-1/2 mx-auto mt-10">
+            <div class="mb-5">
+                <label
+                    for="name"
+                    class="block mb-2 text-sm font-medium text-gray-900"
+                >
+                    Nombre Congregación
+                </label>
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    placeholder="Sampaka"
+                />
+            </div>
+
+            <div class="mb-5">
+                <label
+                    for="dia_reunion"
+                    class="block mb-2 text-sm font-medium text-gray-900"
+                >
+                    Día de Reunión
+                </label>
+                <select
+                    name="dia_reunion"
+                    id="dia_reunion"
+                    class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                >
+                    <option value="" disabled selected>
+                        --- Selecciona un día ---</option
+                    >
+                    <option value="domingo">Domingo</option>
+                    <option value="sabado">Sábado</option>
+                </select>
+            </div>
+            <div class="mb-5">
+                <label
+                    for="turno_reunion"
+                    class="block mb-2 text-sm font-medium text-gray-900"
+                >
+                    Turno de la reunión
+                </label>
+                <select
+                    name="turno_reunion"
+                    id="turno_reunion"
+                    class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                >
+                    <option value="" disabled selected>
+                        --- Selecciona un turno ---</option
+                    >
+                    <option value="T1">Turno 1 (9:30 - 11:30)</option>
+                    <option value="T2">Turno 2 (11:30 - 13:30)</option>
+                    <option value="T3">Turno 3 (13:30 - 15:30)</option>
+                    <option value="T4">Turno 4 (15:30 - 17:30)</option>
+                </select>
+            </div>
+
+            <button
+                class="bg-cyan-600 py-2 text-white rounded-md w-full hover:bg-cyan-700 transition-colors disabled:bg-gray-400"
+                type="submit"
+                id="congregacionBtn"
+            >
+                <Spinner
+                    classList="w-6 h-6 mx-auto hidden"
+                    id="congre-spinner"
+                />
+                <span class="text-center" id="congre-btn-text">
+                    Añadir congregación
+                </span>
+            </button>
+        </form>
+    </section>
+</Layout>
+
+<script>
+    import { Notyf } from "notyf";
+    import "notyf/notyf.min.css";
+
+    const notyf = new Notyf({
+        duration: 4000,
+        position: {
+            x: "right",
+            y: "top",
+        },
+    });
+
+    const form = document.querySelector("form") as HTMLFormElement;
+    const submitBtn = document.querySelector(
+        "#congregacionBtn",
+    ) as HTMLButtonElement;
+    const spinner = document.querySelector("#congre-spinner");
+    const btnText = document.querySelector("#congre-btn-text");
+    let loading;
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = {
+            nombre: formData.get("name"),
+            diaReunion: formData.get("dia_reunion"),
+            turnoReunion: formData.get("turno_reunion"),
+        };
+        const isEmpty = Object.values(data).some((value) => !value);
+
+        if (isEmpty) {
+            notyf.error("Rellena todos los campos");
+            return;
+        }
+
+        //Llamada a la API
+
+        submitBtn.setAttribute("disabled", "true");
+        spinner.classList.remove("hidden");
+        btnText.classList.add("hidden");
+
+        try {
+            loading = true;
+            const values = {
+                nombre: formData.get("name"),
+                diaReunion: formData.get("dia_reunion"),
+                turnoReunion: formData.get("turno_reunion"),
+            };
+            const res = await fetch("/api/congregation/create_congregation", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(values),
+            });
+            const data = await res.json();
+            console.log(data);
+
+            notyf.success("Congregación creada con éxito");
+            window.location.replace("/congregaciones");
+        } catch (error) {
+            notyf.error("Algo falló. Inténtelo más tarde");
+        } finally {
+            loading = false;
+            submitBtn.removeAttribute("disabled");
+            spinner.classList.add("hidden");
+            btnText.classList.remove("hidden");
+        }
+    });
+</script>

@@ -11,10 +11,10 @@ import { CongregationTable, Plus } from "../components";
 >
     <section class="max-w-7xl mx-auto mt-10 px-5 md:px-10 pb-10">
 
-        <a href="/" class="bg-cyan-600 py-3 px-5 rounded-lg text-white mb-10 flex items-center w-fit gap-x-2">
+        <a href="/crear-congregacion" class="bg-cyan-600 py-3 px-5 rounded-lg text-white mb-10 flex items-center w-fit gap-x-2 hover:scale-105 hover:bg-cyan-700 transition-all">
             <Plus className="size-7"/>
             <span class="text-md font-semibold">Congregación</span>
         </a>
-        <CongregationTable client:load/> 
+        <CongregationTable client:only/> 
     </section>
 </Layout>

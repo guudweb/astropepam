@@ -5,6 +5,9 @@ export const useCongregation = () => {
     const [congregaciones, setCongregaciones] = useState<Congregation[]>([])
     const [loading, setLoading] = useState(true)
 
+    const [show, setShow] = useState(false)
+    const [congreId, setCongreId] = useState(0)
+
     const fetchData = async () => {
         setLoading(true)
         try {
@@ -23,14 +26,18 @@ export const useCongregation = () => {
     }, [])
 
     const handleClick = (id: number) => {
-        console.log(id);
+        setShow(true)
+        setCongreId(id)
     }
 
 
     return {
         congregaciones,
         loading,
-        handleClick
+        show, 
+        congreId,
+        handleClick,
+        setShow,
     }
 }
 
