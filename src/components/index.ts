@@ -38,7 +38,7 @@ import {
     CongregationData,
     LoadingCongregationData,
     CongregationMovile,
-    LoadingCongreMovile
+    LoadingCongreMovile,
 } from "./congregation";
 
 import { Modal } from "./Modal";
