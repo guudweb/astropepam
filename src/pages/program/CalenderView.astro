@@ -109,7 +109,7 @@ const { isAdmin } = Astro.locals;
           <th class="px-4 py-2 border-b">Turno</th>
           ${weekDates
             .map((date, index) => {
-              if (days[index] !== "a") {
+              if (days[index] !== "lunes") {
                 return `<th class="px-4 py-2 border-b">${formatDate(date, days[index])}</th>`;
               }
               return "";
@@ -125,7 +125,7 @@ const { isAdmin } = Astro.locals;
             <td class="px-4 py-2 border-b">${turnoTimes[turno]}</td>
             ${days
               .map((day, dayIndex) => {
-                if (day !== "a") {
+                if (day !== "lunes") {
                   const date = weekDates[dayIndex];
                   return `
                     <td class="px-4 py-2 border-b" data-day="${day}">
@@ -152,7 +152,7 @@ const { isAdmin } = Astro.locals;
   <div class="md:hidden">
     ${days
       .map((day, dayIndex) => {
-        if (day !== "a") {
+        if (day !== "lunes") {
           const date = weekDates[dayIndex];
           return `
             <div class="mb-4">
@@ -257,15 +257,25 @@ const { isAdmin } = Astro.locals;
 <script is:inline>
   const saveDivAsPDF = () => {
     const element = document.querySelector(".md\\:block"); // Select the desktop view
+    element.classList.add("pdf-content"); // Add the CSS class to the element
+
     const opt = {
-      margin: 0,
+      margin: [20, 10, 0, 10], // Add margins (top, right, bottom, left)
       filename: "calendar.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "A4", orientation: "landscape" },
+      image: { type: "jpeg", quality: 1.0 }, // Increase the quality
+      html2canvas: { scale: 2 }, // Adjust the scale to increase quality
+      jsPDF: { unit: "px", format: [1366, 546], orientation: "landscape" },
     };
 
     // Use html2pdf to generate the PDF
     html2pdf().from(element).set(opt).save();
   };
 </script>
+
+<style>
+  .pdf-content {
+    border: 2px solid black; /* Adjust the border size and color as needed */
+    padding: 10px; /* Add padding to create space between the content and the border */
+    text-align: center; /* Center the text */
+  }
+</style>
