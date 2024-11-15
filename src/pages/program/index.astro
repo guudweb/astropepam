@@ -382,9 +382,8 @@ let weekDates = getWeekDates(weekOffset);
         notyf.success(`Preajuste guardado exitosamente`);
         //alert("Preajuste guardado exitosamente");
       } else if (selectedOption === "cargar") {
-        const preajusteName = prompt(
-          "Introduce el nombre del preajuste a cargar:"
-        );
+        //const preajusteName = prompt("Introduce:  Preajuste1 ");
+        const preajusteName = "Preajuste1";
         if (preajusteName) {
           await loadPreajustesData(preajusteName);
           //alert("Preajuste cargado exitosamente");
@@ -492,7 +491,7 @@ let weekDates = getWeekDates(weekOffset);
   // Function to save preajustes data
   const savePreajustesData = async () => {
     const preajustesData = {};
-    const preajusteName = "NombreDelPreajuste"; // Puedes cambiar esto según sea necesario
+    const preajusteName = "Preajuste1"; // Puedes cambiar esto según sea necesario
 
     document.querySelectorAll("select").forEach(async (select) => {
       const day = select.dataset.day;
@@ -503,21 +502,6 @@ let weekDates = getWeekDates(weekOffset);
       if (userName) {
         // Only save if a user is selected
         preajustesData[`${day}-${turno}-${index}`] = userName;
-
-        // Save user selection to UserHistory table
-        await fetch("/api/saveUserHistory.json", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userName,
-            date: new Date().toISOString().split("T")[0], // Use the current date
-            day,
-            turno,
-            indexValue: index,
-          }),
-        });
       }
     });
 
