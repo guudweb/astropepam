@@ -68,17 +68,9 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
         const updatedUser = await response.json();
         notyf.success("Usuario actualizado correctamente");
 
-        //limpiar todos los campos
-        setNombre("");
-        setCongregacion("")
-        setContraseña("");
-        setTelefono("");
-        setCorreo("");
-        setIsActive(false);
-        setSexo("")
-        setEstadoCivil("")
-        setAvailability("")
-        setRole("");
+        setTimeout(() => {
+          window.location.replace('/');
+        }, 2000);
         
       } else {
         notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
