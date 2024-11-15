@@ -249,17 +249,28 @@ const { isAdmin } = Astro.locals;
       const saveTableAsPDF = () => {
         const { jsPDF } = window.jspdf;
 
+        // Mostrar temporalmente la tabla de escritorio en la vista móvil
+        const desktopTableWrapper =
+          document.querySelector("#desktopTable").parentElement;
+
+        // Guardar el estado original de la tabla
+        const originalDisplay = desktopTableWrapper.style.display;
+
+        // Forzar que la tabla de escritorio sea visible
+        desktopTableWrapper.style.display = "block";
+
         const doc = new jsPDF({
           orientation: "landscape",
           unit: "px",
           format: "a4",
         });
 
-        // Forzar el uso de la tabla de escritorio para el PDF
+        // Seleccionar la tabla de escritorio
         const table = document.querySelector("#desktopTable");
 
         if (!table) {
           alert("La tabla de escritorio no está disponible.");
+          desktopTableWrapper.style.display = originalDisplay; // Restaurar el estado original
           return;
         }
 
@@ -269,17 +280,17 @@ const { isAdmin } = Astro.locals;
         );
         const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) =>
           Array.from(tr.querySelectorAll("td")).map((td) => {
-            const names = td.innerText.split("\n"); // Split names by line breaks
-            return names.join("\n\n"); // Add extra line breaks for padding
+            const names = td.innerText.split("\n"); // Dividir nombres por saltos de línea
+            return names.join("\n\n"); // Agregar separación adicional en el PDF
           })
         );
 
-        // Generar el PDF con la tabla de escritorio
+        // Generar el PDF
         doc.autoTable({
           head: [headers],
           body: rows,
           startY: 20,
-          margin: { top: 0, right: 11, bottom: 0, left: 10 },
+          margin: { top: 10, right: 10, bottom: 10, left: 10 },
           theme: "grid",
           styles: {
             fontSize: 9,
@@ -301,25 +312,13 @@ const { isAdmin } = Astro.locals;
           },
           tableLineColor: [0, 0, 0],
           tableLineWidth: 0.1,
-          columnStyles: {
-            0: { cellWidth: 60 },
-            1: { cellWidth: 90 },
-            2: { cellWidth: 90 },
-            3: { cellWidth: 90 },
-            4: { cellWidth: 90 },
-            5: { cellWidth: 90 },
-            6: { cellWidth: 100 },
-          },
-          didDrawCell: (data) => {
-            if (data.section === "body") {
-              data.cell.styles.cellPadding = 0;
-              data.cell.styles.halign = "center";
-              data.cell.styles.valign = "middle";
-            }
-          },
         });
 
+        // Descargar el PDF
         doc.save("calendar.pdf");
+
+        // Ocultar la tabla de escritorio nuevamente
+        desktopTableWrapper.style.display = originalDisplay;
       };
     </script>
   </div>
