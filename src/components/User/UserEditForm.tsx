@@ -67,10 +67,6 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
       if (response.ok) {
         const updatedUser = await response.json();
         notyf.success("Usuario actualizado correctamente");
-
-        setTimeout(() => {
-          window.location.replace('/');
-        }, 2000);
         
       } else {
         notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
