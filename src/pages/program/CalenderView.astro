@@ -211,7 +211,7 @@ const { isAdmin } = Astro.locals;
                           const isCurrentUser = value === user;
                           return `<div class="user" data-nombre="${value}" style="margin-bottom: 8px;${
                             isCurrentUser
-                              ? "color: green; font-weight: bold;"
+                              ? "color: blue; font-weight: bold;"
                               : ""
                           }">${value}</div>`;
                         })
@@ -258,7 +258,7 @@ const { isAdmin } = Astro.locals;
                             const isCurrentUser = value === user;
                             return `<div class="user" data-nombre="${value}" style="margin-bottom: 8px; ${
                               isCurrentUser
-                                ? "color: green; font-weight: bold;"
+                                ? "color: blue; font-weight: bold;"
                                 : ""
                             }">${value}</div>`;
                           })
