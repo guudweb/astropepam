@@ -439,30 +439,30 @@ let weekDates = getWeekDates(weekOffset);
         currentWeekData[`${day}-${turno}-${index}`] = userName;
 
         // Check if user history record already exists
-        const userHistoryPromise = fetch(
-          `/api/checkUserHistory.json?userName=${userName}&date=${weekDate}&day=${day}&turno=${turno}&indexValue=${index}`
-        )
-          .then((response) => response.json())
-          .then((data) => {
-            if (!data.exists) {
-              // Save user selection to UserHistory table if it doesn't exist
-              return fetch("/api/saveUserHistory.json", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  userName,
-                  date: weekDate, // Use the week date
-                  day,
-                  turno,
-                  indexValue: index,
-                }),
-              });
-            }
-          });
+        // const userHistoryPromise = fetch(
+        //   `/api/checkUserHistory.json?userName=${userName}&date=${weekDate}&day=${day}&turno=${turno}&indexValue=${index}`
+        // )
+        //   .then((response) => response.json())
+        //   .then((data) => {
+        //     if (!data.exists) {
+        //       // Save user selection to UserHistory table if it doesn't exist
+        //       return fetch("/api/saveUserHistory.json", {
+        //         method: "POST",
+        //         headers: {
+        //           "Content-Type": "application/json",
+        //         },
+        //         body: JSON.stringify({
+        //           userName,
+        //           date: weekDate, // Use the week date
+        //           day,
+        //           turno,
+        //           indexValue: index,
+        //         }),
+        //       });
+        //     }
+        //   });
 
-        userHistoryPromises.push(userHistoryPromise);
+        // userHistoryPromises.push(userHistoryPromise);
       }
     });
 
