@@ -1,0 +1,247 @@
+---
+import {
+  db,
+  PersonasInteresadas as PersonasInteresadasDB,
+  Usuario as UsuarioDB,
+  Congregacion as CongregacionDB,
+  eq,
+} from "astro:db";
+
+import Layout from "../layouts/Layout.astro";
+
+// Helper to fetch user details
+async function getUserDetailsByName(userName: string) {
+  const userDetails = await db
+    .select()
+    .from(UsuarioDB)
+    .where(eq(UsuarioDB.nombre, userName))
+    .execute();
+
+  return userDetails[0] || null; // Return the first match or null if not found
+}
+
+// Example usage: Get user details
+const loggedInUserName = Astro.locals.user?.name || ""; // Replace with actual logged-in user data
+const userDetails = loggedInUserName
+  ? await getUserDetailsByName(loggedInUserName)
+  : null;
+
+// Determine if the user is an admin and extract serviceLink
+const isAdmin = Astro.locals.isAdmin;
+const serviceLink = userDetails?.service_link || false;
+
+// Fetch personas interesadas data
+let personasInteresadasData: any[] = [];
+
+if (isAdmin) {
+  // Admin: Fetch all records with names
+  personasInteresadasData = await db
+    .select({
+      id: PersonasInteresadasDB.id,
+      nombre: PersonasInteresadasDB.nombre,
+      telefono: PersonasInteresadasDB.telefono,
+      abordado_por: PersonasInteresadasDB.abordado_por,
+      congregacion: CongregacionDB.nombre, // Get congregation name
+      atendido: PersonasInteresadasDB.atendido,
+      añadido_por: UsuarioDB.nombre, // Get the name of the user who added the record
+      comentarios: PersonasInteresadasDB.comentarios,
+    })
+    .from(PersonasInteresadasDB)
+    .leftJoin(
+      UsuarioDB,
+      eq(PersonasInteresadasDB.añadido_por, UsuarioDB.user_id)
+    ) // Join with user table
+    .leftJoin(
+      CongregacionDB,
+      eq(PersonasInteresadasDB.congregacion, CongregacionDB.id)
+    ) // Join with congregation table
+    .execute();
+} else if (serviceLink && userDetails?.congregacion) {
+  // Non-admin with serviceLink: Filter by user's congregation and exclude 'atendido' true records
+  personasInteresadasData = await db
+    .select({
+      id: PersonasInteresadasDB.id,
+      nombre: PersonasInteresadasDB.nombre,
+      telefono: PersonasInteresadasDB.telefono,
+      abordado_por: PersonasInteresadasDB.abordado_por,
+      congregacion: CongregacionDB.nombre,
+      atendido: PersonasInteresadasDB.atendido,
+      añadido_por: UsuarioDB.nombre,
+      comentarios: PersonasInteresadasDB.comentarios,
+    })
+    .from(PersonasInteresadasDB)
+    .leftJoin(
+      UsuarioDB,
+      eq(PersonasInteresadasDB.añadido_por, UsuarioDB.user_id)
+    )
+    .leftJoin(
+      CongregacionDB,
+      eq(PersonasInteresadasDB.congregacion, CongregacionDB.id)
+    )
+    .where(eq(PersonasInteresadasDB.congregacion, userDetails.congregacion))
+    .execute();
+} else {
+  // Neither admin nor service link: Return no data
+  personasInteresadasData = [];
+}
+
+// Helper to handle checkbox change
+async function handleCheckboxChange(personaId: number, checked: boolean) {
+  // Send POST request to update 'atendido' in the database
+  await fetch("/update-atendido", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      personaId: personaId,
+      atendido: checked,
+    }),
+  });
+}
+---
+
+<Layout title="Personas Interesadas">
+  <div class="container mx-auto mt-8 px-4">
+    <h1
+      class="text-3xl font-extrabold text-gray-800 dark:text-white mb-6 text-center"
+    >
+      Personas Interesadas
+    </h1>
+
+    <div class="overflow-x-auto">
+      <table
+        class="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 shadow-lg rounded-lg"
+      >
+        <thead>
+          <tr>
+            <th
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+            >
+              Nombre
+            </th>
+            <th
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+            >
+              Teléfono
+            </th>
+            <th
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+            >
+              Abordado Por
+            </th>
+            <th
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+            >
+              Congregación
+            </th>
+            <th
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+            >
+              Atendido
+            </th>
+            <th
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+            >
+              Añadido Por
+            </th>
+            <th
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+            >
+              Comentarios
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            personasInteresadasData.map((persona) => {
+              const shouldHideRow = persona.atendido && !isAdmin;
+              if (shouldHideRow) {
+                return null; // Skip this record for non-admin users without service_link
+              }
+
+              return (
+                <tr
+                  class={`bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 ${
+                    persona.atendido ? "bg-gray-300 dark:bg-gray-600" : ""
+                  }`}
+                >
+                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                    {persona.nombre}
+                  </td>
+                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                    {persona.telefono}
+                  </td>
+                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                    {persona.abordado_por}
+                  </td>
+                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                    {persona.congregacion}
+                  </td>
+                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                    {isAdmin || serviceLink ? (
+                      <>
+                        <span class="mr-2">
+                          {persona.atendido ? "Sí" : "No"}
+                        </span>
+                        <input
+                          type="checkbox"
+                          name="atendido"
+                          checked={persona.atendido}
+                          class="mr-2"
+                          data-persona-id={persona.id}
+                        />
+                      </>
+                    ) : persona.atendido ? (
+                      "Sí"
+                    ) : (
+                      "No"
+                    )}
+                  </td>
+                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                    {persona.añadido_por}
+                  </td>
+                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                    {persona.comentarios}
+                  </td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script is:inline>
+    // Attach event listeners after the page is loaded
+    document.addEventListener("DOMContentLoaded", () => {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+
+      checkboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", async (event) => {
+          const personaId = event.target.dataset.personaId;
+          const checked = event.target.checked;
+
+          // Call the backend API to update 'atendido'
+          const response = await fetch("/api/update-atendido.json", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              personaId: personaId,
+              atendido: checked,
+            }),
+          });
+
+          if (response.ok) {
+            console.log("Atendido status updated successfully");
+          } else {
+            console.error("Error updating atendido status");
+          }
+        });
+      });
+    });
+  </script>
+</Layout>

@@ -25,6 +25,20 @@ const Usuario = defineTable({
     disponibilidad: column.json(),
     isActive: column.boolean({ default: true }),
     userName: column.text(),
+    service_link: column.boolean({ default: false }), // New column added
+  },
+});
+
+const PersonasInteresadas = defineTable({
+  columns: {
+    id: column.number({ primaryKey: true, autoIncrement: true }),
+    nombre: column.text(),
+    telefono: column.number(),
+    abordado_por: column.text(),
+    congregacion: column.number({ references: () => Congregacion.columns.id }),
+    atendido: column.boolean({ default: false }),
+    añadido_por: column.text({ references: () => Usuario.columns.nombre }),
+    comentarios: column.text(),
   },
 });
 
@@ -72,5 +86,6 @@ export default defineDb({
     UserHistory,
     Congregacion,
     Preajustes,
+    PersonasInteresadas,
   },
 });

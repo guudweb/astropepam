@@ -1,0 +1,171 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Añadir Persona Interesada">
+  <div class="container mx-auto mt-8 px-4">
+    <h1
+      class="text-3xl font-extrabold text-gray-800 dark:text-white mb-6 text-center"
+    >
+      Añadir Persona Interesada
+    </h1>
+
+    <!-- Formulario -->
+    <form
+      id="addPersonForm"
+      class="bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4"
+    >
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2"
+          for="nombre"
+        >
+          Nombre
+        </label>
+        <input
+          type="text"
+          id="nombre"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          placeholder="Nombre"
+          required
+        />
+      </div>
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2"
+          for="telefono"
+        >
+          Teléfono
+        </label>
+        <input
+          type="text"
+          id="telefono"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          placeholder="Teléfono"
+          required
+        />
+      </div>
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2"
+          for="abordado_por"
+        >
+          Abordado Por
+        </label>
+        <input
+          type="text"
+          id="abordado_por"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          placeholder="Nombre de quien abordó"
+          required
+        />
+      </div>
+
+      <!-- Campo para seleccionar congregación -->
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2"
+          for="congregacion"
+        >
+          Congregación que debe atender
+        </label>
+        <select
+          id="congregacion"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          required
+        >
+          <option value="">Selecciona una congregación</option>
+          <option value="1">TIMBABE</option>
+          <option value="2">CARACOLAS</option>
+          <option value="3">SAMPAKA</option>
+          <option value="4">PARAÍSO</option>
+          <option value="5">CAMPO YAUNDE</option>
+          <option value="6">ELA NGUEMA</option>
+          <option value="7">LAMPERT</option>
+          <option value="8">FANG</option>
+          <option value="9">BUENA ESPERANZA</option>
+          <option value="10">PORVENIR</option>
+          <option value="11">INGLESA</option>
+          <option value="12">FRANCESA</option>
+        </select>
+      </div>
+
+      <!-- Campo de comentarios -->
+      <div class="mb-4">
+        <label
+          class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2"
+          for="comentarios"
+        >
+          Comentarios
+        </label>
+        <textarea
+          id="comentarios"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          placeholder="Escribe algún comentario adicional"
+          rows="3"></textarea>
+      </div>
+
+      <!-- Campo oculto para el ID del usuario logeado -->
+      <input type="hidden" id="añadido_por" value="{{loggedInUserId}}" />
+
+      <div class="flex items-center justify-between">
+        <button
+          type="submit"
+          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+        >
+          Añadir Persona
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script is:inline>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("addPersonForm");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Obtener valores del formulario
+        const nombre = document.getElementById("nombre").value.trim();
+        const telefono = document.getElementById("telefono").value.trim();
+        const abordadoPor = document
+          .getElementById("abordado_por")
+          .value.trim();
+        const congregacion = document.getElementById("congregacion").value;
+        const comentarios = document.getElementById("comentarios").value.trim(); // Nuevo campo
+        const añadidoPor = document.getElementById("añadido_por").value.trim(); // ID del usuario logeado
+
+        // Validar campos requeridos
+        if (!nombre || !telefono || !abordadoPor || !congregacion) {
+          alert("Por favor, completa todos los campos requeridos.");
+          return;
+        }
+
+        // Enviar los datos al servidor
+        const response = await fetch("/api/crearPersonasInteresadas.json", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nombre,
+            telefono,
+            abordado_por: abordadoPor,
+            congregacion_id: congregacion,
+            comentarios, // Añadir comentarios al body
+            añadido_por: añadidoPor,
+          }),
+        });
+
+        if (response.ok) {
+          alert("Persona añadida exitosamente.");
+          form.reset(); // Limpiar el formulario
+        } else {
+          console.error("Error al añadir la persona.");
+          alert("Ocurrió un error al añadir la persona.");
+        }
+      });
+    });
+  </script>
+</Layout>
