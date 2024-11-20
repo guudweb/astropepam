@@ -103,50 +103,48 @@ async function handleCheckboxChange(personaId: number, checked: boolean) {
 
 <Layout title="Personas Interesadas">
   <div class="container mx-auto mt-8 px-4">
-    <h1
-      class="text-3xl font-extrabold text-gray-800 dark:text-white mb-6 text-center"
-    >
+    <h1 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">
       Personas Interesadas
     </h1>
 
     <div class="overflow-x-auto">
       <table
-        class="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 shadow-lg rounded-lg"
+        class="min-w-full bg-white border border-gray-300 shadow-lg rounded-lg"
       >
         <thead>
           <tr>
             <th
-              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700"
             >
               Nombre
             </th>
             <th
-              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700"
             >
               Teléfono
             </th>
             <th
-              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700"
             >
               Abordado Por
             </th>
             <th
-              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700"
             >
               Congregación
             </th>
             <th
-              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700"
             >
               Atendido
             </th>
             <th
-              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700"
             >
               Añadido Por
             </th>
             <th
-              class="px-4 py-3 border-b text-left font-semibold text-gray-700 dark:text-gray-300"
+              class="px-4 py-3 border-b text-left font-semibold text-gray-700"
             >
               Comentarios
             </th>
@@ -162,23 +160,23 @@ async function handleCheckboxChange(personaId: number, checked: boolean) {
 
               return (
                 <tr
-                  class={`bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 ${
-                    persona.atendido ? "bg-gray-300 dark:bg-gray-600" : ""
+                  class={`bg-gray-50  hover:bg-gray-100  ${
+                    persona.atendido ? "bg-gray-300 " : ""
                   }`}
                 >
-                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                  <td class="px-4 py-2 border-b text-gray-800 ">
                     {persona.nombre}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                  <td class="px-4 py-2 border-b text-gray-800 ">
                     {persona.telefono}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                  <td class="px-4 py-2 border-b text-gray-800 ">
                     {persona.abordado_por}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                  <td class="px-4 py-2 border-b text-gray-800 ">
                     {persona.congregacion}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                  <td class="px-4 py-2 border-b text-gray-800 ">
                     {isAdmin || serviceLink ? (
                       <>
                         <span class="mr-2">
@@ -198,10 +196,10 @@ async function handleCheckboxChange(personaId: number, checked: boolean) {
                       "No"
                     )}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                  <td class="px-4 py-2 border-b text-gray-800 ">
                     {persona.añadido_por}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 dark:text-gray-200">
+                  <td class="px-4 py-2 border-b text-gray-800 ">
                     {persona.comentarios}
                   </td>
                 </tr>
