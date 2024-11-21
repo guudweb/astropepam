@@ -103,14 +103,15 @@ async function handleCheckboxChange(personaId: number, checked: boolean) {
 
 <Layout title="Personas Interesadas">
   <div class="container mx-auto mt-8 px-4">
-    <h1 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">
+    <h1 class="text-2xl text-gray-800 mb-6 text-center">
       Personas Interesadas
     </h1>
 
     <div class="overflow-x-auto">
       <table
-        class="min-w-full bg-white border border-gray-300 shadow-lg rounded-lg"
+        class="min-w-full bg-white border border-gray-300 shadow-lg rounded-lg hidden md:table"
       >
+        <!-- Table for Desktop View -->
         <thead>
           <tr>
             <th
@@ -152,34 +153,33 @@ async function handleCheckboxChange(personaId: number, checked: boolean) {
         </thead>
         <tbody>
           {
-            personasInteresadasData.map((persona) => {
-              const shouldHideRow = persona.atendido && !isAdmin;
-              if (shouldHideRow) {
-                return null; // Skip this record for non-admin users without service_link
-              }
-
-              return (
+            personasInteresadasData
+              .filter((persona) => isAdmin || serviceLink || !persona.atendido) // Filter rows for non-admins
+              .map((persona) => (
                 <tr
-                  class={`bg-gray-50  hover:bg-gray-100  ${
-                    persona.atendido ? "bg-gray-300 " : ""
+                  class={`bg-gray-50 hover:bg-gray-100 ${
+                    persona.atendido ? "bg-gray-300" : ""
                   }`}
                 >
-                  <td class="px-4 py-2 border-b text-gray-800 ">
+                  <td class="px-4 py-2 border-b text-gray-800">
                     {persona.nombre}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 ">
+                  <td class="px-4 py-2 border-b text-gray-800">
                     {persona.telefono}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 ">
+                  <td class="px-4 py-2 border-b text-gray-800">
                     {persona.abordado_por}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 ">
+                  <td class="px-4 py-2 border-b text-gray-800">
                     {persona.congregacion}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 ">
+                  <td class="px-4 py-2 border-b text-gray-800">
                     {isAdmin || serviceLink ? (
                       <>
-                        <span class="mr-2">
+                        <span
+                          id={`desktop-atendido-status-${persona.id}`}
+                          class="mr-2"
+                        >
                           {persona.atendido ? "Sí" : "No"}
                         </span>
                         <input
@@ -188,6 +188,7 @@ async function handleCheckboxChange(personaId: number, checked: boolean) {
                           checked={persona.atendido}
                           class="mr-2"
                           data-persona-id={persona.id}
+                          data-view="desktop"
                         />
                       </>
                     ) : persona.atendido ? (
@@ -196,23 +197,78 @@ async function handleCheckboxChange(personaId: number, checked: boolean) {
                       "No"
                     )}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 ">
+
+                  <td class="px-4 py-2 border-b text-gray-800">
                     {persona.añadido_por}
                   </td>
-                  <td class="px-4 py-2 border-b text-gray-800 ">
+                  <td class="px-4 py-2 border-b text-gray-800">
                     {persona.comentarios}
                   </td>
                 </tr>
-              );
-            })
+              ))
           }
         </tbody>
       </table>
+
+      <!-- Table for Mobile View -->
+      <div class="grid grid-cols-1 gap-4 md:hidden">
+        {
+          personasInteresadasData
+            .filter((persona) => isAdmin || serviceLink || !persona.atendido) // Filter rows for non-admins
+            .map((persona) => (
+              <div
+                class={`bg-white border border-gray-300 shadow-md rounded-lg p-4 ${
+                  persona.atendido ? "bg-gray-100" : ""
+                }`}
+              >
+                <p class="text-gray-800 font-semibold mb-2">
+                  <span class="block">Nombre: {persona.nombre}</span>
+                  <span class="block">Teléfono: {persona.telefono}</span>
+                </p>
+                <p class="text-gray-700 mb-2">
+                  Abordado Por: {persona.abordado_por}
+                </p>
+                <p class="text-gray-700 mb-2">
+                  Congregación asignada: {persona.congregacion}
+                </p>
+                <p class="text-gray-700 mb-2">
+                  Atendido:{" "}
+                  {isAdmin || serviceLink ? (
+                    <>
+                      <span
+                        id={`mobile-atendido-status-${persona.id}`}
+                        class="mr-2"
+                      >
+                        {persona.atendido ? "Sí" : "No"}
+                      </span>
+                      <input
+                        type="checkbox"
+                        name="atendido"
+                        checked={persona.atendido}
+                        class="mr-2"
+                        data-persona-id={persona.id}
+                        data-view="mobile"
+                      />
+                    </>
+                  ) : persona.atendido ? (
+                    "Sí"
+                  ) : (
+                    "No"
+                  )}
+                </p>
+
+                <p class="text-gray-700 mb-2">
+                  Añadido Por: {persona.añadido_por}
+                </p>
+                <p class="text-gray-700">Comentarios: {persona.comentarios}</p>
+              </div>
+            ))
+        }
+      </div>
     </div>
   </div>
 
   <script is:inline>
-    // Attach event listeners after the page is loaded
     document.addEventListener("DOMContentLoaded", () => {
       const checkboxes = document.querySelectorAll('input[type="checkbox"]');
 
@@ -221,25 +277,126 @@ async function handleCheckboxChange(personaId: number, checked: boolean) {
           const personaId = event.target.dataset.personaId;
           const checked = event.target.checked;
 
-          // Call the backend API to update 'atendido'
-          const response = await fetch("/api/update-atendido.json", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              personaId: personaId,
-              atendido: checked,
-            }),
-          });
+          // Show confirmation modal
+          const confirmAction = await showModal(
+            "Confirmar acción",
+            `¿Estás seguro de que quieres marcar como ${
+              checked ? "atendido" : "no atendido"
+            } esta persona?`
+          );
 
-          if (response.ok) {
-            console.log("Atendido status updated successfully");
+          if (confirmAction) {
+            try {
+              // Call the backend API to update 'atendido'
+              const response = await fetch("/api/update-atendido.json", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  personaId: personaId,
+                  atendido: checked,
+                }),
+              });
+
+              if (response.ok) {
+                console.log("Atendido status updated successfully");
+
+                // Dynamically update the status text and checkbox for both views
+                const desktopStatusText = document.getElementById(
+                  `desktop-atendido-status-${personaId}`
+                );
+                const mobileStatusText = document.getElementById(
+                  `mobile-atendido-status-${personaId}`
+                );
+
+                const desktopCheckbox = document.querySelector(
+                  `input[data-persona-id="${personaId}"][data-view="desktop"]`
+                );
+                const mobileCheckbox = document.querySelector(
+                  `input[data-persona-id="${personaId}"][data-view="mobile"]`
+                );
+
+                // Update text content
+                if (desktopStatusText) {
+                  desktopStatusText.textContent = checked ? "Sí" : "No";
+                }
+                if (mobileStatusText) {
+                  mobileStatusText.textContent = checked ? "Sí" : "No";
+                }
+
+                // Synchronize checkbox state
+                if (desktopCheckbox) {
+                  desktopCheckbox.checked = checked;
+                }
+                if (mobileCheckbox) {
+                  mobileCheckbox.checked = checked;
+                }
+              } else {
+                console.error("Error updating atendido status");
+                event.target.checked = !checked; // Revert the checkbox if API call fails
+              }
+            } catch (error) {
+              console.error("Error during update:", error);
+              event.target.checked = !checked; // Revert the checkbox if there's an error
+            }
           } else {
-            console.error("Error updating atendido status");
+            event.target.checked = !checked; // Revert the checkbox if user cancels
           }
         });
       });
+
+      // Function to show modal and return user's confirmation
+      function showModal(title, message) {
+        return new Promise((resolve) => {
+          const modalOverlay = document.createElement("div");
+          modalOverlay.className =
+            "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+
+          const modal = document.createElement("div");
+          modal.className =
+            "bg-white rounded-lg shadow-lg p-6 max-w-sm w-full text-center";
+
+          const modalTitle = document.createElement("h2");
+          modalTitle.className = "text-lg font-bold mb-4";
+          modalTitle.textContent = title;
+
+          const modalMessage = document.createElement("p");
+          modalMessage.className = "text-gray-700 mb-6";
+          modalMessage.textContent = message;
+
+          const buttonContainer = document.createElement("div");
+          buttonContainer.className = "flex justify-end gap-2";
+
+          const confirmButton = document.createElement("button");
+          confirmButton.className =
+            "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600";
+          confirmButton.textContent = "Sí";
+
+          const cancelButton = document.createElement("button");
+          cancelButton.className =
+            "bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400";
+          cancelButton.textContent = "No";
+
+          buttonContainer.appendChild(confirmButton);
+          buttonContainer.appendChild(cancelButton);
+          modal.appendChild(modalTitle);
+          modal.appendChild(modalMessage);
+          modal.appendChild(buttonContainer);
+          modalOverlay.appendChild(modal);
+          document.body.appendChild(modalOverlay);
+
+          confirmButton.addEventListener("click", () => {
+            resolve(true);
+            document.body.removeChild(modalOverlay);
+          });
+
+          cancelButton.addEventListener("click", () => {
+            resolve(false);
+            document.body.removeChild(modalOverlay);
+          });
+        });
+      }
     });
   </script>
 </Layout>
