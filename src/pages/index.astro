@@ -2,9 +2,15 @@
 import { IndexCard, Program, Time, Users, CreateUser, Congregation } from "@/components/index";
 import { Layout } from "@/layouts/index";
 import { getSession } from 'auth-astro/server';
+
 const session = await getSession(Astro.request);
 
 const { isAdmin, user } = Astro.locals;
+
+// Determine if the user has service link or is a captain
+const hasSpecialAccess = isAdmin;
+//const hasSpecialAccess = isAdmin || user?.service_link || user?.privilegios?.includes("capitan");
+
 ---
 
 <Layout title="Inicio">
@@ -52,5 +58,24 @@ const { isAdmin, user } = Astro.locals;
         className="size-16 md:size-28 text-cyan-600 mx-auto group-hover:text-white"
       />
     </IndexCard>
+
+    <!-- {hasSpecialAccess && ( -->
+      <>
+        <IndexCard
+          href="/crear-personas-interesadas"
+          title="Añadir Persona Interesada"
+          subtitle="Registra a una nueva persona interesada en el sistema."
+        >
+          <CreateUser className="size-16 md:size-28 text-cyan-600 mx-auto group-hover:text-white" />
+        </IndexCard>
+        <IndexCard
+          href="/personas-interesadas"
+          title="Personas Interesadas"
+          subtitle="Administra y consulta las personas interesadas."
+        >
+          <Users className="size-16 md:size-28 text-cyan-600 mx-auto group-hover:text-white" />
+        </IndexCard>
+      </>
+    <!-- )} -->
   </section>
 </Layout>

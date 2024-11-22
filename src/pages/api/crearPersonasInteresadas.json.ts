@@ -2,10 +2,7 @@ import type { APIRoute } from "astro";
 import { db, PersonasInteresadas, Usuario, eq } from "astro:db";
 import { getSession } from "auth-astro/server";
 
-type Privilegios = {
-  roles?: string[];
-  [key: string]: any;
-};
+type Privilegios = string[];
 
 export const POST: APIRoute = async ({ request }) => {
   const session = await getSession(request);
@@ -31,24 +28,20 @@ export const POST: APIRoute = async ({ request }) => {
 
     const currentUser = usuarioDB[0];
 
-    // Deserializar privilegios
-    let privilegios: Privilegios = {};
-    if (currentUser?.privilegios) {
-      try {
-        privilegios = JSON.parse(
-          currentUser.privilegios as string
-        ) as Privilegios;
-      } catch (error) {
-        console.error("Error al deserializar privilegios:", error);
-      }
+    // Verificar si privilegios ya es un array
+    let privilegios: Privilegios = [];
+    if (Array.isArray(currentUser?.privilegios)) {
+      privilegios = currentUser.privilegios as Privilegios;
+      console.log("Privilegios is already an array:", privilegios);
+    } else {
+      console.warn("Unexpected privilegios format:", currentUser.privilegios);
     }
 
     // Verificar si el usuario tiene autorización
     const isAuthorized =
       user.role === "admin" ||
       currentUser?.service_link === true ||
-      (Array.isArray(privilegios.roles) &&
-        privilegios.roles.includes("capitan"));
+      (Array.isArray(privilegios) && privilegios.includes("capitan"));
 
     if (!isAuthorized) {
       return new Response("No autorizado", { status: 403 });

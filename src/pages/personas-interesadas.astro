@@ -7,6 +7,8 @@ import {
   eq,
 } from "astro:db";
 
+import { or } from "astro:db";
+
 import Layout from "../layouts/Layout.astro";
 
 // Helper to fetch user details
@@ -32,32 +34,8 @@ const serviceLink = userDetails?.service_link || false;
 
 // Fetch personas interesadas data
 let personasInteresadasData: any[] = [];
-
 if (isAdmin) {
   // Admin: Fetch all records with names
-  personasInteresadasData = await db
-    .select({
-      id: PersonasInteresadasDB.id,
-      nombre: PersonasInteresadasDB.nombre,
-      telefono: PersonasInteresadasDB.telefono,
-      abordado_por: PersonasInteresadasDB.abordado_por,
-      congregacion: CongregacionDB.nombre, // Get congregation name
-      atendido: PersonasInteresadasDB.atendido,
-      añadido_por: UsuarioDB.nombre, // Get the name of the user who added the record
-      comentarios: PersonasInteresadasDB.comentarios,
-    })
-    .from(PersonasInteresadasDB)
-    .leftJoin(
-      UsuarioDB,
-      eq(PersonasInteresadasDB.añadido_por, UsuarioDB.user_id)
-    ) // Join with user table
-    .leftJoin(
-      CongregacionDB,
-      eq(PersonasInteresadasDB.congregacion, CongregacionDB.id)
-    ) // Join with congregation table
-    .execute();
-} else if (serviceLink && userDetails?.congregacion) {
-  // Non-admin with serviceLink: Filter by user's congregation and exclude 'atendido' true records
   personasInteresadasData = await db
     .select({
       id: PersonasInteresadasDB.id,
@@ -78,10 +56,62 @@ if (isAdmin) {
       CongregacionDB,
       eq(PersonasInteresadasDB.congregacion, CongregacionDB.id)
     )
-    .where(eq(PersonasInteresadasDB.congregacion, userDetails.congregacion))
+    .execute();
+} else if (serviceLink && userDetails?.congregacion) {
+  // Service link and captain: Fetch both congregation and user's added records
+  personasInteresadasData = await db
+    .select({
+      id: PersonasInteresadasDB.id,
+      nombre: PersonasInteresadasDB.nombre,
+      telefono: PersonasInteresadasDB.telefono,
+      abordado_por: PersonasInteresadasDB.abordado_por,
+      congregacion: CongregacionDB.nombre,
+      atendido: PersonasInteresadasDB.atendido,
+      añadido_por: UsuarioDB.nombre,
+      comentarios: PersonasInteresadasDB.comentarios,
+    })
+    .from(PersonasInteresadasDB)
+    .leftJoin(
+      UsuarioDB,
+      eq(PersonasInteresadasDB.añadido_por, UsuarioDB.user_id)
+    )
+    .leftJoin(
+      CongregacionDB,
+      eq(PersonasInteresadasDB.congregacion, CongregacionDB.id)
+    )
+    .where(
+      or(
+        eq(PersonasInteresadasDB.congregacion, userDetails.congregacion),
+        eq(UsuarioDB.nombre, userDetails.nombre)
+      )
+    )
+    .execute();
+} else if (userDetails) {
+  // Captain only: Fetch only records added by the user
+  personasInteresadasData = await db
+    .select({
+      id: PersonasInteresadasDB.id,
+      nombre: PersonasInteresadasDB.nombre,
+      telefono: PersonasInteresadasDB.telefono,
+      abordado_por: PersonasInteresadasDB.abordado_por,
+      congregacion: CongregacionDB.nombre,
+      atendido: PersonasInteresadasDB.atendido,
+      añadido_por: UsuarioDB.nombre,
+      comentarios: PersonasInteresadasDB.comentarios,
+    })
+    .from(PersonasInteresadasDB)
+    .leftJoin(
+      UsuarioDB,
+      eq(PersonasInteresadasDB.añadido_por, UsuarioDB.user_id)
+    )
+    .leftJoin(
+      CongregacionDB,
+      eq(PersonasInteresadasDB.congregacion, CongregacionDB.id)
+    )
+    .where(eq(UsuarioDB.nombre, userDetails.nombre)) // Only records added by the user
     .execute();
 } else {
-  // Neither admin nor service link: Return no data
+  // No permissions: Return no data
   personasInteresadasData = [];
 }
 
