@@ -37,16 +37,6 @@ export const POST: APIRoute = async ({ request }) => {
       console.warn("Unexpected privilegios format:", currentUser.privilegios);
     }
 
-    // Verificar si el usuario tiene autorización
-    const isAuthorized =
-      user.role === "admin" ||
-      currentUser?.service_link === true ||
-      (Array.isArray(privilegios) && privilegios.includes("capitan"));
-
-    if (!isAuthorized) {
-      return new Response("No autorizado", { status: 403 });
-    }
-
     // Validar datos requeridos
     if (!nombre || !telefono || !abordado_por || !congregacion_id) {
       return new Response(
