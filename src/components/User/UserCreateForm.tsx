@@ -74,7 +74,7 @@ export const UserCreateForm = ({ congregacionData }) => {
       return;
     }
 
-    console.log(userData);
+    
 
     try {
       const response = await fetch(`/api/createUser`, {
