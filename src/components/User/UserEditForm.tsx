@@ -39,11 +39,8 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
     setIsActive(user.isActive || false);
     setSexo(user.sexo || "M");
     setEstadoCivil(user.estadoCivil || "soltero");
-<<<<<<< HEAD
     setDescripcion(user.descripcion || "");
-=======
     setUsername(user.userName);
->>>>>>> 89c44c70c534f5a0cb5bd4e68513c753ac18dd5b
   }, [user]);
 
   const handleSubmit = async (e) => {
