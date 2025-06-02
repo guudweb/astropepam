@@ -14,6 +14,7 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
   const [estadoCivil, setEstadoCivil] = useState(user.estadoCivil || "soltero");
   const [role, setRole] = useState(user.role || "user");
   const [availability, setAvailability] = useState(user.disponibilidad || {});
+  const [userName, setUsername] = useState(user.userName || "");
   const [loading, setLoading] = useState(false);
   const [descripcion, setDescripcion] = useState(user.descripcion || "");
 
@@ -38,7 +39,11 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
     setIsActive(user.isActive || false);
     setSexo(user.sexo || "M");
     setEstadoCivil(user.estadoCivil || "soltero");
+<<<<<<< HEAD
     setDescripcion(user.descripcion || "");
+=======
+    setUsername(user.userName);
+>>>>>>> 89c44c70c534f5a0cb5bd4e68513c753ac18dd5b
   }, [user]);
 
   const handleSubmit = async (e) => {
@@ -70,7 +75,6 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
       if (response.ok) {
         const updatedUser = await response.json();
         notyf.success("Usuario actualizado correctamente");
-        
       } else {
         notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
         console.error("Error al actualizar el usuario:", response.statusText);
@@ -100,6 +104,17 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
         />
+      </div>
+      <div className="mb-5">
+        <label
+          htmlFor="username"
+          className="block mb-2 text-sm font-medium text-gray-900"
+        >
+          Nombre de usuario
+        </label>
+        <span className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+          {userName}
+        </span>
       </div>
       <div className="mb-5">
         <label
@@ -165,7 +180,9 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
           value={congregacion}
           onChange={(e) => setCongregacion(e.target.value)}
         >
-          <option value="" disabled>Sin congregación</option>
+          <option value="" disabled>
+            Sin congregación
+          </option>
           {congregacionData.map((item) => (
             <option value={item.id} key={item.id}>
               {item.nombre}
