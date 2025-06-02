@@ -5,9 +5,10 @@ import { TableRow } from "@/components/index";
 interface Props {
     comments: User[] | [];
     handleClick: (userId: number) => void;
+    isAdmin?: boolean; // NUEVA PROP
 }
 
-export const TableData: React.FC<Props> = ({ comments, handleClick }) => {
+export const TableData: React.FC<Props> = ({ comments, handleClick, isAdmin }) => {
 
     
 
@@ -40,6 +41,16 @@ export const TableData: React.FC<Props> = ({ comments, handleClick }) => {
                             </span>
                         )}
                     </TableRow>
+                    {/* NUEVO: Mostrar descripción solo para admins */}
+                    {isAdmin && (
+                        <TableRow>
+                            <div className="max-w-xs">
+                                <p className="text-sm text-gray-600 truncate" title={user.descripcion || 'Sin descripción'}>
+                                    {user.descripcion || 'Sin descripción'}
+                                </p>
+                            </div>
+                        </TableRow>
+                    )}
                     <TableRow className="flex gap-x-5">
                         <a href={`/user/${user.user_id}`} className="group">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-7 text-cyan-700 group-hover:scale-110 transition-transform">

@@ -8,9 +8,10 @@ import "notyf/notyf.min.css";
 interface TableProps {
     comments: User[];
     isLoading: boolean;
+    isAdmin?: boolean;
 }
 
-export const TableUser: React.FC<TableProps> = ({ comments, isLoading }) => {
+export const TableUser: React.FC<TableProps> = ({ comments, isLoading, isAdmin }) => {
     const [show, setShow] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
@@ -69,6 +70,7 @@ export const TableUser: React.FC<TableProps> = ({ comments, isLoading }) => {
                         <TableHead title="Congregación" />
                         <TableHead title="Teléfono" />
                         <TableHead title="Disponible" />
+                        {isAdmin && <TableHead title="Descripción" />}
                         <TableHead title="Acciones" />
                     </tr>
                 </thead>
@@ -76,7 +78,7 @@ export const TableUser: React.FC<TableProps> = ({ comments, isLoading }) => {
                     {isLoading ? (
                         <LoadingTable />
                     ) : (
-                        <TableData comments={filteredComments} handleClick={handleClick} />
+                        <TableData comments={filteredComments} handleClick={handleClick} isAdmin={isAdmin} />
                     )}
                 </tbody>
             </table>

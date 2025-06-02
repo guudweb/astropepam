@@ -18,6 +18,7 @@ export const UserCreateForm = ({ congregacionData }) => {
   const [role, setRole] = useState("");
   const [availability, setAvailability] = useState("{}");
   const [loading, setLoading] = useState(false);
+  const [descripcion, setDescripcion] = useState(""); // NUEVO ESTADO
 
   const handleDisponibilityChange = useCallback((newAvailability) => {
     setAvailability(newAvailability);
@@ -55,6 +56,7 @@ export const UserCreateForm = ({ congregacionData }) => {
       congregacion: +congregacion,
       availability: JSON.stringify(availability),
       role,
+      descripcion, // AÑADIR DESCRIPCIÓN
     };
 
     if (
@@ -102,6 +104,7 @@ export const UserCreateForm = ({ congregacionData }) => {
         setEstadoCivil("")
         setRole("")
         setTelefono("")
+        setDescripcion(""); // LIMPIAR DESCRIPCIÓN
 
       } else {
         notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
@@ -363,6 +366,28 @@ export const UserCreateForm = ({ congregacionData }) => {
           <option value="admin">Admin</option>
           <option value="user">User</option>
         </select>
+      </div>
+
+      {/* NUEVO CAMPO: Descripción (solo para admins) */}
+      <div className="mb-5">
+        <label
+          htmlFor="descripcion"
+          className="block mb-2 text-sm font-medium text-gray-900"
+        >
+          Descripción (Solo visible para administradores)
+        </label>
+        <textarea
+          id="descripcion"
+          rows={4}
+          className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+          placeholder="Notas internas sobre el usuario..."
+          value={descripcion}
+          onChange={(e) => setDescripcion(e.target.value)}
+          maxLength={500}
+        />
+        <p className="mt-1 text-sm text-gray-500">
+          {descripcion.length}/500 caracteres
+        </p>
       </div>
 
       <button

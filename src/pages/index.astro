@@ -1,5 +1,6 @@
 ---
 import { IndexCard, Program, Time, Users, CreateUser, Congregation } from "@/components/index";
+import { PersonasInteresadasNotification } from "@/components/PersonasInteresadasNotification";
 import { Layout } from "@/layouts/index";
 import { getSession } from 'auth-astro/server';
 
@@ -17,6 +18,16 @@ const hasSpecialAccess = isAdmin;
   <section
     class="grid grid-cols-2 px-5 md:flex md:flex-wrap justify-center items-center flex-1 gap-x-10 gap-y-10 my-20 pb-10"
   >
+    {/* NUEVO: Notificación de personas interesadas */}
+    {(isAdmin || user?.service_link) && (
+      <div class="col-span-2 w-full flex justify-center mb-4">
+        <PersonasInteresadasNotification 
+          userId={session.user.id} 
+          isServiceLink={user?.service_link || false}
+          client:load
+        />
+      </div>
+    )}
     {
       isAdmin && (
         <IndexCard

@@ -5,7 +5,11 @@ import { useFetchUsers } from "@/hooks/index";
 
 
 
-export const DataView = () => {
+interface DataViewProps {
+  isAdmin?: boolean;
+}
+
+export const DataView = ({ isAdmin }: DataViewProps) => {
   const limit = 10;
   const { comments, isLoading, page, setSearchTerm, handleNextPage, handlePreviousPage, setDay, setTurn } = useFetchUsers(limit);
 
@@ -45,7 +49,7 @@ export const DataView = () => {
           <Search onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <div className="overflow-x-auto">
-          <TableUser comments={comments} isLoading={isLoading} />
+          <TableUser comments={comments} isLoading={isLoading} isAdmin={isAdmin} />
           {comments.length === 0 && !isLoading && (
             <p className="text-center text-gray-500 mt-4">
               No se encontraron resultados.

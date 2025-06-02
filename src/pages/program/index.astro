@@ -4,8 +4,11 @@ import { db, Usuario } from "astro:db";
 
 const allUsers = await db.select().from(Usuario);
 
+// MODIFICACIÓN: Filtrar solo usuarios activos
+const activeUsers = allUsers.filter(user => user.isActive === true);
+
 const getUsersForTurno = (day: string, turno: string) => {
-  return allUsers
+  return activeUsers // Cambiar de allUsers a activeUsers
     .filter((user) => {
       const disponibilidad =
         typeof user.disponibilidad === "string"
@@ -259,19 +262,21 @@ let weekDates = getWeekDates(weekOffset);
 
         <!-- Lista de botones de usuarios -->
         <ul id="userList" class="max-h-60 overflow-y-auto">
-          <!-- Aquí se generarán los botones dinámicamente con los usuarios -->
+          <!-- MODIFICACIÓN: Filtrar usuarios activos y ordenar alfabéticamente -->
           {
-            allUsers.map((user) => (
-              <li class="mb-2">
-                <button
-                  class="bg-cyan-600 text-white w-full px-2 py-1 rounded user-select-btn"
-                  data-username={user.nombre}
-                  data-congregacion-id={user.congregacion}
-                >
-                  {user.nombre}
-                </button>
-              </li>
-            ))
+            activeUsers
+              .sort((a, b) => a.nombre.localeCompare(b.nombre)) // Ordenar alfabéticamente
+              .map((user) => (
+                <li class="mb-2">
+                  <button
+                    class="bg-cyan-600 text-white w-full px-2 py-1 rounded user-select-btn hover:bg-cyan-700 transition-colors"
+                    data-username={user.nombre}
+                    data-congregacion-id={user.congregacion}
+                  >
+                    {user.nombre}
+                  </button>
+                </li>
+              ))
           }
         </ul>
 

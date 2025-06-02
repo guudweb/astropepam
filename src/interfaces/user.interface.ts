@@ -14,6 +14,7 @@ export interface User {
   isActive: boolean;
   userName: string;
   service_link: boolean;
+  descripcion?: string;
 }
 
 export interface Congregacion {

@@ -19,6 +19,7 @@ export const POST: APIRoute = async ({ request, params }) => {
       role,
       conyuje,
       userName,
+      descripcion, // NUEVO
     } = await request.json();
 
     // Verifica si el usuario está autenticado
@@ -56,6 +57,7 @@ export const POST: APIRoute = async ({ request, params }) => {
       nombre_conyuge: conyuje,
       userName: userName,
       privilegios: null,
+      descripcion: descripcion || null, // NUEVO
     });
 
     return new Response(JSON.stringify(newUser), { status: 200 });

@@ -1,0 +1,237 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { db, PersonasInteresadas, Usuario, Congregacion, eq } from "astro:db";
+import { getSession } from "auth-astro/server";
+
+const { id } = Astro.params;
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect("/signin");
+}
+
+// Obtener la persona interesada
+const [persona] = await db
+  .select()
+  .from(PersonasInteresadas)
+  .where(eq(PersonasInteresadas.id, Number(id)));
+
+if (!persona) {
+  return Astro.redirect("/personas-interesadas");
+}
+
+// Verificar permisos: admin o el usuario que la añadió
+const isAdmin = session.user.role === "admin";
+const isOwner = persona.añadido_por === session.user.id;
+
+if (!isAdmin && !isOwner) {
+  return Astro.redirect("/personas-interesadas");
+}
+
+// Obtener congregaciones para el select
+const congregaciones = await db.select().from(Congregacion);
+---
+
+<Layout title="Editar Persona Interesada">
+  <div class="container mx-auto mt-8 px-4">
+    <h1 class="text-2xl text-gray-800 mb-6 text-center">
+      Editar Persona Interesada
+    </h1>
+
+    <form
+      id="editPersonForm"
+      class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 max-w-2xl mx-auto"
+      data-persona-id={id}
+    >
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="nombre">
+          Nombre
+        </label>
+        <input
+          type="text"
+          id="nombre"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          placeholder="Nombre"
+          value={persona.nombre}
+          required
+        />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="telefono">
+          Teléfono
+        </label>
+        <input
+          type="text"
+          id="telefono"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          placeholder="Teléfono"
+          value={persona.telefono}
+          required
+        />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="abordado_por">
+          Abordado Por
+        </label>
+        <input
+          type="text"
+          id="abordado_por"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          placeholder="Nombre de quien abordó"
+          value={persona.abordado_por}
+          required
+        />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="congregacion">
+          Congregación que debe atender
+        </label>
+        <select
+          id="congregacion"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          required
+        >
+          <option value="">Selecciona una congregación</option>
+          {congregaciones.map((cong) => (
+            <option 
+              value={cong.id} 
+              selected={cong.id === persona.congregacion}
+            >
+              {cong.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="comentarios">
+          Comentarios
+        </label>
+        <textarea
+          id="comentarios"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          placeholder="Escribe algún comentario adicional"
+          rows="3"
+        >{persona.comentarios}</textarea>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2">
+          Estado de atención
+        </label>
+        <label class="inline-flex items-center">
+          <input
+            type="checkbox"
+            id="atendido"
+            class="form-checkbox h-5 w-5 text-cyan-600"
+            checked={persona.atendido}
+          />
+          <span class="ml-2 text-gray-700">Atendido</span>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-between gap-4">
+        <button
+          type="submit"
+          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex-1"
+          id="submitBtn"
+        >
+          <span id="btnText">Actualizar</span>
+          <div id="spinner" class="hidden">
+            <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        </button>
+        <a
+          href="/personas-interesadas"
+          class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex-1 text-center"
+        >
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    import { Notyf } from "notyf";
+    import "notyf/notyf.min.css";
+
+    const notyf = new Notyf({
+      duration: 4000,
+      position: {
+        x: "right",
+        y: "top",
+      },
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("editPersonForm");
+      const submitBtn = document.getElementById("submitBtn");
+      const spinner = document.getElementById("spinner");
+      const btnText = document.getElementById("btnText");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const personaId = form.dataset.personaId;
+        const nombre = document.getElementById("nombre").value.trim();
+        const telefono = document.getElementById("telefono").value.trim();
+        const abordadoPor = document.getElementById("abordado_por").value.trim();
+        const congregacion = document.getElementById("congregacion").value;
+        const comentarios = document.getElementById("comentarios").value.trim();
+        const atendido = document.getElementById("atendido").checked;
+
+        // Validar campos requeridos
+        if (!nombre || !telefono || !abordadoPor || !congregacion) {
+          notyf.error("Por favor, completa todos los campos requeridos.");
+          return;
+        }
+
+        // Mostrar spinner
+        submitBtn.disabled = true;
+        btnText.classList.add("hidden");
+        spinner.classList.remove("hidden");
+
+        try {
+          const response = await fetch("/api/update-persona-interesada.json", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              personaId: Number(personaId),
+              nombre,
+              telefono,
+              abordado_por: abordadoPor,
+              congregacion: Number(congregacion),
+              comentarios,
+              atendido,
+            }),
+          });
+
+          if (response.ok) {
+            notyf.success("Persona actualizada exitosamente.");
+            setTimeout(() => {
+              window.location.href = "/personas-interesadas";
+            }, 1500);
+          } else {
+            const error = await response.json();
+            notyf.error(error.message || "Error al actualizar la persona.");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          notyf.error("Error de conexión. Inténtalo de nuevo.");
+        } finally {
+          submitBtn.disabled = false;
+          btnText.classList.remove("hidden");
+          spinner.classList.add("hidden");
+        }
+      });
+    });
+  </script>
+</Layout>

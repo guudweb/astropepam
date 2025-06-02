@@ -31,6 +31,7 @@ const userDetails = loggedInUserName
 // Determine if the user is an admin and extract serviceLink
 const isAdmin = Astro.locals.isAdmin;
 const serviceLink = userDetails?.service_link || false;
+const user = Astro.locals.user; // Get the user object for ID comparison
 
 // Fetch personas interesadas data
 let personasInteresadasData: any[] = [];
@@ -45,6 +46,7 @@ if (isAdmin) {
       congregacion: CongregacionDB.nombre,
       atendido: PersonasInteresadasDB.atendido,
       añadido_por: UsuarioDB.nombre,
+      añadido_por_id: PersonasInteresadasDB.añadido_por,
       comentarios: PersonasInteresadasDB.comentarios,
     })
     .from(PersonasInteresadasDB)
@@ -68,6 +70,7 @@ if (isAdmin) {
       congregacion: CongregacionDB.nombre,
       atendido: PersonasInteresadasDB.atendido,
       añadido_por: UsuarioDB.nombre,
+      añadido_por_id: PersonasInteresadasDB.añadido_por,
       comentarios: PersonasInteresadasDB.comentarios,
     })
     .from(PersonasInteresadasDB)
@@ -97,6 +100,7 @@ if (isAdmin) {
       congregacion: CongregacionDB.nombre,
       atendido: PersonasInteresadasDB.atendido,
       añadido_por: UsuarioDB.nombre,
+      añadido_por_id: PersonasInteresadasDB.añadido_por,
       comentarios: PersonasInteresadasDB.comentarios,
     })
     .from(PersonasInteresadasDB)
@@ -242,6 +246,14 @@ export { personasInteresadasData };
                     {persona.comentarios}
                   </td>
                   <td class="px-4 py-2 border-b text-gray-800">
+                    {(isAdmin || persona.añadido_por_id === user?.id) && (
+                      <a
+                        href={`/editar-persona-interesada/${persona.id}`}
+                        class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2"
+                      >
+                        Editar
+                      </a>
+                    )}
                     {isAdmin && (
                       <button
                         class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
@@ -310,15 +322,23 @@ export { personasInteresadasData };
                 </p>
                 <p class="text-gray-700">Comentarios: {persona.comentarios}</p>
 
-                {isAdmin && (
+                {(isAdmin || persona.añadido_por_id === user?.id) && (
                   <div class="flex gap-2 mt-4">
-                    <button
-                      class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 w-full"
-                      data-persona-id={persona.id}
-                      data-action="delete"
+                    <a
+                      href={`/editar-persona-interesada/${persona.id}`}
+                      class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 w-full text-center"
                     >
-                      Eliminar
-                    </button>
+                      Editar
+                    </a>
+                    {isAdmin && (
+                      <button
+                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 w-full"
+                        data-persona-id={persona.id}
+                        data-action="delete"
+                      >
+                        Eliminar
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

@@ -26,6 +26,7 @@ const Usuario = defineTable({
     isActive: column.boolean({ default: true }),
     userName: column.text(),
     service_link: column.boolean({ default: false }), // New column added
+    descripcion: column.text({ optional: true }), // NUEVO CAMPO
   },
 });
 
