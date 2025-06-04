@@ -6,6 +6,16 @@ interface Props {
     handleClick: (userId: number) => void;
 }
 
+const PrivilegeBadge: React.FC<{ privilege: string }> = ({ privilege }) => {
+    const firstLetter = privilege.charAt(0).toUpperCase();
+    
+    return (
+        <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full">
+            {firstLetter}
+        </span>
+    );
+};
+
 export const MovileData: React.FC<Props> = ({ comments, handleClick }) => {
 
 
@@ -21,6 +31,13 @@ export const MovileData: React.FC<Props> = ({ comments, handleClick }) => {
                             <div className="">
                                 <div className="flex items-center gap-2">
                                     <p className="text-md text-gray-900 text-[17px]">{user.nombre}</p>
+                                    {user.privilegios && Array.isArray(user.privilegios) && (
+                                        <div className="flex gap-1">
+                                            {user.privilegios.map((privilege: string, index: number) => (
+                                                <PrivilegeBadge key={index} privilege={privilege} />
+                                            ))}
+                                        </div>
+                                    )}
                                     {user.isActive ? (
                                         <span className="flex justify-center items-center bg-green-200 rounded-full size-3" />
                                     ) : (

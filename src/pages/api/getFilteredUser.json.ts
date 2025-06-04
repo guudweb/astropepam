@@ -7,11 +7,13 @@ export async function GET({ url }) {
   const offset = (page - 1) * limit;
   const day = url.searchParams.get("day");
   const turn = url.searchParams.get("turn");
+  const privilegesParam = url.searchParams.get("privileges");
+  const privileges = privilegesParam ? privilegesParam.split(",") : [];
 
-  // Verificación de parámetros obligatorios
-  if (!day || !turn) {
+  // Verificación de parámetros obligatorios - actualizada para ser más flexible
+  if (!day && !turn && privileges.length === 0) {
     return new Response(
-      JSON.stringify({ error: "Day and turn parameters are required" }),
+      JSON.stringify({ error: "At least one filter parameter is required" }),
       {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -32,13 +34,34 @@ export async function GET({ url }) {
       congregacion: user.Congregacion,
     }));
 
-    // Filtra los usuarios según el día y el turno en la disponibilidad
+    // Filtra los usuarios según el día, turno y privilegios
     const filteredUsers = allUsersWithCongregation.filter((user) => {
-      const disponibilidad =
-        typeof user.disponibilidad === "string"
-          ? JSON.parse(user.disponibilidad)
-          : {};
-      return disponibilidad[day] && disponibilidad[day].includes(turn);
+      // Filtro por disponibilidad (día y turno)
+      if (day && turn) {
+        const disponibilidad =
+          typeof user.disponibilidad === "string"
+            ? JSON.parse(user.disponibilidad)
+            : {};
+        if (!disponibilidad[day] || !disponibilidad[day].includes(turn)) {
+          return false;
+        }
+      }
+      
+      // Filtro por privilegios
+      if (privileges.length > 0) {
+        const userPrivileges = user.privilegios || [];
+        // Verifica si el usuario tiene al menos uno de los privilegios seleccionados
+        const hasMatchingPrivilege = privileges.some(privilege => 
+          userPrivileges.some(userPriv => 
+            userPriv.toLowerCase() === privilege.toLowerCase()
+          )
+        );
+        if (!hasMatchingPrivilege) {
+          return false;
+        }
+      }
+      
+      return true;
     });
 
     // Paginación de los resultados filtrados

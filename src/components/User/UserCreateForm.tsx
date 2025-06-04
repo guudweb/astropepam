@@ -1,7 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 import Disponibility from "../Disponibility";
+import { ParticipationRules } from "./ParticipationRules";
 import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
+import type { ParticipationRule } from "@/interfaces/user.interface";
 
 export const UserCreateForm = ({ congregacionData }) => {
   const [nombre, setNombre] = useState("");
@@ -19,10 +21,28 @@ export const UserCreateForm = ({ congregacionData }) => {
   const [availability, setAvailability] = useState("{}");
   const [loading, setLoading] = useState(false);
   const [descripcion, setDescripcion] = useState(""); // NUEVO ESTADO
+  const [privilegios, setPrivilegios] = useState<string[]>([]); // NUEVO ESTADO PARA PRIVILEGIOS
+  const [customPrivilege, setCustomPrivilege] = useState(""); // PARA AGREGAR PRIVILEGIOS PERSONALIZADOS
+  const [participationRules, setParticipationRules] = useState<ParticipationRule[]>([]); // REGLAS DE PARTICIPACIÓN
 
   const handleDisponibilityChange = useCallback((newAvailability) => {
     setAvailability(newAvailability);
   }, []);
+
+  const handlePrivilegeToggle = (privilege: string) => {
+    setPrivilegios(prev => 
+      prev.includes(privilege) 
+        ? prev.filter(p => p !== privilege)
+        : [...prev, privilege]
+    );
+  };
+
+  const handleAddCustomPrivilege = () => {
+    if (customPrivilege.trim() && !privilegios.includes(customPrivilege.trim())) {
+      setPrivilegios(prev => [...prev, customPrivilege.trim()]);
+      setCustomPrivilege("");
+    }
+  };
 
   const notyf = new Notyf({
     duration: 4000,
@@ -57,6 +77,8 @@ export const UserCreateForm = ({ congregacionData }) => {
       availability: JSON.stringify(availability),
       role,
       descripcion, // AÑADIR DESCRIPCIÓN
+      privilegios, // AÑADIR PRIVILEGIOS
+      participation_rules: participationRules, // AÑADIR REGLAS DE PARTICIPACIÓN
     };
 
     if (
@@ -105,6 +127,8 @@ export const UserCreateForm = ({ congregacionData }) => {
         setRole("")
         setTelefono("")
         setDescripcion(""); // LIMPIAR DESCRIPCIÓN
+        setPrivilegios([]); // LIMPIAR PRIVILEGIOS
+        setParticipationRules([]); // LIMPIAR REGLAS DE PARTICIPACIÓN
 
       } else {
         notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
@@ -366,6 +390,84 @@ export const UserCreateForm = ({ congregacionData }) => {
           <option value="admin">Admin</option>
           <option value="user">User</option>
         </select>
+      </div>
+
+      {/* CAMPO DE PRIVILEGIOS */}
+      <div className="mb-5">
+        <label className="block mb-2 text-sm font-medium text-gray-900">
+          Privilegios
+        </label>
+        <div className="space-y-3">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="precursor"
+              checked={privilegios.includes("precursor")}
+              onChange={() => handlePrivilegeToggle("precursor")}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="precursor" className="ml-2 text-sm font-medium text-gray-900">
+              Precursor
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="capitan"
+              checked={privilegios.includes("capitan")}
+              onChange={() => handlePrivilegeToggle("capitan")}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="capitan" className="ml-2 text-sm font-medium text-gray-900">
+              Capitán
+            </label>
+          </div>
+          
+          {/* Mostrar privilegios personalizados */}
+          {privilegios.filter(p => !["precursor", "capitan"].includes(p)).map((privilege, index) => (
+            <div key={index} className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`custom-${index}`}
+                  checked={true}
+                  onChange={() => handlePrivilegeToggle(privilege)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor={`custom-${index}`} className="ml-2 text-sm font-medium text-gray-900">
+                  {privilege}
+                </label>
+              </div>
+            </div>
+          ))}
+          
+          {/* Agregar nuevo privilegio */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={customPrivilege}
+              onChange={(e) => setCustomPrivilege(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomPrivilege())}
+              placeholder="Nuevo privilegio..."
+              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            />
+            <button
+              type="button"
+              onClick={handleAddCustomPrivilege}
+              className="px-3 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              Agregar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* CAMPO DE REGLAS DE PARTICIPACIÓN */}
+      <div className="mb-5">
+        <ParticipationRules 
+          rules={participationRules}
+          onChange={setParticipationRules}
+        />
       </div>
 
       {/* NUEVO CAMPO: Descripción (solo para admins) */}

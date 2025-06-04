@@ -13,6 +13,7 @@ import {
     LoadingTable,
     MovileData,
     PaginationButton,
+    PrivilegeFilter,
     SelectFilter,
     TableData,
     TableHead,
@@ -22,7 +23,8 @@ import {
 
 import { 
     UserCreateForm,
-    UserEditForm 
+    UserEditForm,
+    ParticipationRules
 } from './User'
 
 import BackButton from "./BackButton.astro";
@@ -31,6 +33,7 @@ import { DataView } from "./DataView";
 import Disponibility from "./Disponibility";
 import IndexCard from "./IndexCard.astro";
 import Navbar from "./Navbar";
+import { PDFExporter } from "./PDFExporter";
 import { Search } from "./Search";
 import Spinner from "./Spinner.astro";
 import { 
@@ -62,15 +65,18 @@ export {
     Congregation,
     LoadingMovile,
     LoadingTable,
+    PrivilegeFilter,
     SelectFilter,
     UserCreateForm,
     UserEditForm,
+    ParticipationRules,
     BackButton,
     Calender,
     DataView,
     Disponibility,
     IndexCard,
     Navbar,
+    PDFExporter,
     Search,
     Spinner,
     CongregationTable,

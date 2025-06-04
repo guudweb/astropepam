@@ -3,6 +3,8 @@
 interface User {
   email: string;
   name: string;
+  id?: string; // AGREGAR
+  service_link?: boolean; // AGREGAR
 }
 
 declare namespace App {

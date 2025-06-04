@@ -8,6 +8,16 @@ interface Props {
     isAdmin?: boolean; // NUEVA PROP
 }
 
+const PrivilegeBadge: React.FC<{ privilege: string }> = ({ privilege }) => {
+    const firstLetter = privilege.charAt(0).toUpperCase();
+    
+    return (
+        <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-600 rounded-full">
+            {firstLetter}
+        </span>
+    );
+};
+
 export const TableData: React.FC<Props> = ({ comments, handleClick, isAdmin }) => {
 
     
@@ -16,10 +26,18 @@ export const TableData: React.FC<Props> = ({ comments, handleClick, isAdmin }) =
         <>
             {comments.map((user: User) => (
                 <tr className="bg-white border-b hover:bg-gray-200 transition-colors" key={user.user_id}>
-                    <TableRow
-                        text={user.nombre || 'Sin Nombre'} // Manejo de nombre
-                        className="whitespace-nowrap text-gray-900 font-medium"
-                    />
+                    <TableRow className="whitespace-nowrap text-gray-900 font-medium">
+                        <div className="flex items-center gap-2">
+                            <span>{user.nombre || 'Sin Nombre'}</span>
+                            {user.privilegios && Array.isArray(user.privilegios) && (
+                                <div className="flex gap-1">
+                                    {user.privilegios.map((privilege: string, index: number) => (
+                                        <PrivilegeBadge key={index} privilege={privilege} />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </TableRow>
                     <TableRow
                         text={user.congregacion ? user.congregacion.nombre : 'Sin Congregación'} // Manejo de congregación
                     />

@@ -27,6 +27,7 @@ const Usuario = defineTable({
     userName: column.text(),
     service_link: column.boolean({ default: false }), // New column added
     descripcion: column.text({ optional: true }), // NUEVO CAMPO
+    participation_rules: column.json({ optional: true }), // NUEVO: Reglas de participación
   },
 });
 

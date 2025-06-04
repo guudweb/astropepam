@@ -15,6 +15,13 @@ export interface User {
   userName: string;
   service_link: boolean;
   descripcion?: string;
+  participation_rules?: ParticipationRule[];
+}
+
+export interface ParticipationRule {
+  type: 'max_per_month' | 'max_per_week' | 'specific_weeks' | 'alternating_weeks';
+  value: number | number[];
+  description: string;
 }
 
 export interface Congregacion {

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import {
   PaginationButton,
+  PDFExporter,
+  PrivilegeFilter,
   Search,
   SelectFilter,
   TableUser,
@@ -24,11 +26,14 @@ export const DataView = ({ isAdmin }: DataViewProps) => {
     setDay,
     setTurn,
     setIsActive,
+    setPrivileges: setPrivilegesFilter,
   } = useFetchUsers(limit);
 
   const [day, setDayFilter] = useState("");
   const [turn, setTurnFilter] = useState("");
   const [active, setActive] = useState("");
+  const [privileges, setPrivileges] = useState<string[]>([]);
+  const [searchTermState, setSearchTermState] = useState("");
 
   const handleDayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedDay = e.target.value;
@@ -54,6 +59,17 @@ export const DataView = ({ isAdmin }: DataViewProps) => {
     );
   };
 
+  const handlePrivilegesChange = (selectedPrivileges: string[]) => {
+    setPrivileges(selectedPrivileges);
+    setPrivilegesFilter(selectedPrivileges);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTermState(value);
+    setSearchTerm(value);
+  };
+
   return (
     <section className="pb-10">
       <div className="max-w-7xl px-5 lg:px-20 mx-auto mt-8">
@@ -66,17 +82,34 @@ export const DataView = ({ isAdmin }: DataViewProps) => {
               onChange={handleTurnChange}
               value={turn}
             />
+            
+            <PrivilegeFilter 
+              onChange={handlePrivilegesChange}
+              value={privileges}
+            />
           </div>
-          <select
-            value={active}
-            onChange={handleActiveChange}
-            className="border p-2 rounded"
-          >
-            <option value="">Selecciona disponibilidad</option>
-            <option value="true">Activo</option>
-            <option value="false">Inactivo</option>
-          </select>
-          <Search onChange={(e) => setSearchTerm(e.target.value)} />
+          <div className="flex gap-4 flex-wrap items-center">
+            <select
+              value={active}
+              onChange={handleActiveChange}
+              className="border p-2 rounded"
+            >
+              <option value="">Selecciona disponibilidad</option>
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+            <Search onChange={handleSearchChange} />
+            <PDFExporter 
+              users={comments}
+              currentFilters={{
+                searchTerm: searchTermState || undefined,
+                day: day || undefined,
+                turn: turn || undefined,
+                isActive: active === "true" ? true : active === "false" ? false : null,
+                privileges: privileges.length > 0 ? privileges : undefined
+              }}
+            />
+          </div>
         </div>
         <div className="overflow-x-auto">
           <TableUser
