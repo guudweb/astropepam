@@ -112,6 +112,8 @@ const { isAdmin } = Astro.locals;
     </div>
     <script is:inline>
       let currentDate = new Date(); // Define currentDate in the global scope
+      let userNameMapping = {}; // Mapeo de userName a nombre completo
+      
       const days = [
         "lunes",
         "martes",
@@ -127,6 +129,23 @@ const { isAdmin } = Astro.locals;
         T2: "11:30 - 13:30",
         T3: "13:30 - 15:30",
         T4: "15:30 - 17:30",
+      };
+
+      // Función para obtener el mapeo de nombres
+      const fetchUserNameMapping = async () => {
+        try {
+          const response = await fetch('/api/getUsersNameMapping.json');
+          const data = await response.json();
+          return data.mapping || {};
+        } catch (error) {
+          console.error("Error fetching user name mapping:", error);
+          return {};
+        }
+      };
+
+      // Función para obtener el nombre completo
+      const getFullName = (userName) => {
+        return userNameMapping[userName] || userName; // Fallback al userName si no se encuentra
       };
 
       const fetchWeekData = async (date) => {
@@ -171,6 +190,11 @@ const { isAdmin } = Astro.locals;
       };
 
       const updateWeek = async () => {
+        // Cargar el mapeo de nombres si no lo tenemos
+        if (Object.keys(userNameMapping).length === 0) {
+          userNameMapping = await fetchUserNameMapping();
+        }
+        
         const weekDates = getWeekDates(currentDate);
         const weekData = await fetchWeekData(currentDate);
 
@@ -206,14 +230,15 @@ const { isAdmin } = Astro.locals;
                     <td class="px-4 py-2 border-b" data-day="${day}">
                       ${Array.from({ length: 4 })
                         .map((_, index) => {
-                          const value =
+                          const userName =
                             weekData[`${day}-${turno}-${index}`] || "";
-                          const isCurrentUser = value === user;
-                          return `<div class="user" data-nombre="${value}" style="margin-bottom: 8px;${
+                          const fullName = getFullName(userName);
+                          const isCurrentUser = userName === user;
+                          return `<div class="user" data-nombre="${userName}" style="margin-bottom: 8px;${
                             isCurrentUser
                               ? "color: blue; font-weight: bold;"
                               : ""
-                          }">${value}</div>`;
+                          }">${fullName}</div>`;
                         })
                         .join("")}
                     </td>
@@ -253,14 +278,15 @@ const { isAdmin } = Astro.locals;
                       <td class="px-4 py-2 border-b">
                         ${Array.from({ length: 4 })
                           .map((_, index) => {
-                            const value =
+                            const userName =
                               weekData[`${day}-${turno}-${index}`] || "";
-                            const isCurrentUser = value === user;
-                            return `<div class="user" data-nombre="${value}" style="margin-bottom: 8px; ${
+                            const fullName = getFullName(userName);
+                            const isCurrentUser = userName === user;
+                            return `<div class="user" data-nombre="${userName}" style="margin-bottom: 8px; ${
                               isCurrentUser
                                 ? "color: blue; font-weight: bold;"
                                 : ""
-                            }">${value}</div>`;
+                            }">${fullName}</div>`;
                           })
                           .join("")}
                       </td>
@@ -282,9 +308,9 @@ const { isAdmin } = Astro.locals;
         document.querySelectorAll(".user").forEach((user) => {
           const userElement = user;
           userElement.addEventListener("click", async (event) => {
-            const nombre = userElement.dataset.nombre;
+            const userName = userElement.dataset.nombre; // Este es el userName guardado
 
-            const phoneNumber = await fetchPhoneNumber(nombre);
+            const phoneNumber = await fetchPhoneNumber(userName);
             showPhoneNumber(phoneNumber, event);
           });
         });

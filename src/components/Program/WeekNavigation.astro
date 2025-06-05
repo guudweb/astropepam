@@ -1,0 +1,279 @@
+---
+// Componente para navegación de semanas
+interface Props {
+  currentDate: Date;
+}
+
+const { currentDate } = Astro.props;
+
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString('es-ES', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+};
+
+const getWeekRange = (date: Date) => {
+  const startOfWeek = new Date(date);
+  const day = startOfWeek.getDay();
+  const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+  startOfWeek.setDate(diff);
+  
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  
+  return {
+    start: startOfWeek,
+    end: endOfWeek
+  };
+};
+
+const weekRange = getWeekRange(currentDate);
+---
+
+<!-- Mobile-First Navigation -->
+<div class="mb-6 space-y-4">
+  <!-- Mobile Week Navigation -->
+  <div class="flex items-center justify-between">
+    <button 
+      id="prevWeek"
+      class="flex items-center justify-center w-12 h-12 sm:w-auto sm:h-auto sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 touch-manipulation"
+      aria-label="Semana anterior"
+    >
+      <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+      <span class="hidden sm:inline sm:ml-2">Anterior</span>
+    </button>
+    
+    <!-- Week Display - Mobile optimized -->
+    <div class="text-center flex-1 mx-4">
+      <h2 class="text-base sm:text-lg font-semibold text-gray-800 leading-tight">
+        <span class="block sm:inline">Semana del</span>
+        <span class="block sm:inline font-normal text-sm sm:text-base">
+          {formatDate(weekRange.start).replace(/de \d{4}/, '')} al {formatDate(weekRange.end)}
+        </span>
+      </h2>
+      <p class="text-xs sm:text-sm text-gray-600 mt-1">
+        {currentDate.toLocaleDateString('es-ES', { weekday: 'long' }).charAt(0).toUpperCase() + currentDate.toLocaleDateString('es-ES', { weekday: 'long' }).slice(1)}
+      </p>
+    </div>
+    
+    <button 
+      id="nextWeek"
+      class="flex items-center justify-center w-12 h-12 sm:w-auto sm:h-auto sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 touch-manipulation"
+      aria-label="Semana siguiente"
+    >
+      <span class="hidden sm:inline sm:mr-2">Siguiente</span>
+      <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </button>
+  </div>
+  
+  <!-- Mobile Controls -->
+  <div class="flex flex-col sm:flex-row items-center gap-3 sm:justify-center">
+    <button 
+      id="todayBtn"
+      class="w-full sm:w-auto px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 active:bg-gray-400 transition-colors duration-200 touch-manipulation"
+    >
+      Ir a Hoy
+    </button>
+    
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <label for="dateSelector" class="text-sm text-gray-600 sm:hidden">Fecha:</label>
+      <input 
+        type="date" 
+        id="dateSelector"
+        class="flex-1 sm:flex-none px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-manipulation"
+        value={currentDate.toISOString().split('T')[0]}
+      />
+    </div>
+  </div>
+</div>
+
+<script>
+  interface NavigationElements {
+    prevWeek: HTMLButtonElement;
+    nextWeek: HTMLButtonElement;
+    todayBtn: HTMLButtonElement;
+    dateSelector: HTMLInputElement;
+  }
+
+  interface TouchState {
+    startX: number;
+    startY: number;
+    currentX: number;
+    currentY: number;
+    isDragging: boolean;
+  }
+
+  class WeekNavigation {
+    private elements: NavigationElements;
+    private currentDate: Date;
+    private touchState: TouchState = {
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      isDragging: false
+    };
+
+    constructor() {
+      this.elements = {
+        prevWeek: document.getElementById('prevWeek') as HTMLButtonElement,
+        nextWeek: document.getElementById('nextWeek') as HTMLButtonElement,
+        todayBtn: document.getElementById('todayBtn') as HTMLButtonElement,
+        dateSelector: document.getElementById('dateSelector') as HTMLInputElement
+      };
+
+      this.currentDate = new Date(this.elements.dateSelector.value);
+      this.attachEventListeners();
+      this.setupTouchGestures();
+    }
+
+    private attachEventListeners(): void {
+      this.elements.prevWeek.addEventListener('click', () => this.navigateWeek(-1));
+      this.elements.nextWeek.addEventListener('click', () => this.navigateWeek(1));
+      this.elements.todayBtn.addEventListener('click', () => this.goToToday());
+      this.elements.dateSelector.addEventListener('change', (e) => this.selectDate(e));
+    }
+
+    private setupTouchGestures(): void {
+      const container = document.getElementById('currentView');
+      if (!container) return;
+
+      // Touch events
+      container.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
+      container.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: true });
+      container.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: true });
+
+      // Mouse events para testing en desktop
+      container.addEventListener('mousedown', (e) => this.handleMouseStart(e));
+      container.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+      container.addEventListener('mouseup', (e) => this.handleMouseEnd(e));
+      container.addEventListener('mouseleave', (e) => this.handleMouseEnd(e));
+    }
+
+    private handleTouchStart(e: TouchEvent): void {
+      if (e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      this.touchState.startX = touch.clientX;
+      this.touchState.startY = touch.clientY;
+      this.touchState.isDragging = true;
+    }
+
+    private handleTouchMove(e: TouchEvent): void {
+      if (!this.touchState.isDragging || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      this.touchState.currentX = touch.clientX;
+      this.touchState.currentY = touch.clientY;
+    }
+
+    private handleTouchEnd(e: TouchEvent): void {
+      if (!this.touchState.isDragging) return;
+      this.processSwipeGesture();
+      this.resetTouchState();
+    }
+
+    private handleMouseStart(e: MouseEvent): void {
+      this.touchState.startX = e.clientX;
+      this.touchState.startY = e.clientY;
+      this.touchState.isDragging = true;
+    }
+
+    private handleMouseMove(e: MouseEvent): void {
+      if (!this.touchState.isDragging) return;
+      this.touchState.currentX = e.clientX;
+      this.touchState.currentY = e.clientY;
+    }
+
+    private handleMouseEnd(e: MouseEvent): void {
+      if (!this.touchState.isDragging) return;
+      this.processSwipeGesture();
+      this.resetTouchState();
+    }
+
+    private processSwipeGesture(): void {
+      const deltaX = this.touchState.currentX - this.touchState.startX;
+      const deltaY = Math.abs(this.touchState.currentY - this.touchState.startY);
+      
+      // Mínima distancia para considerar swipe y máxima vertical para evitar scroll
+      const minSwipeDistance = 50;
+      const maxVerticalMovement = 100;
+      
+      if (Math.abs(deltaX) > minSwipeDistance && deltaY < maxVerticalMovement) {
+        if (deltaX > 0) {
+          // Swipe right - semana anterior
+          this.navigateWeek(-1);
+          this.showSwipeFeedback('← Semana anterior');
+        } else {
+          // Swipe left - semana siguiente
+          this.navigateWeek(1);
+          this.showSwipeFeedback('Semana siguiente →');
+        }
+      }
+    }
+
+    private showSwipeFeedback(message: string): void {
+      // Crear elemento de feedback temporal
+      const feedback = document.createElement('div');
+      feedback.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
+      feedback.textContent = message;
+      document.body.appendChild(feedback);
+
+      // Remover después de 1.5 segundos
+      setTimeout(() => {
+        feedback.style.opacity = '0';
+        setTimeout(() => {
+          document.body.removeChild(feedback);
+        }, 300);
+      }, 1500);
+    }
+
+    private resetTouchState(): void {
+      this.touchState = {
+        startX: 0,
+        startY: 0,
+        currentX: 0,
+        currentY: 0,
+        isDragging: false
+      };
+    }
+
+    private navigateWeek(direction: number): void {
+      const newDate = new Date(this.currentDate);
+      newDate.setDate(newDate.getDate() + (direction * 7));
+      this.updateDate(newDate);
+    }
+
+    private goToToday(): void {
+      this.updateDate(new Date());
+    }
+
+    private selectDate(event: Event): void {
+      const target = event.target as HTMLInputElement;
+      const selectedDate = new Date(target.value);
+      this.updateDate(selectedDate);
+    }
+
+    private updateDate(newDate: Date): void {
+      this.currentDate = newDate;
+      const dateString = newDate.toISOString().split('T')[0];
+      
+      // Actualizar el selector de fecha
+      this.elements.dateSelector.value = dateString;
+      
+      // Redirigir a la nueva fecha
+      const url = new URL(window.location.href);
+      url.searchParams.set('date', dateString);
+      window.location.href = url.toString();
+    }
+  }
+
+  // Inicializar navegación cuando el DOM esté listo
+  document.addEventListener('DOMContentLoaded', () => {
+    new WeekNavigation();
+  });
+</script>

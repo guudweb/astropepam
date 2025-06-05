@@ -41,8 +41,13 @@ export class ParticipationValidatorJS {
 
     const monthParticipations = userHistory.filter(p => {
       const pDate = new Date(p.date);
+      console.log(`[DEBUG] Comparando fecha ${p.date}: mes=${pDate.getMonth()}, año=${pDate.getFullYear()} vs seleccionado mes=${selectedMonth}, año=${selectedYear}`);
       return pDate.getMonth() === selectedMonth && pDate.getFullYear() === selectedYear;
     });
+
+    console.log(`[DEBUG] validateMaxPerMonth - Mes/Año seleccionado: ${selectedMonth}/${selectedYear}`);
+    console.log(`[DEBUG] validateMaxPerMonth - Participaciones del mes encontradas:`, monthParticipations);
+    console.log(`[DEBUG] validateMaxPerMonth - Cantidad: ${monthParticipations.length}, Límite: ${maxParticipations}`);
 
     if (monthParticipations.length >= maxParticipations) {
       result.canParticipate = false;
@@ -166,8 +171,20 @@ export class ParticipationValidatorJS {
         url.searchParams.append('fromDate', fromDate.toISOString().split('T')[0]);
       }
 
+      console.log(`[DEBUG CLIENT] Calling API: ${url.toString()}`);
+      console.log(`[DEBUG CLIENT] Buscando historia para: "${userName}"`);
+      
       const response = await fetch(url.toString());
+      console.log(`[DEBUG CLIENT] API response status:`, response.status);
+      
+      if (!response.ok) {
+        console.error(`[DEBUG CLIENT] API error: ${response.status} ${response.statusText}`);
+        return [];
+      }
+      
       const data = await response.json();
+      console.log(`[DEBUG CLIENT] API response data:`, data);
+      
       return data.data || [];
     } catch (error) {
       console.error('Error fetching user participation history:', error);
@@ -191,12 +208,29 @@ export class ParticipationValidatorJS {
     }
 
     const userHistory = await this.getUserParticipationHistory(userName);
+    console.log(`[DEBUG] ${userName} - Historia completa recibida:`, userHistory);
+    console.log(`[DEBUG] ${userName} - Total registros en historia:`, userHistory.length);
+    console.log(`[DEBUG] ${userName} - Fecha seleccionada:`, selectedDate.toISOString().split('T')[0]);
+    console.log(`[DEBUG] ${userName} - Fecha objeto:`, selectedDate);
+    console.log(`[DEBUG] ${userName} - Mes de fecha (0-indexado):`, selectedDate.getMonth(), '(debería ser 5 para junio)');
+    console.log(`[DEBUG] ${userName} - Año de fecha:`, selectedDate.getFullYear());
+    console.log(`[DEBUG] ${userName} - Reglas de participación:`, rules);
+    
     const validation = this.validateUserParticipation(rules, selectedDate, userHistory);
     
-    return {
+    console.log(`[DEBUG] ${userName} - Resultado de validación:`, validation);
+    console.log(`[DEBUG] ${userName} - ¿Puede participar?:`, validation.canParticipate);
+    console.log(`[DEBUG] ${userName} - Advertencias:`, validation.warnings);
+    console.log(`[DEBUG] ${userName} - Restricciones:`, validation.restrictions);
+    
+    const result = {
       ...validation,
       icon: this.getUserStatusIcon(rules, selectedDate, userHistory),
       rulesDescription: rules.map(rule => this.getRuleDescription(rule))
     };
+    
+    console.log(`[DEBUG] ${userName} - Resultado final:`, result);
+    
+    return result;
   }
 }

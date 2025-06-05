@@ -1,0 +1,318 @@
+---
+// Componente para selector de usuarios con validación
+import type { WeekDay, Turno } from '../../types/program';
+
+interface Props {
+  day: WeekDay;
+  turno: Turno;
+  index: number;
+  date: string;
+  value?: string;
+  disabled?: boolean;
+  class?: string;
+}
+
+const { day, turno, index, date, value = "", disabled = false, class: className = "" } = Astro.props;
+const selectId = `select-${day}-${turno}-${index}`;
+const iconId = `icon-${day}-${turno}-${index}`;
+---
+
+<div class="inline-block mr-2">
+  <select
+    id={selectId}
+    class={`border border-gray-300 focus:border-cyan-700 bg-white rounded-md w-64 px-1 py-2 my-1 user-select ${className}`}
+    data-day={day}
+    data-turno={turno}
+    data-index={index}
+    data-date={date}
+    value={value}
+    disabled={disabled}
+  >
+    <option value=""></option>
+    <option value="--separator--" disabled>Seleccionar usuario...</option>
+    <!-- Las opciones de usuarios se cargarán dinámicamente -->
+  </select>
+  <span
+    class="icon ml-1"
+    id={iconId}
+    title="Estado de validación"
+  />
+</div>
+
+<script>
+  import type { UserData, WeekDay, Turno } from '../../types/program';
+  import { UserLoader } from '../../utils/program/userLoader';
+  import { ValidationManager } from '../../utils/program/validationManager';
+  import { programStore } from '../../stores/programStore';
+
+  class UserSelectComponent {
+    private element: HTMLSelectElement;
+    private iconElement: HTMLSpanElement;
+    private day: WeekDay;
+    private turno: Turno;
+    private index: number;
+    private date: Date;
+
+    constructor(selectElement: HTMLSelectElement) {
+      this.element = selectElement;
+      this.day = selectElement.dataset.day as WeekDay;
+      this.turno = selectElement.dataset.turno as Turno;
+      this.index = parseInt(selectElement.dataset.index || '0');
+      this.date = new Date(selectElement.dataset.date || '');
+      
+      const iconId = `icon-${this.day}-${this.turno}-${this.index}`;
+      this.iconElement = document.getElementById(iconId) as HTMLSpanElement;
+
+      this.init();
+    }
+
+    private async init() {
+      await this.loadUsers();
+      this.attachEventListeners();
+      
+      // Cargar valor inicial si existe
+      const savedValue = programStore.getAssignment(this.day, this.turno, this.index);
+      if (savedValue) {
+        this.element.value = savedValue;
+        await this.validateCurrentSelection();
+      }
+    }
+
+    private async loadUsers() {
+      try {
+        const users = await UserLoader.loadUsersForSelect(this.day, this.turno);
+        this.populateOptions(users);
+      } catch (error) {
+        console.error('Error loading users for select:', error);
+        this.showError('Error cargando usuarios');
+      }
+    }
+
+    private populateOptions(users: UserData[]) {
+      // Limpiar opciones existentes (excepto las por defecto)
+      const defaultOptions = Array.from(this.element.options).slice(0, 2);
+      this.element.innerHTML = '';
+      
+      // Agregar opciones por defecto
+      defaultOptions.forEach(option => this.element.appendChild(option));
+
+      // Agregar usuarios
+      users.forEach(user => {
+        if (!user.nombre || !user.userName) {
+          console.warn('Usuario sin nombre o userName:', user);
+          return;
+        }
+
+        const option = document.createElement('option');
+        option.value = user.userName;
+        
+        // Formatear texto de display
+        let displayText = UserLoader.formatUserForDisplay(user);
+        const statusIcon = UserLoader.getStatusIcon(user);
+        option.textContent = `${displayText} ${statusIcon}`;
+        
+        // Agregar datos adicionales
+        option.dataset.congregacionId = user.congregacion?.id?.toString() || '';
+        option.dataset.participationRules = JSON.stringify(user.participation_rules || []);
+        option.disabled = user.canParticipate === false;
+        
+        this.element.appendChild(option);
+      });
+
+      // Agregar opción "Añadir usuario"
+      const addOption = document.createElement('option');
+      addOption.value = 'add';
+      addOption.textContent = 'Añadir usuario';
+      this.element.appendChild(addOption);
+    }
+
+    private attachEventListeners() {
+      this.element.addEventListener('change', this.handleChange.bind(this));
+    }
+
+    private async handleChange(event: Event) {
+      const target = event.target as HTMLSelectElement;
+      const selectedValue = target.value;
+
+      if (selectedValue === 'add') {
+        this.showUserModal();
+        return;
+      }
+
+      if (selectedValue === '') {
+        this.clearAssignment();
+        return;
+      }
+
+      await this.handleUserSelection(selectedValue);
+    }
+
+    private async handleUserSelection(userName: string) {
+      // Actualizar store
+      const assignment = {
+        day: this.day,
+        turno: this.turno,
+        index: this.index,
+        userName,
+        date: this.date.toISOString().split('T')[0]
+      };
+      
+      programStore.assignUser(assignment);
+
+      // Validar inmediatamente
+      await this.validateCurrentSelection();
+    }
+
+    private clearAssignment() {
+      programStore.removeUser(this.day, this.turno, this.index);
+      this.clearValidationIcon();
+      
+      // Notificar si había restricciones previas
+      const previousState = programStore.getValidationState(this.day, this.turno, this.index);
+      if (previousState && (previousState.hasRestrictions || previousState.hasWarnings)) {
+        programStore.addNotification('info', 
+          `${this.day} ${this.turno} posición ${this.index + 1}: Sin restricciones (vacío)`);
+      }
+    }
+
+    private async validateCurrentSelection() {
+      const userName = this.element.value;
+      if (!userName || userName === '--separator--' || userName === 'add') {
+        return;
+      }
+
+      // Mostrar icono de carga
+      this.iconElement.innerHTML = "⏳";
+
+      try {
+        // Verificar conflictos
+        const conflicts = ValidationManager.findAssignmentConflicts(
+          userName, 
+          programStore.getState().weekData,
+          `${this.day}-${this.turno}-${this.index}`
+        );
+
+        if (conflicts.length > 0) {
+          this.showConflictValidation(userName, conflicts);
+          return;
+        }
+
+        // Validar reglas de participación
+        const user = programStore.getUser(userName);
+        if (user && user.participation_rules && user.participation_rules.length > 0) {
+          const validation = await ValidationManager.validateUserAssignment(
+            userName, this.day, this.turno, this.index, this.date, user
+          );
+          
+          await this.showValidationResult(userName, validation);
+        } else {
+          this.clearValidationIcon();
+        }
+      } catch (error) {
+        console.error('Error validating user assignment:', error);
+        this.iconElement.innerHTML = "";
+      }
+    }
+
+    private showConflictValidation(userName: string, conflicts: string[]) {
+      this.iconElement.innerHTML = "⚠️";
+      
+      const fullName = programStore.getUserFullName(userName);
+      programStore.addNotification('error',
+        `${fullName} ya participa esta semana en ${conflicts.join(", ")}.`);
+
+      const validationState = {
+        userName,
+        hasRestrictions: true,
+        hasWarnings: false,
+        canParticipate: false
+      };
+      
+      programStore.setValidationState(this.day, this.turno, this.index, validationState);
+    }
+
+    private async showValidationResult(userName: string, validation: any) {
+      const fullName = await programStore.getUserFullName(userName);
+      const previousState = programStore.getValidationState(this.day, this.turno, this.index);
+      
+      // Actualizar icono
+      this.iconElement.innerHTML = ValidationManager.getValidationIcon(validation);
+      
+      // Crear nuevo estado
+      const newState = ValidationManager.createValidationState(userName, validation);
+      
+      // Determinar qué mensajes mostrar
+      const shouldShow = ValidationManager.shouldShowValidationMessage(
+        previousState,
+        newState,
+        !previousState || previousState.userName !== userName
+      );
+
+      // Mostrar notificaciones apropiadas
+      const messages = ValidationManager.formatValidationMessages(validation, fullName);
+      
+      if (shouldShow.showRestrictions) {
+        messages.restrictions.forEach(msg => programStore.addNotification('error', msg));
+        if (validation.rulesDescription) {
+          programStore.addNotification('error', `Condiciones de ${fullName}: ${validation.rulesDescription.join(', ')}`);
+        }
+      }
+      
+      if (shouldShow.showWarnings) {
+        messages.warnings.forEach(msg => programStore.addNotification('warning', msg));
+      }
+      
+      if (shouldShow.showSuccess) {
+        messages.success.forEach(msg => programStore.addNotification('success', msg));
+      }
+      
+      if (shouldShow.showImprovement) {
+        programStore.addNotification('info', `${fullName}: ✓ Ya puede participar (con advertencias)`);
+      }
+
+      // Actualizar tooltip
+      if (validation.rulesDescription && validation.rulesDescription.length > 0) {
+        this.iconElement.title = `Condiciones de ${fullName}:\n${validation.rulesDescription.join('\n')}`;
+      }
+
+      // Guardar estado
+      programStore.setValidationState(this.day, this.turno, this.index, newState);
+    }
+
+    private clearValidationIcon() {
+      this.iconElement.innerHTML = "";
+      this.iconElement.title = "Estado de validación";
+    }
+
+    private showUserModal() {
+      // Implementar modal de selección de usuarios
+      // Por ahora, revertir la selección
+      this.element.value = programStore.getAssignment(this.day, this.turno, this.index) || '';
+    }
+
+    private showError(message: string) {
+      this.element.innerHTML = `
+        <option value=""></option>
+        <option value="--error--" disabled>${message}</option>
+      `;
+    }
+  }
+
+  // Inicializar componente cuando el DOM esté listo
+  document.addEventListener('DOMContentLoaded', () => {
+    const selectElements = document.querySelectorAll('.user-select');
+    selectElements.forEach(select => {
+      new UserSelectComponent(select as HTMLSelectElement);
+    });
+  });
+</script>
+
+<style>
+  .user-select:disabled {
+    @apply bg-gray-100 cursor-not-allowed;
+  }
+  
+  .icon {
+    @apply inline-block w-6 text-center;
+  }
+</style>

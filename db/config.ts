@@ -24,10 +24,10 @@ const Usuario = defineTable({
     privilegios: column.json(),
     disponibilidad: column.json(),
     isActive: column.boolean({ default: true }),
-    userName: column.text(),
-    service_link: column.boolean({ default: false }), // New column added
-    descripcion: column.text({ optional: true }), // NUEVO CAMPO
-    participation_rules: column.json({ optional: true }), // NUEVO: Reglas de participación
+    userName: column.text({ unique: true }), // OPTIMIZACIÓN: Índice único para userName
+    service_link: column.boolean({ default: false }),
+    descripcion: column.text({ optional: true }),
+    participation_rules: column.json({ optional: true }),
   },
 });
 
@@ -56,7 +56,7 @@ const disponibilidad = defineTable({
 const WeekData = defineTable({
   columns: {
     id: column.number({ primaryKey: true, autoIncrement: true }),
-    date: column.date(),
+    date: column.date({ unique: true }), // OPTIMIZACIÓN: Índice único para fechas
     data: column.json(),
   },
 });
@@ -72,8 +72,8 @@ const Preajustes = defineTable({
 const UserHistory = defineTable({
   columns: {
     id: column.number({ primaryKey: true, autoIncrement: true }),
-    userName: column.text(),
-    date: column.date(),
+    userName: column.text(), // OPTIMIZACIÓN: Necesita índice para consultas frecuentes
+    date: column.date(),     // OPTIMIZACIÓN: Necesita índice para filtros por fecha
     day: column.text(),
     turno: column.text(),
     indexValue: column.number(),

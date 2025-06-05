@@ -1,0 +1,127 @@
+---
+// Componente optimizado para vista desktop del programa
+interface Props {
+  days: string[];
+  turnos: string[];
+  weekDates: Date[];
+}
+
+const { days, turnos, weekDates } = Astro.props;
+---
+
+<!-- Vista Desktop del Programa -->
+<div class="hidden lg:block">
+  <div class="overflow-x-auto">
+    <div class="min-w-full">
+      {days.map((day, dayIndex) => (
+        <div class="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
+            <h2 class="text-xl font-bold">
+              {day.charAt(0).toUpperCase() + day.slice(1)} - {weekDates[dayIndex].toLocaleDateString('es-ES', {
+                weekday: 'long',
+                day: 'numeric', 
+                month: 'long'
+              })}
+            </h2>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    Turno
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Asignaciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                {turnos.map((turno) => (
+                  <tr class="hover:bg-gray-50 transition-colors duration-150">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900">{turno}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-4 gap-4">
+                        {[...Array(4)].map((_, index) => (
+                          <div class="flex items-center gap-2">
+                            <div class="flex-1 min-w-0">
+                              <label class="block text-xs font-medium text-gray-700 mb-1">
+                                Posición {index + 1}
+                              </label>
+                              <select
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 user-select"
+                                data-day={day}
+                                data-turno={turno}
+                                data-index={index}
+                                data-date={weekDates[dayIndex].toISOString().split("T")[0]}
+                              >
+                                <option value="">Sin asignar</option>
+                                <option value="--separator--" disabled>Seleccionar usuario...</option>
+                              </select>
+                            </div>
+                            <span 
+                              class="flex-shrink-0 w-6 h-6 flex items-center justify-center text-sm"
+                              id={`icon-${day}-${turno}-${index}`}
+                            >
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Estilos optimizados para desktop */
+  .user-select {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .user-select:hover {
+    border-color: #3b82f6;
+  }
+
+  .user-select:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+  }
+
+  /* Estados de validación para desktop */
+  .user-select[data-valid="true"] {
+    border-color: #10b981;
+    background-color: #f0fdf4;
+  }
+
+  .user-select[data-valid="false"] {
+    border-color: #f59e0b;
+    background-color: #fffbeb;
+  }
+
+  .user-select[data-valid="error"] {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+  }
+
+  /* Hover effects para mejor UX */
+  tr:hover .user-select {
+    border-color: #6b7280;
+  }
+
+  /* Mejores espacios en pantallas grandes */
+  @media (min-width: 1536px) {
+    .user-select {
+      min-width: 200px;
+    }
+  }
+</style>

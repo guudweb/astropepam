@@ -1,340 +1,199 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { db, Usuario } from "astro:db";
+import WeekNavigation from "../../components/Program/WeekNavigation.astro";
+import MobileScheduleView from "../../components/Program/MobileScheduleView.astro";
+import DesktopScheduleView from "../../components/Program/DesktopScheduleView.astro";
+import { DAYS } from "../../constants/days";
+import { TURNS } from "../../constants/turns";
 
-const allUsers = await db.select().from(Usuario);
+// Extraer solo los valores de los días para compatibilidad
+const days = DAYS.filter(d => d.value).map(d => d.value);
+const turnos = TURNS.filter(t => t.value).map(t => t.value);
 
-// MODIFICACIÓN: Filtrar solo usuarios activos
-const activeUsers = allUsers.filter(user => user.isActive === true);
+// Obtener fecha de URL o usar fecha actual
+const url = Astro.url;
+const dateParam = url.searchParams.get('date');
+let currentDate = new Date();
 
-const getUsersForTurno = (day: string, turno: string) => {
-  return activeUsers // Cambiar de allUsers a activeUsers
-    .filter((user) => {
-      const disponibilidad =
-        typeof user.disponibilidad === "string"
-          ? JSON.parse(user.disponibilidad)
-          : {};
-      return disponibilidad[day] && disponibilidad[day].includes(turno);
-    })
-    .map((user) => ({
-      ...user,
-      telefono: user.telefono,
-      privilegios: user.privilegios || [],
-      participation_rules: user.participation_rules || [],
-    }));
-};
+if (dateParam) {
+  const parsedDate = new Date(dateParam);
+  if (!isNaN(parsedDate.getTime())) {
+    currentDate = parsedDate;
+  }
+}
 
-const days = [
-  "lunes",
-  "martes",
-  "miercoles",
-  "jueves",
-  "viernes",
-  "sabado",
-  "domingo",
-];
-const turnos = ["T1", "T2", "T3", "T4"];
-
-const usersDisponibilidad = {};
-
-days.forEach((day) => {
-  usersDisponibilidad[day] = {};
-  turnos.forEach((turno) => {
-    usersDisponibilidad[day][turno] = getUsersForTurno(day, turno);
-  });
-});
-
-const getWeekDates = (weekOffset: number) => {
-  const startOfWeek = new Date();
-  startOfWeek.setDate(
-    startOfWeek.getDate() - startOfWeek.getDay() + 1 + weekOffset * 7
-  );
+// Obtener fechas de la semana actual
+const getWeekDates = (date: Date) => {
+  const startOfWeek = new Date(date);
+  const day = startOfWeek.getDay();
+  const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+  startOfWeek.setDate(diff);
+  
   const dates = [];
   for (let i = 0; i < 7; i++) {
-    const date = new Date(startOfWeek);
-    date.setDate(startOfWeek.getDate() + i);
-    dates.push(date);
+    const weekDate = new Date(startOfWeek);
+    weekDate.setDate(startOfWeek.getDate() + i);
+    dates.push(weekDate);
   }
   return dates;
 };
 
-let weekOffset = 0;
-let weekDates = getWeekDates(weekOffset);
+const weekDates = getWeekDates(currentDate);
 ---
 
 <Layout title="program">
   <div id="spinnerOverlay" class="spinner-overlay">
     <div class="spinner"></div>
   </div>
-  <div class="container mx-auto mt-8 px-2 text-center">
-    <div class="flex justify-between mb-5">
-      <button
-        class="bg-cyan-600 text-white px-4 py-2 ml-2 rounded h-fit"
-        id="prevWeekBtn"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-chevrons-left"
-          ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
-            d="M11 7l-5 5l5 5"></path><path d="M17 7l-5 5l5 5"></path></svg
-        >
-      </button>
+  <div class="container mx-auto mt-4 px-2 lg:px-4">
+    <!-- Nueva navegación responsive -->
+    <WeekNavigation currentDate={currentDate} />
 
-      <div class="flex gap-2">
-        <a href="/program/CalenderView"
-          ><button
-            class="bg-cyan-500 text-white px-4 py-2 rounded font-semibold flex"
-            id="CalenderViewBtn"
-          >
-            Calendario
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-right"
-              ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
-                d="M9 6l6 6l-6 6"></path></svg
-            >
-          </button></a
+    <!-- Barra de herramientas mobile-friendly -->
+    <div class="flex flex-col sm:flex-row gap-3 mb-6 items-stretch sm:items-center sm:justify-center">
+      <!-- Preajustes dropdown - Mobile first -->
+      <div class="flex-1 sm:flex-none">
+        <select
+          id="preajustesSelect"
+          class="w-full sm:w-auto px-4 py-3 border-2 border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-manipulation"
         >
+          <option value="" selected>PreAjustes</option>
+          <option value="cargar">Cargar Preajuste</option>
+          <option value="guardar">Guardar Preajuste</option>
+        </select>
       </div>
 
-      <button
-        class="bg-cyan-600 text-white px-4 py-2 mr-2 rounded h-fit"
-        id="nextWeekBtn"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-chevrons-right"
-          ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
-            d="M7 7l5 5l-5 5"></path><path d="M13 7l5 5l-5 5"></path></svg
+      <!-- Botones de acción -->
+      <div class="flex gap-3">
+        <button
+          class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-700 text-white px-6 py-3 rounded-lg hover:bg-blue-800 active:bg-blue-900 transition-colors duration-200 touch-manipulation"
+          id="saveBtn"
         >
-      </button>
-    </div>
-
-    <div class="flex gap-2 mb-4 justify-center">
-      <select
-        id="preajustesSelect"
-        class="border-2 border-black-500 ml-2 rounded-md text-sm text-center"
-      >
-        <option value="" selected>PreAjustes</option>
-        <option value="cargar">Cargar Preajuste</option>
-        <option value="guardar">Guardar Preajuste</option>
-      </select>
-      <button
-        class="bg-blue-700 text-white px-4 py-2 h-full rounded"
-        id="saveBtn"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-device-floppy"
-          ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
-            d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"
-          ></path><path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"
-          ></path><path d="M14 4l0 4l-6 0l0 -4"></path></svg
-        >
-      </button>
-
-      <a href="/user-history">
-        <button class="bg-teal-600 text-white px-4 py-2 rounded">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="icon icon-tabler icons-tabler-outline icon-tabler-history"
-            ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
-              d="M12 8l0 4l2 2"></path><path
-              d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"></path></svg
           >
+            <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"></path>
+            <path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+            <path d="M14 4l0 4l-6 0l0 -4"></path>
+          </svg>
+          <span class="hidden sm:inline">Guardar</span>
         </button>
-      </a>
+
+        <a href="/program/CalenderView" class="flex-1 sm:flex-none">
+          <button class="w-full flex items-center justify-center gap-2 bg-cyan-600 text-white px-6 py-3 rounded-lg hover:bg-cyan-700 active:bg-cyan-800 transition-colors duration-200 touch-manipulation">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span class="hidden sm:inline">Calendario</span>
+          </button>
+        </a>
+
+        <a href="/user-history" class="flex-1 sm:flex-none">
+          <button class="w-full flex items-center justify-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 active:bg-teal-800 transition-colors duration-200 touch-manipulation">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 8l0 4l2 2"></path>
+              <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"></path>
+            </svg>
+            <span class="hidden sm:inline">Historial</span>
+          </button>
+        </a>
+      </div>
     </div>
 
-    <div id="currentView" class="grid justify-center">
-      {
-        days.map((day, dayIndex) => (
-          <div class="mb-8">
-            {" "}
-            <h2 class="text-xl font-bold mb-4 week-date">
-              {" "}
-              {day.charAt(0).toUpperCase() + day.slice(1)} -{" "}
-              {weekDates[dayIndex].toLocaleDateString()}{" "}
-            </h2>{" "}
-            <table>
-              {" "}
-              {turnos.map((turno) => (
-                <tr>
-                  {" "}
-                  <td class="px-4 py-2 border-b">{turno}</td>{" "}
-                  <td class="px-4 py-2 border-b">
-                    {" "}
-                    {[...Array(4)].map((_, index) => (
-                      <div class="inline-block  mr-2">
-                        {" "}
-                        <select
-                          class="border border-gray-300 focus:border-cyan-700 bg-white rounded-md w-64 px-1 py-2 my-1"
-                          data-day={day}
-                          data-turno={turno}
-                          data-index={index}
-                          data-date={
-                            weekDates[dayIndex].toISOString().split("T")[0]
-                          }
-                        >
-                          {" "}
-                          {/* Opción para dejar el select vacío */}{" "}
-                          {usersDisponibilidad[day][turno].map(
-                            ({ nombre, Congregacion, privilegios, participation_rules }) => {
-                              let displayName = nombre;
-                              let statusIcon = '';
-                              
-                              // Agregar badges de privilegios
-                              if (privilegios && Array.isArray(privilegios)) {
-                                const isCapitan = privilegios.some(p => p.toLowerCase() === 'capitan');
-                                const otherPrivileges = privilegios
-                                  .filter(p => p.toLowerCase() !== 'capitan')
-                                  .map(p => p.charAt(0).toUpperCase())
-                                  .join("");
-                                
-                                if (isCapitan) {
-                                  displayName = `[C] ${nombre}`;
-                                }
-                                if (otherPrivileges) {
-                                  displayName += ` [${otherPrivileges}]`;
-                                }
-                              }
-                              
-                              // Agregar indicador de restricciones
-                              if (participation_rules && Array.isArray(participation_rules) && participation_rules.length > 0) {
-                                statusIcon = ' ⚠️';
-                              }
-                              
-                              return (
-                                <option
-                                  value={nombre}
-                                  data-congregacion-id={Congregacion}
-                                  data-participation-rules={JSON.stringify(participation_rules || [])}
-                                >
-                                  {displayName}{statusIcon}
-                                </option>
-                              );
-                            }
-                          )}{" "}
-                          <option value="add" id="add">
-                            Añadir usuario
-                          </option>{" "}
-                          <option value="" />{" "}
-                        </select>
-                        <span
-                          class="icon"
-                          id={`icon-${day}-${turno}-${index}`}
-                        />{" "}
-                      </div>
-                    ))}{" "}
-                  </td>{" "}
-                </tr>
-              ))}{" "}
-            </table>{" "}
-          </div>
-        ))
-      }
+    <!-- Vistas adaptivas del programa -->
+    <div id="currentView">
+      <!-- Vista Mobile -->
+      <MobileScheduleView 
+        days={days}
+        turnos={turnos}
+        weekDates={weekDates}
+      />
+      
+      <!-- Vista Desktop -->
+      <DesktopScheduleView 
+        days={days}
+        turnos={turnos}
+        weekDates={weekDates}
+      />
     </div>
-    <!-- Modal -->
+    <!-- Modal Responsive -->
     <div
       id="userModal"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden"
+      class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden p-4 z-50"
     >
-      <div class="bg-white p-8 rounded shadow-lg">
-        <h2 class="text-xl mb-4">Seleccionar Usuario</h2>
-        <input
-          type="text"
-          id="userSearch"
-          class="border border-gray-300 rounded px-2 py-1 mb-4"
-          placeholder="Buscar usuario..."
-        />
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] flex flex-col">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 class="text-xl font-semibold text-gray-900">Seleccionar Usuario</h2>
+          <button
+            id="closeModalBtn"
+            class="text-gray-400 hover:text-gray-600 transition-colors p-2"
+            aria-label="Cerrar modal"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
 
-        <!-- Lista de botones de usuarios -->
-        <ul id="userList" class="max-h-60 overflow-y-auto">
-          <!-- MODIFICACIÓN: Filtrar usuarios activos y ordenar alfabéticamente -->
-          {
-            activeUsers
-              .sort((a, b) => a.nombre.localeCompare(b.nombre)) // Ordenar alfabéticamente
-              .map((user) => {
-                const isCapitan = user.privilegios && Array.isArray(user.privilegios) && 
-                  user.privilegios.some(p => p.toLowerCase() === 'capitan');
-                const otherPrivileges = user.privilegios && Array.isArray(user.privilegios) ?
-                  user.privilegios
-                    .filter(p => p.toLowerCase() !== 'capitan')
-                    .map(p => p.charAt(0).toUpperCase())
-                    .join("") : "";
-                
-                const hasRestrictions = user.participation_rules && 
-                  Array.isArray(user.participation_rules) && 
-                  user.participation_rules.length > 0;
-                
-                return (
-                  <li class="mb-2">
-                    <button
-                      class="bg-cyan-600 text-white w-full px-2 py-1 rounded user-select-btn hover:bg-cyan-700 transition-colors text-left"
-                      data-username={user.nombre}
-                      data-congregacion-id={user.congregacion}
-                      data-participation-rules={JSON.stringify(user.participation_rules || [])}
-                    >
-                      {isCapitan && <span class="font-bold">[C]</span>}
-                      {isCapitan && " "}
-                      {user.nombre}
-                      {otherPrivileges && (
-                        <span class="font-bold"> [{otherPrivileges}]</span>
-                      )}
-                      {hasRestrictions && <span class="text-yellow-200"> ⚠️</span>}
-                    </button>
-                  </li>
-                );
-              })
-          }
-        </ul>
+        <!-- Search -->
+        <div class="p-6 border-b border-gray-200">
+          <input
+            type="text"
+            id="userSearch"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-manipulation"
+            placeholder="Buscar usuario..."
+          />
+        </div>
 
-        <button
-          class="mt-4 bg-red-500 text-white px-4 py-2 rounded"
-          id="closeModalBtn"
-        >
-          Cerrar
-        </button>
+        <!-- Lista de usuarios -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <ul id="userList" class="space-y-2">
+            <li class="text-center py-8 text-gray-500">
+              <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+              </svg>
+              Cargando usuarios...
+            </li>
+          </ul>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-6 border-t border-gray-200">
+          <button
+            class="w-full bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 active:bg-gray-700 transition-colors duration-200 touch-manipulation"
+            id="closeModalBtnFooter"
+          >
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
 
@@ -379,6 +238,60 @@ let weekDates = getWeekDates(weekOffset);
         </button>
       </div>
     </div>
+
+    <!-- Panel de Notificaciones -->
+    <div
+      id="notificationsPanel"
+      class="fixed top-4 right-4 w-96 bg-white rounded-lg shadow-xl border z-50 hidden"
+    >
+      <div class="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
+        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5V3h0z" />
+          </svg>
+          Notificaciones
+          <span id="notificationCount" class="ml-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">0</span>
+        </h3>
+        <button
+          id="closeNotificationsBtn"
+          class="text-gray-500 hover:text-gray-700 p-1"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="max-h-96 overflow-y-auto">
+        <div id="notificationsList" class="p-4">
+          <div class="text-center text-gray-500 py-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5V3h0z" />
+            </svg>
+            <p>No hay notificaciones</p>
+          </div>
+        </div>
+      </div>
+      <div class="p-3 border-t bg-gray-50 rounded-b-lg">
+        <button
+          id="clearNotificationsBtn"
+          class="w-full bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 transition-colors text-sm"
+        >
+          Limpiar todas
+        </button>
+      </div>
+    </div>
+
+    <!-- Botón flotante para abrir panel -->
+    <button
+      id="notificationsToggle"
+      class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-40"
+      title="Ver notificaciones"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5V3h0z" />
+      </svg>
+      <span id="floatingNotificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center hidden">0</span>
+    </button>
   </div>
 </Layout>
 
@@ -393,27 +306,325 @@ let weekDates = getWeekDates(weekOffset);
     "sabado",
     "domingo",
   ];
+  
+  // Obtener referencias DOM al inicio para evitar errores
+  const spinnerOverlay = document.getElementById("spinnerOverlay");
 
-  // Function to load week data
-  const loadWeekData = async () => {
-    // Calculate the start date of the week
-    const startOfWeek = new Date(currentDate);
+  // OPTIMIZACIÓN: Cache de usuarios para evitar múltiples consultas
+  let allUsersCache = null;
+  
+  // OPTIMIZACIÓN: Memoización para cálculos costosos
+  const memoCache = new Map();
+  
+  const memoize = (fn, keyGenerator) => {
+    return function (...args) {
+      const key = keyGenerator ? keyGenerator(...args) : JSON.stringify(args);
+      
+      if (memoCache.has(key)) {
+        return memoCache.get(key);
+      }
+      
+      const result = fn.apply(this, args);
+      memoCache.set(key, result);
+      
+      // Limpiar caché después de 5 minutos para evitar memory leaks
+      setTimeout(() => {
+        memoCache.delete(key);
+      }, 5 * 60 * 1000);
+      
+      return result;
+    };
+  };
+  
+  // OPTIMIZACIÓN: Debouncing para validaciones
+  const validationTimeouts = new Map();
+  
+  const debounce = (func, delay) => {
+    return function (...args) {
+      const key = args[0]?.dataset ? `${args[0].dataset.day}-${args[0].dataset.turno}-${args[0].dataset.index}` : 'default';
+      
+      // Cancelar timeout anterior si existe
+      if (validationTimeouts.has(key)) {
+        clearTimeout(validationTimeouts.get(key));
+      }
+      
+      // Crear nuevo timeout
+      const timeoutId = setTimeout(() => {
+        func.apply(this, args);
+        validationTimeouts.delete(key);
+      }, delay);
+      
+      validationTimeouts.set(key, timeoutId);
+    };
+  };
+  
+  // OPTIMIZACIÓN: Funciones de debouncing removidas - ahora se cargan todos los usuarios de una vez
+  
+  // Function to populate select with users
+  const populateSelect = (select, users) => {
+    // Limpiar el select y agregar opciones por defecto
+    select.innerHTML = `
+      <option value=""></option>
+      <option value="--separator--" disabled>Seleccionar usuario...</option>
+    `;
+    
+    users.forEach(user => {
+      // Validar que tenemos los datos básicos necesarios
+      if (!user.nombre || !user.userName) {
+        console.warn('Usuario sin nombre o userName:', user);
+        return;
+      }
+      
+      let displayName = user.nombre;
+      let statusIcon = '';
+      
+      // Agregar badges de privilegios
+      if (user.privilegios && Array.isArray(user.privilegios)) {
+        const isCapitan = user.privilegios.some(p => p && p.toLowerCase() === 'capitan');
+        const otherPrivileges = user.privilegios
+          .filter(p => p && p.toLowerCase() !== 'capitan')
+          .map(p => p.charAt(0).toUpperCase())
+          .join("");
+        
+        if (isCapitan) {
+          displayName = `[C] ${user.nombre}`;
+        }
+        if (otherPrivileges) {
+          displayName += ` [${otherPrivileges}]`;
+        }
+      }
+      
+      // Agregar indicadores de estado
+      if (user.canParticipate === false) {
+        statusIcon = ' 🚫';
+        if (user.validationMessage) {
+          displayName += ` (${user.validationMessage})`;
+        }
+      } else if (user.validationMessage) {
+        statusIcon = ' ⚠️';
+      } else if (user.participation_rules && Array.isArray(user.participation_rules) && user.participation_rules.length > 0) {
+        statusIcon = ' ⚠️';
+      } else {
+        statusIcon = ' ✅';
+      }
+      
+      const option = document.createElement('option');
+      option.value = user.userName;
+      option.textContent = displayName + statusIcon;
+      option.dataset.congregacionId = user.congregacion?.id || '';
+      option.dataset.participationRules = JSON.stringify(user.participation_rules || []);
+      option.disabled = user.canParticipate === false;
+      
+      select.appendChild(option);
+    });
+    
+    // Agregar opción de añadir usuario
+    const addOption = document.createElement('option');
+    addOption.value = 'add';
+    addOption.textContent = 'Añadir usuario';
+    select.appendChild(addOption);
+  };
+  
+  // Function to populate all selects with filtered users
+  const populateAllSelects = (allUsers) => {
+    const selects = document.querySelectorAll('.user-select');
+    selects.forEach(select => {
+      const day = select.dataset.day;
+      const turno = select.dataset.turno;
+      const date = select.dataset.date;
+      
+      // Filtrar usuarios disponibles para este día y turno
+      const availableUsers = allUsers.filter(user => {
+        if (!user.disponibilidad) return false;
+        
+        try {
+          const disponibilidad = typeof user.disponibilidad === "string"
+            ? JSON.parse(user.disponibilidad)
+            : user.disponibilidad;
+            
+          return disponibilidad[day] && disponibilidad[day].includes(turno);
+        } catch {
+          return false;
+        }
+      });
+      
+      // Poblar el select con usuarios disponibles
+      populateSelect(select, availableUsers);
+    });
+  };
+  
+  // Function to load all users once and apply to all selects
+  const loadAllUsers = async () => {
+    try {
+      // Si ya tenemos usuarios en caché, usar esos
+      if (allUsersCache) {
+        populateAllSelects(allUsersCache);
+        return;
+      }
+      
+      // Cargar todos los usuarios activos una sola vez
+      const response = await fetch('/api/getUsersForProgram.json?activeOnly=true');
+      if (!response.ok) {
+        throw new Error('Error loading users');
+      }
+      
+      const { data: allUsers } = await response.json();
+      allUsersCache = allUsers;
+      
+      populateAllSelects(allUsers);
+      
+    } catch (error) {
+      console.error('Error loading users:', error);
+      // En caso de error, mostrar mensaje en todos los selects
+      const selects = document.querySelectorAll('.user-select');
+      selects.forEach(select => {
+        select.innerHTML = `
+          <option value=""></option>
+          <option value="--error--" disabled>Error cargando usuarios</option>
+        `;
+      });
+    }
+  };
+  
+  // Function to clear users cache (useful when week changes)
+  const clearUsersCache = () => {
+    allUsersCache = null;
+  };
+
+  // OPTIMIZACIÓN: Función unificada para cargar datos de semana
+  const fetchWeekDataFromAPI = async (date: Date) => {
+    try {
+      const response = await fetch(
+        `/api/getWeekData.json?date=${date.toISOString().split("T")[0]}`
+      );
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching week data:", error);
+      return {};
+    }
+  };
+
+  // OPTIMIZACIÓN: Memoizar el cálculo de inicio de semana
+  const getStartOfWeek = memoize((date) => {
+    const startOfWeek = new Date(date);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+    return startOfWeek;
+  }, (date) => `start-week-${new Date(date).toISOString().split('T')[0]}`);
+
+  // Function to load week data and apply to UI
+  const loadWeekData = async () => {
+    // Calculate the start date of the week (memoized)
+    const startOfWeek = getStartOfWeek(currentDate);
 
     try {
       // Show spinner
       spinnerOverlay.classList.add("active");
+      
+      // Cargar usuarios para todos los selects (usa cache si está disponible)
+      await loadAllUsers();
 
-      const response = await fetch(
-        `/api/getWeekData.json?date=${startOfWeek.toISOString().split("T")[0]}`
-      );
-      const currentWeekData = await response.json();
+      const currentWeekData = await fetchWeekDataFromAPI(startOfWeek);
+      
+      // Para usuarios que necesitamos buscar su información completa
+      const usersToFetch = new Set();
+      
+      // Primera pasada: identificar usuarios que necesitamos buscar
       document.querySelectorAll("select").forEach((select) => {
         const day = select.dataset.day;
         const turno = select.dataset.turno;
         const index = select.dataset.index;
-        const value = currentWeekData[`${day}-${turno}-${index}`] || "";
-        select.value = value;
+        const savedValue = currentWeekData[`${day}-${turno}-${index}`] || "";
+        
+        if (savedValue) {
+          const optionExists = Array.from(select.options).some(
+            (option) => option.value === savedValue
+          );
+          
+          if (!optionExists) {
+            usersToFetch.add(savedValue);
+          }
+        }
+      });
+      
+      // Si hay usuarios que buscar, obtener su información
+      let additionalUsers = {};
+      if (usersToFetch.size > 0) {
+        try {
+          const response = await fetch('/api/getUsersForProgram.json?activeOnly=false');
+          if (response.ok) {
+            const { data: allUsers } = await response.json();
+            allUsers.forEach(user => {
+              if (usersToFetch.has(user.userName)) {
+                additionalUsers[user.userName] = user;
+              }
+            });
+          }
+        } catch (error) {
+          console.warn('Error fetching additional user info:', error);
+        }
+      }
+      
+      // Segunda pasada: aplicar valores y crear opciones si es necesario
+      document.querySelectorAll("select.user-select").forEach((select) => {
+        const day = select.dataset.day;
+        const turno = select.dataset.turno;
+        const index = select.dataset.index;
+        const savedValue = currentWeekData[`${day}-${turno}-${index}`] || "";
+        
+        if (savedValue) {
+          // Verificar si la opción existe
+          const optionExists = Array.from(select.options).some(
+            (option) => option.value === savedValue
+          );
+          
+          if (!optionExists) {
+            // Si el usuario guardado no está en las opciones, añadirlo
+            const newOption = document.createElement("option");
+            newOption.value = savedValue;
+            
+            // Buscar información del usuario
+            const userInfo = additionalUsers[savedValue];
+            if (userInfo) {
+              // Construir el texto de display con privilegios
+              let displayText = userInfo.nombre;
+              
+              if (userInfo.privilegios && Array.isArray(userInfo.privilegios)) {
+                const isCapitan = userInfo.privilegios.some(p => p && p.toLowerCase() === 'capitan');
+                const otherPrivileges = userInfo.privilegios
+                  .filter(p => p && p.toLowerCase() !== 'capitan')
+                  .map(p => p.charAt(0).toUpperCase())
+                  .join("");
+                
+                if (isCapitan) displayText = `[C] ${userInfo.nombre}`;
+                if (otherPrivileges) displayText += ` [${otherPrivileges}]`;
+              }
+              
+              // Indicador de no disponible
+              displayText += ' (no disponible) ⚠️';
+              
+              newOption.textContent = displayText;
+              newOption.dataset.congregacionId = userInfo.congregacion?.id || '';
+              newOption.dataset.participationRules = JSON.stringify(userInfo.participation_rules || []);
+              newOption.style.color = '#666';
+              newOption.style.fontStyle = 'italic';
+            } else {
+              // Fallback si no encontramos la info
+              newOption.textContent = `${savedValue} (no disponible) ⚠️`;
+              newOption.style.color = '#666';
+              newOption.style.fontStyle = 'italic';
+            }
+            
+            // Insertar antes de la opción "Añadir usuario"
+            const addOption = Array.from(select.options).find(opt => opt.value === "add");
+            if (addOption) {
+              select.insertBefore(newOption, addOption);
+            } else {
+              select.appendChild(newOption);
+            }
+          }
+        }
+        
+        select.value = savedValue;
       });
 
       // Hide spinner
@@ -433,7 +644,7 @@ let weekDates = getWeekDates(weekOffset);
 
       if (selectedOption === "guardar") {
         await savePreajustesData();
-        notyf.success(`Preajuste guardado exitosamente`);
+        notify.success(`Preajuste guardado exitosamente`);
         //alert("Preajuste guardado exitosamente");
       } else if (selectedOption === "cargar") {
         //const preajusteName = prompt("Introduce:  Preajuste1 ");
@@ -441,7 +652,7 @@ let weekDates = getWeekDates(weekOffset);
         if (preajusteName) {
           await loadPreajustesData(preajusteName);
           //alert("Preajuste cargado exitosamente");
-          notyf.success(`Preajuste cargado exitosamente`);
+          notify.success(`Preajuste cargado exitosamente`);
         }
       }
 
@@ -458,7 +669,7 @@ let weekDates = getWeekDates(weekOffset);
         `/api/getPreajustesData.json?name=${encodeURIComponent(preajusteName)}`
       );
       const preajustesData = await response.json();
-      document.querySelectorAll("select").forEach((select) => {
+      document.querySelectorAll("select.user-select").forEach((select) => {
         const day = select.dataset.day;
         const turno = select.dataset.turno;
         const index = select.dataset.index;
@@ -471,9 +682,6 @@ let weekDates = getWeekDates(weekOffset);
   };
 
   // Function to save week data
-  const spinnerOverlay = document.getElementById("spinnerOverlay");
-
-  // Function to save week data
   const saveWeekData = async () => {
     const currentWeekData = {};
     const startOfWeek = new Date(currentDate);
@@ -482,41 +690,47 @@ let weekDates = getWeekDates(weekOffset);
 
     const userHistoryPromises = [];
 
-    document.querySelectorAll("select").forEach((select) => {
+    document.querySelectorAll("select.user-select").forEach((select) => {
       const day = select.dataset.day;
       const turno = select.dataset.turno;
       const index = select.dataset.index;
       const userName = select.value;
 
-      if (userName) {
-        // Only save if a user is selected
+      // Validar que tenemos todos los datos necesarios
+      if (!day || !turno || index === undefined) {
+        console.warn('Select sin datos completos:', { day, turno, index, userName });
+        return;
+      }
+
+      if (userName && userName !== "--separator--" && userName !== "--error--" && userName !== "add") {
+        // Only save if a real user is selected
         currentWeekData[`${day}-${turno}-${index}`] = userName;
 
         // Check if user history record already exists
-        // const userHistoryPromise = fetch(
-        //   `/api/checkUserHistory.json?userName=${userName}&date=${weekDate}&day=${day}&turno=${turno}&indexValue=${index}`
-        // )
-        //   .then((response) => response.json())
-        //   .then((data) => {
-        //     if (!data.exists) {
-        //       // Save user selection to UserHistory table if it doesn't exist
-        //       return fetch("/api/saveUserHistory.json", {
-        //         method: "POST",
-        //         headers: {
-        //           "Content-Type": "application/json",
-        //         },
-        //         body: JSON.stringify({
-        //           userName,
-        //           date: weekDate, // Use the week date
-        //           day,
-        //           turno,
-        //           indexValue: index,
-        //         }),
-        //       });
-        //     }
-        //   });
+        const userHistoryPromise = fetch(
+          `/api/checkUserHistory.json?userName=${userName}&date=${weekDate}&day=${day}&turno=${turno}&indexValue=${index}`
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.exists) {
+              // Save user selection to UserHistory table if it doesn't exist
+              return fetch("/api/saveUserHistory.json", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  userName,
+                  date: weekDate, // Use the week date
+                  day,
+                  turno,
+                  indexValue: index,
+                }),
+              });
+            }
+          });
 
-        // userHistoryPromises.push(userHistoryPromise);
+        userHistoryPromises.push(userHistoryPromise);
       }
     });
 
@@ -526,8 +740,9 @@ let weekDates = getWeekDates(weekOffset);
     // Wait for all user history checks and saves to complete
     await Promise.all(userHistoryPromises);
 
+
     // Save week data
-    await fetch("/api/saveWeekData.json", {
+    const response = await fetch("/api/saveWeekData.json", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -538,6 +753,11 @@ let weekDates = getWeekDates(weekOffset);
       }),
     });
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Error ${response.status}: ${errorData.error}`);
+    }
+
     // Hide spinner
     spinnerOverlay.classList.remove("active");
   };
@@ -547,14 +767,14 @@ let weekDates = getWeekDates(weekOffset);
     const preajustesData = {};
     const preajusteName = "Preajuste1"; // Puedes cambiar esto según sea necesario
 
-    document.querySelectorAll("select").forEach(async (select) => {
+    document.querySelectorAll("select.user-select").forEach(async (select) => {
       const day = select.dataset.day;
       const turno = select.dataset.turno;
       const index = select.dataset.index;
       const userName = select.value;
 
-      if (userName) {
-        // Only save if a user is selected
+      if (userName && userName !== "--separator--" && userName !== "--error--" && userName !== "add") {
+        // Only save if a real user is selected
         preajustesData[`${day}-${turno}-${index}`] = userName;
       }
     });
@@ -579,8 +799,9 @@ let weekDates = getWeekDates(weekOffset);
     });
   };
 
-  // Function to get week dates
-  const getWeekDates = (currentDate: string | number | Date) => {
+  
+  // Function to get week dates (memoized)
+  const getWeekDates = memoize((currentDate: string | number | Date) => {
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
     const dates = [];
@@ -590,7 +811,7 @@ let weekDates = getWeekDates(weekOffset);
       dates.push(date);
     }
     return dates;
-  };
+  }, (date) => `week-dates-${new Date(date).toISOString().split('T')[0]}`);
 
   // Buscador para el modal
   document.getElementById("userSearch").addEventListener("input", function () {
@@ -610,45 +831,164 @@ let weekDates = getWeekDates(weekOffset);
     });
   });
 
-  const prevWeekBtn = document.getElementById("prevWeekBtn");
-  const nextWeekBtn = document.getElementById("nextWeekBtn");
-  const saveBtn = document.getElementById("saveBtn");
-  // Add event listeners for week navigation buttons
-  prevWeekBtn.addEventListener("click", async () => {
-    if (hasChanges()) {
-      const shouldSave = await showConfirmationModal();
-      if (shouldSave) {
-        await saveWeekData();
-      }
-    }
-    currentDate.setDate(currentDate.getDate() - 7);
-    updateWeekDates();
-    await loadWeekData();
-    document.querySelectorAll("select").forEach((select) => {
-      checkUserAssignmentForBtn(select);
-    });
-    setInitialSelectValues();
-  });
-
-  nextWeekBtn.addEventListener("click", async () => {
-    if (hasChanges()) {
-      const shouldSave = await showConfirmationModal();
-      if (shouldSave) {
-        await saveWeekData();
-      }
-    }
-    currentDate.setDate(currentDate.getDate() + 7);
-    updateWeekDates();
-    await loadWeekData();
-    document.querySelectorAll("select").forEach((select) => {
-      checkUserAssignmentForBtn(select);
-    });
-    setInitialSelectValues();
-  });
+  // Los botones de navegación ahora se manejan en el componente WeekNavigation
 
   import { Notyf } from "notyf";
   import "notyf/notyf.min.css";
   import { ParticipationValidatorJS } from "../../utils/participationValidator.js";
+
+  // Sistema de gestión de notificaciones
+  let notificationsStore = [];
+  let notificationIdCounter = 0;
+
+  const NotificationManager = {
+    add(type, message) {
+      const notification = {
+        id: ++notificationIdCounter,
+        type: type,
+        message: message,
+        timestamp: new Date(),
+        read: false
+      };
+      
+      notificationsStore.unshift(notification); // Agregar al principio
+      
+      // Mantener solo las últimas 50 notificaciones
+      if (notificationsStore.length > 50) {
+        notificationsStore = notificationsStore.slice(0, 50);
+      }
+      
+      this.updateUI();
+      return notification;
+    },
+
+    clear() {
+      notificationsStore = [];
+      this.updateUI();
+    },
+
+    markAsRead(id) {
+      const notification = notificationsStore.find(n => n.id === id);
+      if (notification) {
+        notification.read = true;
+        this.updateUI();
+      }
+    },
+
+    getIconForType(type) {
+      switch(type) {
+        case 'error': return '❌';
+        case 'warning': return '⚠️';
+        case 'info': return 'ℹ️';
+        case 'success': return '✅';
+        default: return '📢';
+      }
+    },
+
+    getColorForType(type) {
+      switch(type) {
+        case 'error': return 'bg-red-50 border-red-200 text-red-800';
+        case 'warning': return 'bg-orange-50 border-orange-200 text-orange-800';
+        case 'info': return 'bg-blue-50 border-blue-200 text-blue-800';
+        case 'success': return 'bg-green-50 border-green-200 text-green-800';
+        default: return 'bg-gray-50 border-gray-200 text-gray-800';
+      }
+    },
+
+    updateUI() {
+      const count = notificationsStore.length;
+      const unreadCount = notificationsStore.filter(n => !n.read).length;
+      
+      // Actualizar contador en panel
+      document.getElementById('notificationCount').textContent = count;
+      
+      // Actualizar badge flotante
+      const floatingBadge = document.getElementById('floatingNotificationBadge');
+      if (unreadCount > 0) {
+        floatingBadge.textContent = unreadCount;
+        floatingBadge.classList.remove('hidden');
+      } else {
+        floatingBadge.classList.add('hidden');
+      }
+      
+      // Actualizar lista
+      this.renderNotifications();
+    },
+
+    renderNotifications() {
+      const container = document.getElementById('notificationsList');
+      
+      if (notificationsStore.length === 0) {
+        container.innerHTML = `
+          <div class="text-center text-gray-500 py-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5V3h0z" />
+            </svg>
+            <p>No hay notificaciones</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = notificationsStore.map(notification => {
+        const timeStr = notification.timestamp.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        
+        return `
+          <div class="mb-3 p-3 border rounded-lg ${this.getColorForType(notification.type)} ${!notification.read ? 'ring-2 ring-blue-200' : ''}" 
+               data-notification-id="${notification.id}">
+            <div class="flex items-start justify-between">
+              <div class="flex items-start space-x-2 flex-1">
+                <span class="text-lg">${this.getIconForType(notification.type)}</span>
+                <div class="flex-1">
+                  <p class="text-sm font-medium">${notification.message}</p>
+                  <p class="text-xs mt-1 opacity-70">${timeStr}</p>
+                </div>
+              </div>
+              ${!notification.read ? '<div class="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-1"></div>' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      // Agregar event listeners para marcar como leída
+      container.querySelectorAll('[data-notification-id]').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = parseInt(item.dataset.notificationId);
+          this.markAsRead(id);
+        });
+      });
+    }
+  };
+
+  // Event listeners para el panel
+  document.addEventListener('DOMContentLoaded', () => {
+    const panel = document.getElementById('notificationsPanel');
+    const toggleBtn = document.getElementById('notificationsToggle');
+    const closeBtn = document.getElementById('closeNotificationsBtn');
+    const clearBtn = document.getElementById('clearNotificationsBtn');
+
+    toggleBtn.addEventListener('click', () => {
+      panel.classList.toggle('hidden');
+    });
+
+    closeBtn.addEventListener('click', () => {
+      panel.classList.add('hidden');
+    });
+
+    clearBtn.addEventListener('click', () => {
+      NotificationManager.clear();
+    });
+
+    // Cerrar panel al hacer clic fuera
+    document.addEventListener('click', (event) => {
+      if (!panel.contains(event.target) && !toggleBtn.contains(event.target)) {
+        panel.classList.add('hidden');
+      }
+    });
+  });
 
   // Crear una instancia de Notyf con configuración para advertencias
   const notyf = new Notyf({
@@ -679,84 +1019,277 @@ let weekDates = getWeekDates(weekOffset);
     ]
   });
 
+  // Wrapper para integrar Notyf con nuestro panel de notificaciones
+  const notify = {
+    success(message) {
+      notyf.success(message);
+      NotificationManager.add('success', message);
+    },
+    
+    error(message) {
+      notyf.error(message);
+      NotificationManager.add('error', message);
+    },
+    
+    warning(message) {
+      notyf.open({ type: 'warning', message });
+      NotificationManager.add('warning', message);
+    },
+    
+    info(message) {
+      notyf.open({ type: 'info', message });
+      NotificationManager.add('info', message);
+    },
+    
+    open(options) {
+      notyf.open(options);
+      NotificationManager.add(options.type || 'info', options.message);
+    }
+  };
+
   // Load week data when the DOM is fully loaded
   document.addEventListener("DOMContentLoaded", async () => {
     await loadWeekData();
+    
+    // Agregar event listeners para los selects después de cargar
+    document.querySelectorAll("select.user-select").forEach((select) => {
+      select.addEventListener("change", (event) => {
+        const target = event.target as HTMLSelectElement;
+        
+        if (target.value === "add") {
+          const day = select.dataset.day;
+          const turno = select.dataset.turno;
+          const index = select.dataset.index;
+          
+          // Obtener referencias a elementos del modal
+          const modal = document.getElementById("userModal");
+          const userList = document.getElementById("userList");
+          
+          // Abrir el modal cuando se seleccione "Añadir usuario"
+          modal.classList.remove("hidden");
+          modal.dataset.day = day;
+          modal.dataset.turno = turno;
+          modal.dataset.index = index;
+          
+          // Cargar usuarios dinámicamente en el modal
+          userList.innerHTML = '<li class="text-center py-4 text-gray-500">Cargando usuarios...</li>';
+          
+          // Cargar usuarios activos para el modal
+          const loadModalUsers = async () => {
+            try {
+              const response = await fetch('/api/getUsersForProgram.json?activeOnly=true');
+              if (response.ok) {
+                const { data: users } = await response.json();
+                
+                // Ordenar alfabéticamente
+                users.sort((a, b) => a.nombre.localeCompare(b.nombre));
+                
+                // Limpiar lista
+                userList.innerHTML = '';
+                
+                // Agregar usuarios
+                users.forEach(user => {
+                  const isCapitan = user.privilegios && Array.isArray(user.privilegios) && 
+                    user.privilegios.some(p => p.toLowerCase() === 'capitan');
+                  const otherPrivileges = user.privilegios && Array.isArray(user.privilegios) ?
+                    user.privilegios
+                      .filter(p => p.toLowerCase() !== 'capitan')
+                      .map(p => p.charAt(0).toUpperCase())
+                      .join("") : "";
+                  
+                  const hasRestrictions = user.participation_rules && 
+                    Array.isArray(user.participation_rules) && 
+                    user.participation_rules.length > 0;
+                  
+                  const li = document.createElement('li');
+                  li.className = 'mb-2';
+                  
+                  const button = document.createElement('button');
+                  button.className = 'bg-cyan-600 text-white w-full px-2 py-1 rounded user-select-btn hover:bg-cyan-700 transition-colors text-left';
+                  button.dataset.username = user.userName;
+                  button.dataset.congregacionId = user.congregacion?.id || '';
+                  button.dataset.participationRules = JSON.stringify(user.participation_rules || []);
+                  
+                  let displayText = '';
+                  if (isCapitan) displayText += '[C] ';
+                  displayText += user.nombre;
+                  if (otherPrivileges) displayText += ` [${otherPrivileges}]`;
+                  if (hasRestrictions) displayText += ' ⚠️';
+                  
+                  button.textContent = displayText;
+                  
+                  // Agregar event listener al botón
+                  button.addEventListener("click", async function handleUserSelection(event) {
+                    const newUserName = button.dataset.username;
+                    const participationRules = button.dataset.participationRules;
+                    
+                    if (newUserName) {
+                      // Verificar si la opción ya existe
+                      const existingOption = Array.from(select.options).find(opt => opt.value === newUserName);
+                      if (!existingOption) {
+                        // Crear nueva opción con toda la información del usuario
+                        const newOption = document.createElement("option");
+                        newOption.value = newUserName;
+                        newOption.textContent = displayText; // Usar el displayText con privilegios
+                        newOption.dataset.congregacionId = user.congregacion?.id || '';
+                        newOption.dataset.participationRules = participationRules || '[]';
+                        
+                        // Insertar antes de la opción "Añadir usuario"
+                        const addOption = Array.from(select.options).find(opt => opt.value === "add");
+                        if (addOption) {
+                          select.insertBefore(newOption, addOption);
+                        } else {
+                          select.appendChild(newOption);
+                        }
+                      }
+                      
+                      // Actualizar el valor del select
+                      select.value = newUserName;
+                      
+                      // Verificar las asignaciones después de añadir un usuario
+                      await checkUserAssignment(select);
+                      
+                      // Cerrar el modal
+                      modal.classList.add("hidden");
+                    }
+                  });
+                  
+                  li.appendChild(button);
+                  userList.appendChild(li);
+                });
+                
+                // Aplicar filtro de búsqueda si existe
+                const searchInput = document.getElementById("userSearch") as HTMLInputElement;
+                if (searchInput && searchInput.value) {
+                  searchInput.dispatchEvent(new Event('input'));
+                }
+              } else {
+                userList.innerHTML = '<li class="text-center py-4 text-red-500">Error cargando usuarios</li>';
+              }
+            } catch (error) {
+              console.error('Error loading modal users:', error);
+              userList.innerHTML = '<li class="text-center py-4 text-red-500">Error de conexión</li>';
+            }
+          };
+          
+          loadModalUsers();
+          
+        } else if (select.value !== "") {
+          // Validación inmediata para feedback visual rápido
+          const icon = document.getElementById(`icon-${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`);
+          if (icon) {
+            icon.innerHTML = "⏳"; // Mostrar que se está validando
+          }
+          
+          // Validación completa con debounce para evitar spam de API
+          debouncedValidation(select);
+        }
+      });
+    });
+    
+    // Add event listener for save button
+    const saveBtn = document.getElementById("saveBtn");
+    if (saveBtn) {
+      saveBtn.addEventListener("click", async () => {
+        try {
+          await saveWeekData();
+          notify.success("Guardado correctamente");
+        } catch (error) {
+          console.error('Error al guardar:', error);
+          notify.error(`Error al guardar: ${error.message}`);
+        }
+      });
+    }
+    
+    // Add event listeners for close modal buttons
+    const closeModalBtn = document.getElementById("closeModalBtn");
+    const closeModalBtnFooter = document.getElementById("closeModalBtnFooter");
+    
+    if (closeModalBtn) {
+      closeModalBtn.addEventListener("click", () => {
+        const modal = document.getElementById("userModal");
+        modal.classList.add("hidden");
+      });
+    }
+    
+    if (closeModalBtnFooter) {
+      closeModalBtnFooter.addEventListener("click", () => {
+        const modal = document.getElementById("userModal");
+        modal.classList.add("hidden");
+      });
+    }
+    
+    // Add event listener for close warning button
+    const closeWarningBtn = document.getElementById("closeWarningBtn");
+    if (closeWarningBtn) {
+      closeWarningBtn.addEventListener("click", () => {
+        const warningPopup = document.getElementById("warningPopup");
+        if (warningPopup) warningPopup.classList.add("hidden");
+      });
+    }
+    
+    // Set initial values after loading
     setTimeout(() => {
-      document.querySelectorAll("select").forEach((select) => {
+      document.querySelectorAll("select.user-select").forEach((select) => {
         const key = `${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`;
         initialSelectValues[key] = select.value;
       });
-    }, 3000);
-
-    // Set initial values of the selects based on fetched week data
-    const weekData = await fetchWeekData(new Date());
-
-    document.querySelectorAll("select").forEach((select) => {
-      const day = select.dataset.day;
-      const turno = select.dataset.turno;
-      const index = select.dataset.index;
-
-      if (weekData[`${day}-${turno}-${index}`]) {
-        const value = weekData[`${day}-${turno}-${index}`];
-        const optionExists = Array.from(select.options).some(
-          (option) => option.value === value
-        );
-
-        if (!optionExists) {
-          const newOption = document.createElement("option");
-          newOption.value = value;
-          newOption.text = value;
-          select.appendChild(newOption);
-        }
-
-        select.value = value;
-      }
-
-      // Verificar si el select no está vacío
-      if (select.value) {
-        // Verificar si el usuario está en la lista de opciones del select
-        const userName = select.value;
-        const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
-
-        // Verificar si el usuario ya está asignado en otro turno de la semana
-        const assignedTurns = [];
-        document.querySelectorAll("select").forEach((otherSelect) => {
-          if (otherSelect !== select && otherSelect.value === userName) {
-            const otherDay = otherSelect.dataset.day;
-            const otherTurno = otherSelect.dataset.turno;
-            assignedTurns.push(`${otherDay} en el turno ${otherTurno}`);
-          }
-        });
-
-        if (assignedTurns.length > 0) {
-          icon.innerHTML += "⚠️"; // Icono para ya asignado
-          // notyf.error(
-          //   `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
-          // );
-        }
-      }
-    });
+    }, 1000);
   });
+
+  // Cache para mapeo de nombres
+  let userNameMappingCache = null;
+  
+  // Función para obtener el nombre completo del usuario
+  const getUserFullName = async (userName) => {
+    try {
+      // Si no tenemos cache, cargar el mapeo
+      if (!userNameMappingCache) {
+        const response = await fetch('/api/getUsersNameMapping.json');
+        const data = await response.json();
+        userNameMappingCache = data.mapping || {};
+      }
+      return userNameMappingCache[userName] || userName; // Fallback al userName si no se encuentra
+    } catch (error) {
+      console.error('Error fetching user name mapping:', error);
+      return userName; // Fallback en caso de error
+    }
+  };
 
   // Function to check user assignment with participation rules validation
   async function checkUserAssignment(select: HTMLSelectElement) {
     const userName = select.value;
-
-    // Ignorar si el select está vacío (ningún usuario seleccionado)
-    if (!userName) {
-      return; // Si no hay usuario seleccionado, no hace nada y sale de la función
-    }
-
     const day = select.dataset.day;
     const turno = select.dataset.turno;
     const index = select.dataset.index;
-    const selectedDate = new Date(select.dataset.date);
+    const stateKey = `${day}-${turno}-${index}`;
     const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
+    
+    // Obtener estado previo
+    const previousState = validationStates.get(stateKey);
+    
+    // Obtener nombre completo del usuario
+    const fullName = await getUserFullName(userName);
+
+    // Si el select está vacío
+    if (!userName) {
+      // Si había un usuario con restricciones antes, notificar que ya no hay restricciones
+      if (previousState && (previousState.hasRestrictions || previousState.hasWarnings)) {
+        notify.open({
+          type: 'info',
+          message: `${day} ${turno} posición ${parseInt(index) + 1}: Sin restricciones (vacío)`
+        });
+      }
+      validationStates.delete(stateKey);
+      if (icon) icon.innerHTML = "";
+      return;
+    }
+
+    const selectedDate = new Date(select.dataset.date);
 
     // Verificar si el usuario ya está asignado en otro turno de la semana
     const assignedTurns: string[] = [];
-    document.querySelectorAll("select").forEach((otherSelect) => {
+    document.querySelectorAll("select.user-select").forEach((otherSelect) => {
       if (otherSelect !== select && otherSelect.value === userName) {
         const otherDay = otherSelect.dataset.day;
         const otherTurno = otherSelect.dataset.turno;
@@ -769,9 +1302,23 @@ let weekDates = getWeekDates(weekOffset);
       if (icon) {
         icon.innerHTML = "⚠️"; // Icono para ya asignado
       }
-      notyf.error(
-        `El usuario ${userName} ya participa esta semana en ${assignedTurns.join(", ")}.`
-      );
+      
+      // Solo mostrar error si es nuevo o cambió de usuario
+      const wasAnotherUser = previousState && previousState.userName !== userName;
+      if (!previousState || wasAnotherUser) {
+        notify.error(
+          `${fullName} ya participa esta semana en ${assignedTurns.join(", ")}.`
+        );
+      }
+      
+      // Guardar estado de conflicto
+      validationStates.set(stateKey, {
+        userName: userName,
+        hasRestrictions: true, // Conflicto cuenta como restricción
+        hasWarnings: false,
+        canParticipate: false
+      });
+      
       return;
     }
 
@@ -781,26 +1328,48 @@ let weekDates = getWeekDates(weekOffset);
     
     if (participationRules && participationRules !== '[]') {
       try {
+        // OPTIMIZACIÓN: Memoizar el parseado de reglas de participación
+        const parseRules = memoize((rulesString) => {
+          return JSON.parse(rulesString);
+        }, (rulesString) => `rules-${rulesString}`);
+        
+        const parsedRules = parseRules(participationRules);
+        
         // Validar reglas de participación
         const validation = await ParticipationValidatorJS.validateUserForDate(
           userName, 
-          participationRules, 
+          parsedRules, 
           selectedDate
         );
 
+        // Crear estado actual
+        const currentState = {
+          userName: userName,
+          hasRestrictions: !validation.canParticipate,
+          hasWarnings: validation.warnings && validation.warnings.length > 0,
+          canParticipate: validation.canParticipate
+        };
+        
+        // Comparar con estado previo
+        const hadPreviousRestrictions = previousState && previousState.hasRestrictions;
+        const hadPreviousWarnings = previousState && previousState.hasWarnings;
+        const wasAnotherUser = previousState && previousState.userName !== userName;
+        
         if (!validation.canParticipate) {
           if (icon) {
             icon.innerHTML = "🚫"; // No puede participar
           }
           
-          // Mostrar restricciones
-          validation.restrictions.forEach(restriction => {
-            notyf.error(`${userName}: ${restriction}`);
-          });
-          
-          // Mostrar reglas que aplican
-          if (validation.rulesDescription && validation.rulesDescription.length > 0) {
-            notyf.error(`Condiciones de ${userName}: ${validation.rulesDescription.join(', ')}`);
+          // Mostrar restricciones solo si es nuevo o cambió de usuario
+          if (!previousState || wasAnotherUser || !hadPreviousRestrictions) {
+            validation.restrictions.forEach(restriction => {
+              notify.error(`${fullName}: ${restriction}`);
+            });
+            
+            // Mostrar reglas que aplican
+            if (validation.rulesDescription && validation.rulesDescription.length > 0) {
+              notify.error(`Condiciones de ${fullName}: ${validation.rulesDescription.join(', ')}`);
+            }
           }
           
         } else if (validation.warnings && validation.warnings.length > 0) {
@@ -808,23 +1377,44 @@ let weekDates = getWeekDates(weekOffset);
             icon.innerHTML = "⚠️"; // Advertencia
           }
           
-          // Mostrar advertencias
-          validation.warnings.forEach(warning => {
-            notyf.open({
-              type: 'warning',
-              message: `${userName}: ${warning}`
+          // Si antes tenía restricciones y ahora solo advertencias, notificar mejora
+          if (hadPreviousRestrictions) {
+            notify.open({
+              type: 'info',
+              message: `${fullName}: ✓ Ya puede participar (con advertencias)`
             });
-          });
+          }
+          
+          // Mostrar advertencias solo si es nuevo o cambió
+          if (!previousState || wasAnotherUser || (!hadPreviousWarnings && !hadPreviousRestrictions)) {
+            validation.warnings.forEach(warning => {
+              notify.open({
+                type: 'warning',
+                message: `${fullName}: ${warning}`
+              });
+            });
+          }
           
         } else {
           if (icon) {
             icon.innerHTML = "✅"; // Todo bien
           }
+          
+          // Si antes tenía restricciones o advertencias y ahora está bien, notificar
+          if (previousState && (hadPreviousRestrictions || hadPreviousWarnings)) {
+            // Solo notificar si es el mismo usuario
+            if (!wasAnotherUser) {
+              notify.success(`${fullName}: ✓ Cumple todas las condiciones`);
+            }
+          }
         }
+        
+        // Guardar estado actual
+        validationStates.set(stateKey, currentState);
 
         // Añadir tooltip con información de reglas
         if (icon && validation.rulesDescription && validation.rulesDescription.length > 0) {
-          icon.title = `Condiciones de ${userName}:\n${validation.rulesDescription.join('\n')}`;
+          icon.title = `Condiciones de ${fullName}:\n${validation.rulesDescription.join('\n')}`;
         }
         
       } catch (error) {
@@ -838,299 +1428,79 @@ let weekDates = getWeekDates(weekOffset);
       if (icon) {
         icon.innerHTML = ""; // Limpiar icono si no hay restricciones
       }
-    }
-  }
-
-  // Function to check user assignment for next and prev buttons (silent validation)
-  async function checkUserAssignmentForBtn(select: HTMLSelectElement) {
-    const userName = select.value;
-
-    // Ignorar si el select está vacío (ningún usuario seleccionado)
-    if (!userName) {
-      return; // Si no hay usuario seleccionado, no hace nada y sale de la función
-    }
-
-    const day = select.dataset.day;
-    const turno = select.dataset.turno;
-    const index = select.dataset.index;
-    const selectedDate = new Date(select.dataset.date);
-    const icon = document.getElementById(`icon-${day}-${turno}-${index}`);
-
-    // Verificar si el usuario ya está asignado en otro turno de la semana
-    const assignedTurns: string[] = [];
-    document.querySelectorAll("select").forEach((otherSelect) => {
-      if (otherSelect !== select && otherSelect.value === userName) {
-        const otherDay = otherSelect.dataset.day;
-        const otherTurno = otherSelect.dataset.turno;
-        assignedTurns.push(`${otherDay} en el turno ${otherTurno}`);
-      }
-    });
-
-    if (assignedTurns.length > 0) {
-      if (icon) {
-        icon.innerHTML = "⚠️"; // Icono para ya asignado
-      }
-      return;
-    }
-
-    // Validación silenciosa de reglas de participación
-    const selectedOption = select.options[select.selectedIndex];
-    const participationRules = selectedOption.getAttribute('data-participation-rules');
-    
-    if (participationRules && participationRules !== '[]') {
-      try {
-        const validation = await ParticipationValidatorJS.validateUserForDate(
-          userName, 
-          participationRules, 
-          selectedDate
-        );
-
-        if (!validation.canParticipate) {
-          if (icon) {
-            icon.innerHTML = "🚫"; // No puede participar
-          }
-        } else if (validation.warnings && validation.warnings.length > 0) {
-          if (icon) {
-            icon.innerHTML = "⚠️"; // Advertencia
-          }
-        } else {
-          if (icon) {
-            icon.innerHTML = "✅"; // Todo bien
-          }
-        }
-      } catch (error) {
-        console.error('Error validating participation rules:', error);
-        if (icon) {
-          icon.innerHTML = ""; // Limpiar icono en caso de error
-        }
-      }
-    } else {
-      if (icon) {
-        icon.innerHTML = ""; // Limpiar icono si no hay restricciones
-      }
-    }
-  }
-
-  // Agregar evento change fuera del evento DOMContentLoaded
-  document.querySelectorAll("select").forEach((select) => {
-    select.addEventListener("change", () => {
-      if (select.value !== "add") {
-        checkUserAssignment(select);
-      }
-    });
-  });
-
-  // Add event listener for save button
-  saveBtn.addEventListener("click", async () => {
-    try {
-      await saveWeekData();
-      notyf.success("Guardado correctamente");
-    } catch (error) {
-      notyf.error("Error al guardar los datos");
-    }
-  });
-
-  // Set initial values of the selects based on fetched week data
-  const weekData = await fetchWeekData(new Date());
-
-  async function fetchWeekData(date: Date) {
-    try {
-      const response = await fetch(
-        `/api/getWeekData.json?date=${date.toISOString().split("T")[0]}`
-      );
-      const data = await response.json();
-
-      return data;
-    } catch (error) {
-      console.error("Error fetching week data:", error);
-      return {};
-    }
-  }
-
-  // Modal and user selection logic
-  const modal = document.getElementById("userModal");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  const userSelectButtons = document.querySelectorAll(".user-select-btn");
-  const addUserButtons = document.querySelectorAll("select");
-
-  // Manejar la lógica de selección de la opción "add"
-  document.querySelectorAll("select").forEach((select) => {
-    select.addEventListener("change", (event) => {
-      const target = event.target as HTMLSelectElement;
-      const selectedOption = target.options[target.selectedIndex];
-
-      if (selectedOption.id === "add") {
-        const day = select.dataset.day;
-        const turno = select.dataset.turno;
-        const index = select.dataset.index;
-
-        // Abrir el modal cuando se seleccione "Añadir usuario"
-        modal.classList.remove("hidden");
-        modal.dataset.day = day;
-        modal.dataset.turno = turno;
-        modal.dataset.index = index;
-
-        // Agregar un evento de clic para cada botón de usuario en el modal
-        const userButtons = document.querySelectorAll(
-          "#userList .user-select-btn"
-        );
-        userButtons.forEach((button) => {
-          button.addEventListener("click", async function handleUserSelection(event) {
-            const newUserName = button.getAttribute("data-username");
-            const participationRules = button.getAttribute("data-participation-rules");
-
-            if (newUserName) {
-              // Actualizar el select con el nuevo nombre de usuario
-              select.value = newUserName;
-
-              // Crear una nueva opción con las reglas de participación si no existe
-              const existingOption = Array.from(select.options).find(opt => opt.value === newUserName);
-              if (!existingOption) {
-                const newOption = document.createElement("option");
-                newOption.value = newUserName;
-                newOption.text = newUserName;
-                newOption.setAttribute('data-participation-rules', participationRules || '[]');
-                select.appendChild(newOption);
-                select.value = newUserName;
-              }
-
-              // Verificar las asignaciones después de añadir un usuario
-              await checkUserAssignment(select);
-
-              // Cerrar el modal después de la selección
-              modal.classList.add("hidden");
-
-              // Eliminar el eventListener para evitar múltiples selecciones
-              userButtons.forEach((btn) => {
-                btn.removeEventListener("click", handleUserSelection);
-              });
-            }
+      
+      // Si antes tenía restricciones/advertencias y ahora no tiene reglas, notificar
+      if (previousState && (previousState.hasRestrictions || previousState.hasWarnings)) {
+        const wasAnotherUser = previousState.userName !== userName;
+        if (!wasAnotherUser) {
+          notify.open({
+            type: 'info',
+            message: `${fullName}: ✓ Sin condiciones especiales`
           });
-        });
+        }
       }
-    });
-  });
+      
+      // Guardar estado sin reglas
+      validationStates.set(stateKey, {
+        userName: userName,
+        hasRestrictions: false,
+        hasWarnings: false,
+        canParticipate: true
+      });
+    }
+  }
 
-  closeModalBtn.addEventListener("click", () => {
-    modal.classList.add("hidden");
-  });
+  // OPTIMIZACIÓN: Función duplicada eliminada - se usa checkUserAssignment para todo
 
-  userSelectButtons.forEach((button) => {
-    button.addEventListener("click", (event) => {
-      const target = event.target as HTMLElement;
-      const userName = (target.dataset as DOMStringMap).username;
-      const modal = document.getElementById("userModal") as HTMLElement;
-      const day = (modal.dataset as DOMStringMap).day;
-      const turno = (modal.dataset as DOMStringMap).turno;
-      const index = (modal.dataset as DOMStringMap).index;
-      const select = document.querySelector(
-        `select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
-      ) as HTMLSelectElement;
-      const option = document.createElement("option");
-      option.value = userName;
-      option.text = userName;
-      select.appendChild(option);
-      select.value = userName;
-      modal.classList.add("hidden");
-    });
-  });
+  // OPTIMIZACIÓN: Versión con debounce de la validación
+  const debouncedValidation = debounce(checkUserAssignment, 300);
+  
+  // Sistema para trackear el estado de validación previo
+  const validationStates = new Map(); // key: "day-turno-index", value: { canParticipate: boolean, hasWarnings: boolean, userName: string }
 
-  const warningPopup = document.getElementById("warningPopup");
-  const warningMessage = document.getElementById("warningMessage");
-  const closeWarningBtn = document.getElementById("closeWarningBtn");
+  // Event listener movido al DOMContentLoaded
 
-  closeWarningBtn.addEventListener("click", () => {
-    warningPopup.classList.add("hidden");
-  });
+  // OPTIMIZACIÓN: fetchWeekData consolidado con loadWeekData - usar loadWeekData para todo
 
+  // Función helper para mostrar popup de advertencia
   const showWarningPopup = (message: string) => {
-    warningMessage.textContent = message;
-    warningPopup.classList.remove("hidden");
+    const warningPopup = document.getElementById("warningPopup");
+    const warningMessage = document.getElementById("warningMessage");
+    if (warningMessage) warningMessage.textContent = message;
+    if (warningPopup) warningPopup.classList.remove("hidden");
   };
 
-  // Lógica de selección de usuario
-  userSelectButtons.forEach((button) => {
-    button.addEventListener("click", (event) => {
-      const target = event.target as HTMLElement;
-      const userName = (target.dataset as DOMStringMap).username;
-      const userCongregacionId = (target.dataset as DOMStringMap)
-        .congregacionId;
-
-      // Check if userCongregacionId is defined
-      if (!userCongregacionId) {
-        console.error("userCongregacionId is undefined:", target.dataset);
-        return;
-      }
-
-      const modal = document.getElementById("userModal") as HTMLElement;
-      const day = (modal.dataset as DOMStringMap).day;
-      const turno = (modal.dataset as DOMStringMap).turno;
-      const index = Number((modal.dataset as DOMStringMap).index);
-
-      // Validate dataset values
-      if (!day || !turno || !Number.isFinite(index)) {
-        console.error("Invalid dataset values:", day, turno, index);
-        return;
-      }
-
-      const select = document.querySelector(
-        `select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
-      ) as HTMLSelectElement;
-      const option = document.createElement("option");
-      option.value = userName;
-      option.text = userName;
-      select.appendChild(option);
-      select.value = userName;
-
-      // Fetch congregation details using the congregation ID
-      fetch(
-        `/api/getCongregacionDetails.json?congregacionId=${userCongregacionId}`
-      )
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          const congregacionName = data.nombre; // Assuming 'nombre' is the congregation name field
-          if (data.diaReunion === day && data.turnoReunion === turno) {
-            showWarningPopup(
-              `El usuario ${userName} tiene reunión el ${day} en el turno ${turno} en la congregación ${congregacionName}.`
-            );
-          }
-        })
-        .catch((error) => {
-          console.error("Fetch error:", error);
-        });
-
-      modal.classList.add("hidden");
-    });
-  });
-
-  const confirmationModal = document.getElementById("confirmationModal");
-  const cancelBtn = document.getElementById("cancelBtn");
-  const saveBtnModal = document.getElementById("saveBtnModal");
+  // Variables globales
   let initialSelectValues = {};
 
   async function showConfirmationModal() {
     return new Promise((resolve) => {
-      confirmationModal.classList.remove("hidden");
-      cancelBtn.onclick = () => {
-        confirmationModal.classList.add("hidden");
-        resolve(false);
-      };
-      saveBtnModal.onclick = async () => {
-        confirmationModal.classList.add("hidden");
-        await saveWeekData();
-        resolve(true);
-      };
+      const confirmationModal = document.getElementById("confirmationModal");
+      const cancelBtn = document.getElementById("cancelBtn");
+      const saveBtnModal = document.getElementById("saveBtnModal");
+      
+      if (confirmationModal) confirmationModal.classList.remove("hidden");
+      
+      if (cancelBtn) {
+        cancelBtn.onclick = () => {
+          if (confirmationModal) confirmationModal.classList.add("hidden");
+          resolve(false);
+        };
+      }
+      
+      if (saveBtnModal) {
+        saveBtnModal.onclick = async () => {
+          if (confirmationModal) confirmationModal.classList.add("hidden");
+          await saveWeekData();
+          resolve(true);
+        };
+      }
     });
   }
 
   function hasChanges() {
     let changes = false;
-    document.querySelectorAll("select").forEach((select) => {
+    document.querySelectorAll("select.user-select").forEach((select) => {
       const key = `${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`;
       if (initialSelectValues[key] !== select.value) {
         changes = true;
@@ -1141,12 +1511,14 @@ let weekDates = getWeekDates(weekOffset);
 
   function setInitialSelectValues() {
     setTimeout(() => {
-      document.querySelectorAll("select").forEach((select) => {
+      document.querySelectorAll("select.user-select").forEach((select) => {
         const key = `${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`;
         initialSelectValues[key] = select.value;
       });
     }, 1000);
   }
+  
+  // OPTIMIZACIÓN: Código movido al DOMContentLoaded principal arriba
 </script>
 
 <style>
