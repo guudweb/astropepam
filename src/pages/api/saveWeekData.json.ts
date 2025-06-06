@@ -86,24 +86,27 @@ export const POST: APIRoute = async ({ request }) => {
     // Extraer y guardar las participaciones individuales en UserHistory
     const participations = extractParticipations(weekData, validDate);
     
-    if (participations.length > 0) {
-      // Primero, eliminar registros existentes para esta semana
-      // (en caso de que se esté actualizando una semana ya guardada)
-      const startOfWeek = new Date(validDate);
-      const endOfWeek = new Date(validDate);
-      endOfWeek.setDate(endOfWeek.getDate() + 6);
-      
-      await db
-        .delete(UserHistory)
-        .where(
-          and(
-            gte(UserHistory.date, startOfWeek),
-            lte(UserHistory.date, endOfWeek)
-          )
+    // SIEMPRE eliminar registros existentes para esta semana
+    // (incluso si no hay nuevas participaciones)
+    const startOfWeek = new Date(validDate);
+    const endOfWeek = new Date(validDate);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    
+    console.log(`[DEBUG] Eliminando historial de la semana ${startOfWeek.toISOString().split('T')[0]} a ${endOfWeek.toISOString().split('T')[0]}`);
+    
+    await db
+      .delete(UserHistory)
+      .where(
+        and(
+          gte(UserHistory.date, startOfWeek),
+          lte(UserHistory.date, endOfWeek)
         )
-        .execute();
+      )
+      .execute();
 
-      // Insertar los nuevos registros
+    // Insertar los nuevos registros (solo si hay participaciones)
+    if (participations.length > 0) {
+      console.log(`[DEBUG] Insertando ${participations.length} nuevas participaciones`);
       for (const participation of participations) {
         await db
           .insert(UserHistory)
@@ -116,11 +119,15 @@ export const POST: APIRoute = async ({ request }) => {
           })
           .execute();
       }
+    } else {
+      console.log(`[DEBUG] No hay nuevas participaciones que insertar - historial limpio`);
     }
 
     return createSuccessResponse({ 
       message: "Data saved successfully",
-      participationsRecorded: participations.length 
+      participationsRecorded: participations.length,
+      weekCleaned: true,
+      weekRange: `${startOfWeek.toISOString().split('T')[0]} to ${endOfWeek.toISOString().split('T')[0]}`
     });
   } catch (error) {
     console.error("Error saving data:", error);

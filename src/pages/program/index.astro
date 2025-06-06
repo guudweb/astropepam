@@ -1,8 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import WeekNavigation from "../../components/Program/WeekNavigation.astro";
-import MobileScheduleView from "../../components/Program/MobileScheduleView.astro";
-import DesktopScheduleView from "../../components/Program/DesktopScheduleView.astro";
+import ResponsiveScheduleView from "../../components/Program/ResponsiveScheduleView.astro";
 import { DAYS } from "../../constants/days";
 import { TURNS } from "../../constants/turns";
 
@@ -127,17 +126,9 @@ const weekDates = getWeekDates(currentDate);
       </div>
     </div>
 
-    <!-- Vistas adaptivas del programa -->
+    <!-- Vista unificada responsiva del programa -->
     <div id="currentView">
-      <!-- Vista Mobile -->
-      <MobileScheduleView 
-        days={days}
-        turnos={turnos}
-        weekDates={weekDates}
-      />
-      
-      <!-- Vista Desktop -->
-      <DesktopScheduleView 
+      <ResponsiveScheduleView 
         days={days}
         turnos={turnos}
         weekDates={weekDates}
@@ -296,7 +287,18 @@ const weekDates = getWeekDates(currentDate);
 </Layout>
 
 <script>
-  let currentDate = new Date();
+  // Declaración de tipos para funciones globales
+  declare global {
+    interface Window {
+      clearUsersCache: () => void;
+    }
+  }
+
+  // Inicializar fecha desde el parámetro URL o fecha actual
+  const urlParams = new URLSearchParams(window.location.search);
+  const dateParam = urlParams.get('date');
+  let currentDate = dateParam ? new Date(dateParam) : new Date();
+  
   const days = [
     "lunes",
     "martes",
@@ -427,6 +429,7 @@ const weekDates = getWeekDates(currentDate);
   
   // Function to populate all selects with filtered users
   const populateAllSelects = (allUsers) => {
+    // Vista única responsiva
     const selects = document.querySelectorAll('.user-select');
     selects.forEach(select => {
       const day = select.dataset.day;
@@ -489,7 +492,23 @@ const weekDates = getWeekDates(currentDate);
   // Function to clear users cache (useful when week changes)
   const clearUsersCache = () => {
     allUsersCache = null;
+    memoCache.clear(); // Limpiar también el cache de memoización
+    validationStates.clear(); // Limpiar estados de validación
+    userNameMappingCache = null; // Limpiar cache de nombres
+    console.log('Cache cleared for week change');
   };
+
+  // Vista única responsiva - no necesita sincronización
+  // Asegurar que syncViewValues no existe (evitar errores de cache)
+  window.syncViewValues = undefined;
+
+  // Exponer función globalmente para navegación
+  window.clearUsersCache = clearUsersCache;
+  
+  // Event listener para detectar cambios de página y limpiar cache
+  window.addEventListener('beforeunload', () => {
+    clearUsersCache();
+  });
 
   // OPTIMIZACIÓN: Función unificada para cargar datos de semana
   const fetchWeekDataFromAPI = async (date: Date) => {
@@ -519,6 +538,9 @@ const weekDates = getWeekDates(currentDate);
     try {
       // Show spinner
       spinnerOverlay.classList.add("active");
+      
+      // Limpiar cache cuando se cambia de semana
+      clearUsersCache();
       
       // Cargar usuarios para todos los selects (usa cache si está disponible)
       await loadAllUsers();
@@ -690,7 +712,21 @@ const weekDates = getWeekDates(currentDate);
 
     const userHistoryPromises = [];
 
+    // Vista única responsiva - obtener solo selects visibles
+    let totalSelects = 0;
+    let visibleSelects = 0;
+    
     document.querySelectorAll("select.user-select").forEach((select) => {
+      totalSelects++;
+      
+      // En mobile, solo procesar días visibles; en desktop, procesar todos
+      const isMobile = window.innerWidth < 1024;
+      const dayContainer = select.closest('.day-container');
+      const isDayVisible = !isMobile || dayContainer?.style.display !== 'none';
+      
+      if (!isDayVisible) return; // Skip días ocultos en mobile
+      
+      visibleSelects++;
       const day = select.dataset.day;
       const turno = select.dataset.turno;
       const index = select.dataset.index;
@@ -760,6 +796,10 @@ const weekDates = getWeekDates(currentDate);
 
     // Hide spinner
     spinnerOverlay.classList.remove("active");
+    
+    // Log de debug
+    console.log(`Guardado completado: ${totalSelects} selects totales, ${visibleSelects} procesados, ${Object.keys(currentWeekData).length} datos guardados`);
+    console.log('Datos guardados:', currentWeekData);
   };
 
   // Function to save preajustes data

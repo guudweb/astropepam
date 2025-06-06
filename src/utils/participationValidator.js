@@ -39,40 +39,84 @@ export class ParticipationValidatorJS {
     const selectedMonth = selectedDate.getMonth();
     const selectedYear = selectedDate.getFullYear();
 
+    console.log(`[DEBUG] validateMaxPerMonth - INICIO`);
+    console.log(`[DEBUG] validateMaxPerMonth - Fecha seleccionada: ${selectedDate.toISOString().split('T')[0]}`);
+    console.log(`[DEBUG] validateMaxPerMonth - Mes seleccionado: ${selectedMonth} (0=Enero, 11=Diciembre)`);
+    console.log(`[DEBUG] validateMaxPerMonth - Año seleccionado: ${selectedYear}`);
+    console.log(`[DEBUG] validateMaxPerMonth - Límite máximo: ${maxParticipations}`);
+    console.log(`[DEBUG] validateMaxPerMonth - Historial completo:`, userHistory);
+
+    // Filtrar solo participaciones pasadas y actuales (no futuras)
+    const currentDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+    
     const monthParticipations = userHistory.filter(p => {
       const pDate = new Date(p.date);
-      console.log(`[DEBUG] Comparando fecha ${p.date}: mes=${pDate.getMonth()}, año=${pDate.getFullYear()} vs seleccionado mes=${selectedMonth}, año=${selectedYear}`);
-      return pDate.getMonth() === selectedMonth && pDate.getFullYear() === selectedYear;
+      const pDateOnly = new Date(pDate.getFullYear(), pDate.getMonth(), pDate.getDate());
+      
+      console.log(`[DEBUG] Evaluando participación: ${p.date}`);
+      console.log(`  - Fecha participación: ${pDateOnly.toISOString().split('T')[0]}`);
+      console.log(`  - Fecha seleccionada: ${currentDateOnly.toISOString().split('T')[0]}`);
+      console.log(`  - ¿Mismo mes/año?: ${pDate.getMonth() === selectedMonth && pDate.getFullYear() === selectedYear}`);
+      console.log(`  - ¿Es pasada o actual?: ${pDateOnly <= currentDateOnly}`);
+      
+      // Solo contar participaciones del mismo mes/año que sean pasadas o la fecha actual
+      const isSameMonth = pDate.getMonth() === selectedMonth && pDate.getFullYear() === selectedYear;
+      const isPastOrCurrent = pDateOnly <= currentDateOnly;
+      
+      return isSameMonth && isPastOrCurrent;
     });
 
-    console.log(`[DEBUG] validateMaxPerMonth - Mes/Año seleccionado: ${selectedMonth}/${selectedYear}`);
-    console.log(`[DEBUG] validateMaxPerMonth - Participaciones del mes encontradas:`, monthParticipations);
-    console.log(`[DEBUG] validateMaxPerMonth - Cantidad: ${monthParticipations.length}, Límite: ${maxParticipations}`);
+    console.log(`[DEBUG] validateMaxPerMonth - Participaciones válidas del mes:`, monthParticipations);
+    console.log(`[DEBUG] validateMaxPerMonth - Cantidad actual: ${monthParticipations.length}`);
+    console.log(`[DEBUG] validateMaxPerMonth - ¿Alcanzó límite?: ${monthParticipations.length >= maxParticipations}`);
 
     if (monthParticipations.length >= maxParticipations) {
       result.canParticipate = false;
-      result.restrictions.push(`Ya alcanzó el límite de ${maxParticipations} participaciones este mes`);
+      result.restrictions.push(`Ya alcanzó el límite de ${maxParticipations} participaciones este mes (actual: ${monthParticipations.length})`);
     } else if (monthParticipations.length === maxParticipations - 1) {
-      result.warnings.push(`Esta será su última participación permitida este mes`);
+      result.warnings.push(`Esta será su última participación permitida este mes (${monthParticipations.length + 1}/${maxParticipations})`);
     }
+
+    console.log(`[DEBUG] validateMaxPerMonth - Resultado: canParticipate=${result.canParticipate}`);
+    console.log(`[DEBUG] validateMaxPerMonth - FIN`);
   }
 
   static validateMaxPerWeek(rule, selectedDate, userHistory, result) {
     const maxParticipations = rule.value;
     const weekStart = this.getWeekStart(new Date(selectedDate));
     const weekEnd = this.getWeekEnd(new Date(selectedDate));
+    const currentDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+
+    console.log(`[DEBUG] validateMaxPerWeek - INICIO`);
+    console.log(`[DEBUG] validateMaxPerWeek - Fecha seleccionada: ${selectedDate.toISOString().split('T')[0]}`);
+    console.log(`[DEBUG] validateMaxPerWeek - Semana inicio: ${weekStart.toISOString().split('T')[0]}`);
+    console.log(`[DEBUG] validateMaxPerWeek - Semana fin: ${weekEnd.toISOString().split('T')[0]}`);
+    console.log(`[DEBUG] validateMaxPerWeek - Límite máximo: ${maxParticipations}`);
 
     const weekParticipations = userHistory.filter(p => {
       const pDate = new Date(p.date);
-      return pDate >= weekStart && pDate <= weekEnd;
+      const pDateOnly = new Date(pDate.getFullYear(), pDate.getMonth(), pDate.getDate());
+      
+      const isInWeek = pDate >= weekStart && pDate <= weekEnd;
+      const isPastOrCurrent = pDateOnly <= currentDateOnly;
+      
+      console.log(`[DEBUG] Evaluando participación semanal: ${p.date}, ¿En semana?: ${isInWeek}, ¿Pasada/actual?: ${isPastOrCurrent}`);
+      
+      return isInWeek && isPastOrCurrent;
     });
+
+    console.log(`[DEBUG] validateMaxPerWeek - Participaciones válidas de la semana:`, weekParticipations);
+    console.log(`[DEBUG] validateMaxPerWeek - Cantidad actual: ${weekParticipations.length}`);
 
     if (weekParticipations.length >= maxParticipations) {
       result.canParticipate = false;
-      result.restrictions.push(`Ya alcanzó el límite de ${maxParticipations} participaciones esta semana`);
+      result.restrictions.push(`Ya alcanzó el límite de ${maxParticipations} participaciones esta semana (actual: ${weekParticipations.length})`);
     } else if (weekParticipations.length === maxParticipations - 1) {
-      result.warnings.push(`Esta será su última participación permitida esta semana`);
+      result.warnings.push(`Esta será su última participación permitida esta semana (${weekParticipations.length + 1}/${maxParticipations})`);
     }
+
+    console.log(`[DEBUG] validateMaxPerWeek - Resultado: canParticipate=${result.canParticipate}`);
+    console.log(`[DEBUG] validateMaxPerWeek - FIN`);
   }
 
   static validateSpecificWeeks(rule, selectedWeek, result) {
@@ -101,12 +145,17 @@ export class ParticipationValidatorJS {
     // Calcular la diferencia en semanas
     const diffInWeeks = Math.floor((selectedWeekStart.getTime() - lastWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
 
+    console.log(`[DEBUG] Semanas alternadas - Última participación: ${lastParticipation.date}, Semana actual: ${selectedDate.toISOString().split('T')[0]}, Diferencia: ${diffInWeeks} semanas`);
+
     if (diffInWeeks === 0) {
       result.canParticipate = false;
       result.restrictions.push('No puede participar dos veces en la misma semana (semanas alternadas)');
     } else if (diffInWeeks === 1) {
       result.canParticipate = false;
       result.restrictions.push('Debe esperar una semana antes de su próxima participación (semanas alternadas)');
+    } else if (diffInWeeks > 1) {
+      // Puede participar, pero mostrar información útil
+      result.warnings.push(`Última participación: ${lastParticipation.date} (hace ${diffInWeeks} semanas)`);
     }
   }
 

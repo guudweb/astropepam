@@ -152,7 +152,9 @@ export class ParticipationValidator {
   private static getWeekStart(date: Date): Date {
     const day = date.getDay();
     const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Lunes como primer día
-    return new Date(date.setDate(diff));
+    const newDate = new Date(date);
+    newDate.setDate(diff);
+    return newDate;
   }
 
   private static getWeekEnd(date: Date): Date {
