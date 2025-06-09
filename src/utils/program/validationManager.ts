@@ -37,6 +37,18 @@ export class ValidationManager {
         };
       }
 
+      // Verificar si tiene la condición de disponibilidad semanal
+      const hasWeeklyAvailabilityRule = user.participation_rules.some(
+        rule => rule.type === 'weekly_availability'
+      );
+
+      if (hasWeeklyAvailabilityRule) {
+        // Mostrar notificación directamente usando notify (si está disponible)
+        if (typeof window !== 'undefined' && (window as any).notify) {
+          (window as any).notify.info(`${userName}: Envía su disponibilidad semanalmente`);
+        }
+      }
+
       // Validar con el sistema existente
       const validation = await ParticipationValidatorJS.validateUserForDate(
         userName,

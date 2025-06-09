@@ -9,9 +9,13 @@ export async function GET({ url }) {
   const turn = url.searchParams.get("turn");
   const privilegesParam = url.searchParams.get("privileges");
   const privileges = privilegesParam ? privilegesParam.split(",") : [];
+  const serviceLinkParam = url.searchParams.get("serviceLink");
+  const serviceLink = serviceLinkParam === "true" ? true : serviceLinkParam === "false" ? false : null;
+  const congregationsParam = url.searchParams.get("congregations");
+  const congregations = congregationsParam ? congregationsParam.split(",") : [];
 
   // Verificación de parámetros obligatorios - actualizada para ser más flexible
-  if (!day && !turn && privileges.length === 0) {
+  if (!day && !turn && privileges.length === 0 && serviceLink === null && congregations.length === 0) {
     return new Response(
       JSON.stringify({ error: "At least one filter parameter is required" }),
       {
@@ -57,6 +61,21 @@ export async function GET({ url }) {
           )
         );
         if (!hasMatchingPrivilege) {
+          return false;
+        }
+      }
+      
+      // Filtro por service_link
+      if (serviceLink !== null) {
+        if (user.service_link !== serviceLink) {
+          return false;
+        }
+      }
+      
+      // Filtro por congregaciones
+      if (congregations.length > 0) {
+        // Verificar si el usuario pertenece a alguna de las congregaciones seleccionadas
+        if (!user.congregacion || !congregations.includes(user.congregacion.id.toString())) {
           return false;
         }
       }

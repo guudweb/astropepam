@@ -23,12 +23,12 @@ const { isAdmin } = Astro.locals;
             d="M11 7l-5 5l5 5"></path><path d="M17 7l-5 5l5 5"></path></svg
         >
       </button>
-      {
-        isAdmin && (
-          <div class=" text-center items-center flex justify-center gap-4 ">
+      <div class="text-center items-center flex justify-center gap-4">
+        {
+          isAdmin && (
             <a href="/program">
               <button
-                class="bg-cyan-500 text-white px-3 py-2 rounded flex "
+                class="bg-cyan-500 text-white px-3 py-2 rounded flex"
                 id="CalenderViewBtn"
               >
                 <svg
@@ -51,36 +51,61 @@ const { isAdmin } = Astro.locals;
                 Editar
               </button>
             </a>
-            <button
-              onclick="saveTableAsPDF()"
-              class=" px-4 py-2 bg-blue-700 text-white font-bold  rounded-md"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf"
-              >
-                <>
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                  <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
-                  <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
-                  <path d="M17 18h2" />
-                  <path d="M20 15h-3v6" />
-                  <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
-                </>
-              </svg>
-            </button>
-          </div>
-        )
-      }
+          )
+        }
+        <button
+          onclick="saveTableAsPDF()"
+          class="px-4 py-2 bg-blue-700 text-white font-bold rounded-md"
+          title="PDF Estructurado"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf"
+          >
+            <>
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+              <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
+              <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
+              <path d="M17 18h2" />
+              <path d="M20 15h-3v6" />
+              <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
+            </>
+          </svg>
+        </button>
+        <button
+          onclick="captureTableAsPDF()"
+          class="px-4 py-2 bg-green-700 text-white font-bold rounded-md ml-2"
+          title="PDF Vista Capturada"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-camera"
+          >
+            <>
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
+              <path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+            </>
+          </svg>
+        </button>
+      </div>
       <button class="bg-cyan-600 text-white px-4 py-2 rounded" id="nextWeekBtn">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -113,7 +138,7 @@ const { isAdmin } = Astro.locals;
     <script is:inline>
       let currentDate = new Date(); // Define currentDate in the global scope
       let userNameMapping = {}; // Mapeo de userName a nombre completo
-      
+
       const days = [
         "lunes",
         "martes",
@@ -134,7 +159,7 @@ const { isAdmin } = Astro.locals;
       // Función para obtener el mapeo de nombres
       const fetchUserNameMapping = async () => {
         try {
-          const response = await fetch('/api/getUsersNameMapping.json');
+          const response = await fetch("/api/getUsersNameMapping.json");
           const data = await response.json();
           return data.mapping || {};
         } catch (error) {
@@ -176,6 +201,115 @@ const { isAdmin } = Astro.locals;
         }
       };
 
+      // Cache para números de teléfono
+      let phoneNumberCache = {};
+
+      // Función para formatear números de teléfono
+      const formatPhoneNumber = (phoneNumber) => {
+        if (
+          !phoneNumber ||
+          phoneNumber === "Sin teléfono" ||
+          phoneNumber === "Error" ||
+          phoneNumber === "Phone number not available"
+        ) {
+          return phoneNumber;
+        }
+
+        // Primero, limpiar el string completo para tener solo dígitos
+        const allDigits = phoneNumber.replace(/\D/g, "");
+
+        // Si después de limpiar no hay dígitos, retornar "Sin teléfono"
+        if (allDigits.length === 0) {
+          return "Sin teléfono";
+        }
+
+        // Detectar si hay múltiples números concatenados
+        let numbers = [];
+
+        // Si hay separadores explícitos, usarlos
+        if (/[,\/;|]/.test(phoneNumber)) {
+          numbers = phoneNumber
+            .split(/[,\/;|]+/)
+            .filter((num) => num.trim().length > 0);
+        } else {
+          // Si no hay separadores, detectar números concatenados
+          // Asumir que cada número tiene 9 dígitos (estándar español)
+          if (allDigits.length >= 18 && allDigits.length % 9 === 0) {
+            // Múltiples números de 9 dígitos
+            for (let i = 0; i < allDigits.length; i += 9) {
+              numbers.push(allDigits.slice(i, i + 9));
+            }
+          } else if (allDigits.length >= 16 && allDigits.length % 8 === 0) {
+            // Múltiples números de 8 dígitos
+            for (let i = 0; i < allDigits.length; i += 8) {
+              numbers.push(allDigits.slice(i, i + 8));
+            }
+          } else if (allDigits.length >= 18) {
+            // Intentar dividir en números de 9 dígitos
+            for (let i = 0; i < allDigits.length; i += 9) {
+              if (i + 9 <= allDigits.length) {
+                numbers.push(allDigits.slice(i, i + 9));
+              } else {
+                // El último número puede tener menos dígitos
+                numbers.push(allDigits.slice(i));
+              }
+            }
+          } else {
+            // Un solo número
+            numbers = [phoneNumber];
+          }
+        }
+
+        const formatSingleNumber = (num) => {
+          // Limpiar el número: solo dígitos
+          const cleanNum = num.replace(/\D/g, "");
+
+          // Si tiene 9 dígitos (formato español estándar)
+          if (cleanNum.length === 9) {
+            return `${cleanNum.slice(0, 3)} ${cleanNum.slice(3, 5)} ${cleanNum.slice(5, 7)} ${cleanNum.slice(7, 9)}`;
+          }
+
+          // Si tiene más o menos dígitos, intentar formatear igualmente
+          if (cleanNum.length >= 6) {
+            if (cleanNum.length === 8) {
+              return `${cleanNum.slice(0, 2)} ${cleanNum.slice(2, 4)} ${cleanNum.slice(4, 6)} ${cleanNum.slice(6, 8)}`;
+            } else if (cleanNum.length === 7) {
+              return `${cleanNum.slice(0, 3)} ${cleanNum.slice(3, 5)} ${cleanNum.slice(5, 7)}`;
+            } else {
+              // Para números más largos, aplicar formato básico
+              return `${cleanNum.slice(0, 3)} ${cleanNum.slice(3, 5)} ${cleanNum.slice(5, 7)} ${cleanNum.slice(7)}`;
+            }
+          }
+
+          // Si es muy corto, devolverlo sin formatear
+          return cleanNum;
+        };
+
+        // Formatear cada número y unirlos con " / "
+        const formattedNumbers = numbers.map(formatSingleNumber);
+        return formattedNumbers.join(" / ");
+      };
+
+      const getPhoneNumber = async (userName) => {
+        if (!userName) return "";
+
+        if (phoneNumberCache[userName]) {
+          return phoneNumberCache[userName];
+        }
+
+        try {
+          const phone = await fetchPhoneNumber(userName);
+          console.log(`Phone for ${userName}:`, phone); // Debug log
+          const formattedPhone = formatPhoneNumber(phone);
+          console.log(`Formatted phone for ${userName}:`, formattedPhone); // Debug log
+          phoneNumberCache[userName] = formattedPhone || "";
+          return phoneNumberCache[userName];
+        } catch (error) {
+          console.error("Error getting phone number:", error);
+          return "";
+        }
+      };
+
       const showPhoneNumber = (phoneNumber, event) => {
         const popup = document.getElementById("phoneNumberPopup");
         popup.innerText = phoneNumber;
@@ -194,7 +328,7 @@ const { isAdmin } = Astro.locals;
         if (Object.keys(userNameMapping).length === 0) {
           userNameMapping = await fetchUserNameMapping();
         }
-        
+
         const weekDates = getWeekDates(currentDate);
         const weekData = await fetchWeekData(currentDate);
 
@@ -205,11 +339,11 @@ const { isAdmin } = Astro.locals;
     <table id="desktopTable" class="min-w-full bg-white border border-gray-200 mb-4">
       <thead>
         <tr>
-          <th class="px-4 py-2 border-b">Turno</th>
+          <th class="px-4 py-2 border-b text-center">Turno</th>
           ${weekDates
             .map((date, index) => {
               if (days[index] !== "lunes") {
-                return `<th class="px-4 py-2 border-b">${formatDate(date, days[index])}</th>`;
+                return `<th class="px-4 py-2 border-b text-center">${formatDate(date, days[index])}</th>`;
               }
               return "";
             })
@@ -234,11 +368,27 @@ const { isAdmin } = Astro.locals;
                             weekData[`${day}-${turno}-${index}`] || "";
                           const fullName = getFullName(userName);
                           const isCurrentUser = userName === user;
+                          const isFirstInShift = index === 0;
+
+                          if (!userName) {
+                            // Solo mostrar "Turno disponible" para las primeras 3 posiciones
+                            if (index < 3) {
+                              return '<div class="empty-slot" style="margin-bottom: 8px; padding: 8px; background-color: #fee2e2; color: #991b1b; text-align: center; border-radius: 4px; display: flex; align-items: center; justify-content: center;">Turno disponible</div>';
+                            } else {
+                              return ""; // No mostrar nada para la 4ta posición vacía
+                            }
+                          }
+
                           return `<div class="user" data-nombre="${userName}" style="margin-bottom: 8px;${
                             isCurrentUser
                               ? "color: blue; font-weight: bold;"
-                              : ""
-                          }">${fullName}</div>`;
+                              : isFirstInShift
+                                ? "font-weight: bold; color: #1e3a8a;"
+                                : ""
+                          }">
+                            <div>${fullName}</div>
+                            <div class="phone-number" style="font-size: 0.8em; color: #666; margin-top: 2px;" data-user="${userName}">Cargando...</div>
+                          </div>`;
                         })
                         .join("")}
                     </td>
@@ -265,8 +415,8 @@ const { isAdmin } = Astro.locals;
               <table class="min-w-full bg-white border border-gray-200 mb-4">
                 <thead>
                   <tr>
-                    <th class="px-4 py-2 border-b">Turno</th>
-                    <th class="px-4 py-2 border-b">${formatDate(date, day)}</th>
+                    <th class="px-4 py-2 border-b text-center">Turno</th>
+                    <th class="px-4 py-2 border-b text-center">${formatDate(date, day)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -282,11 +432,27 @@ const { isAdmin } = Astro.locals;
                               weekData[`${day}-${turno}-${index}`] || "";
                             const fullName = getFullName(userName);
                             const isCurrentUser = userName === user;
+                            const isFirstInShift = index === 0;
+
+                            if (!userName) {
+                              // Solo mostrar "Turno disponible" para las primeras 3 posiciones
+                              if (index < 3) {
+                                return '<div class="empty-slot" style="margin-bottom: 8px; padding: 8px; background-color: #fee2e2; color: #991b1b; text-align: center; border-radius: 4px; display: flex; align-items: center; justify-content: center;">Turno disponible</div>';
+                              } else {
+                                return ""; // No mostrar nada para la 4ta posición vacía
+                              }
+                            }
+
                             return `<div class="user" data-nombre="${userName}" style="margin-bottom: 8px; ${
                               isCurrentUser
                                 ? "color: blue; font-weight: bold;"
-                                : ""
-                            }">${fullName}</div>`;
+                                : isFirstInShift
+                                  ? "font-weight: bold; color: #1e3a8a;"
+                                  : ""
+                            }">
+                              <div>${fullName}</div>
+                              <div class="phone-number" style="font-size: 0.8em; color: #666; margin-top: 2px;" data-user="${userName}">Cargando...</div>
+                            </div>`;
                           })
                           .join("")}
                       </td>
@@ -304,6 +470,30 @@ const { isAdmin } = Astro.locals;
       .join("")}
   </div>
 `;
+
+        // Cargar números de teléfono para todos los usuarios visibles
+        const phoneNumberElements = document.querySelectorAll(".phone-number");
+        phoneNumberElements.forEach(async (phoneElement) => {
+          const userName = phoneElement.dataset.user;
+          if (userName) {
+            try {
+              const phoneNumber = await getPhoneNumber(userName);
+              // Verificar si realmente hay un número o si está vacío/sin teléfono
+              if (
+                phoneNumber &&
+                phoneNumber !== "Phone number not available" &&
+                phoneNumber !== "Sin teléfono" &&
+                phoneNumber !== "Error"
+              ) {
+                phoneElement.textContent = phoneNumber;
+              } else {
+                phoneElement.textContent = "Sin teléfono";
+              }
+            } catch (error) {
+              phoneElement.textContent = "Error";
+            }
+          }
+        });
 
         document.querySelectorAll(".user").forEach((user) => {
           const userElement = user;
@@ -357,18 +547,8 @@ const { isAdmin } = Astro.locals;
         updateWeek();
       });
 
-      const saveTableAsPDF = () => {
+      const saveTableAsPDF = async () => {
         const { jsPDF } = window.jspdf;
-
-        // Mostrar temporalmente la tabla de escritorio en la vista móvil
-        const desktopTableWrapper =
-          document.querySelector("#desktopTable").parentElement;
-
-        // Guardar el estado original de la tabla
-        const originalDisplay = desktopTableWrapper.style.display;
-
-        // Forzar que la tabla de escritorio sea visible
-        desktopTableWrapper.style.display = "block";
 
         const doc = new jsPDF({
           orientation: "landscape",
@@ -376,60 +556,397 @@ const { isAdmin } = Astro.locals;
           format: "a4",
         });
 
-        // Seleccionar la tabla de escritorio
-        const table = document.querySelector("#desktopTable");
+        // Obtener datos de la semana actual
+        const weekDates = getWeekDates(currentDate);
+        const weekData = await fetchWeekData(currentDate);
 
-        if (!table) {
-          alert("La tabla de escritorio no está disponible.");
-          desktopTableWrapper.style.display = originalDisplay; // Restaurar el estado original
-          return;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        let yPosition = 20;
+
+        // Título del documento
+        doc.setFontSize(16);
+        doc.setFont(undefined, "bold");
+        // Get start date BEFORE using it
+        const startDate = weekDates[1]; // Martes (índice 1)
+        const endDate = weekDates[6]; // Domingo (índice 6)
+        const monthName = startDate.toLocaleDateString("es-ES", {
+          month: "long",
+        });
+        const year = startDate.getFullYear();
+        const capitalizedMonth =
+          monthName.charAt(0).toUpperCase() + monthName.slice(1);
+        doc.text(
+          `PPAM Programa Semanal - ${capitalizedMonth} ${year}`,
+          pageWidth / 2,
+          yPosition,
+          {
+            align: "center",
+          }
+        );
+        yPosition += 25;
+
+        // Fechas de la semana
+        doc.setFontSize(10);
+        doc.setFont(undefined, "normal");
+        doc.text(
+          `${startDate.toLocaleDateString("es-ES")} - ${endDate.toLocaleDateString("es-ES")}`,
+          pageWidth / 2,
+          yPosition,
+          { align: "center" }
+        );
+        yPosition += 20;
+
+        // Crear encabezados de la tabla (igual que la página calendario)
+        const headers = ["Turno"];
+        const visibleDays = [];
+
+        // Agregar días como columnas (excluyendo lunes)
+        for (let dayIndex = 1; dayIndex < days.length; dayIndex++) {
+          const day = days[dayIndex];
+          const date = weekDates[dayIndex];
+          visibleDays.push({ day, date, index: dayIndex });
+          headers.push(
+            `${day.charAt(0).toUpperCase() + day.slice(1)} ${date.getDate()}`
+          );
         }
 
-        // Obtener encabezados y filas de la tabla de escritorio
-        const headers = Array.from(table.querySelectorAll("thead th")).map(
-          (th) => th.innerText
-        );
-        const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) =>
-          Array.from(tr.querySelectorAll("td")).map((td) => {
-            const names = td.innerText.split("\n"); // Dividir nombres por saltos de línea
-            return names.join("\n\n"); // Agregar separación adicional en el PDF
-          })
-        );
+        // Crear filas de datos
+        const tableData = [];
+        turnos.forEach((turno) => {
+          const row = [turnoTimes[turno]]; // Primera columna: horario del turno
 
-        // Generar el PDF
-        doc.autoTable({
-          head: [headers],
-          body: rows,
-          startY: 20,
-          margin: { top: 10, right: 10, bottom: 10, left: 10 },
-          theme: "grid",
-          styles: {
-            fontSize: 9,
-            cellPadding: 8,
+          // Agregar datos para cada día
+          visibleDays.forEach(({ day }) => {
+            const usuarios = [];
+
+            for (let index = 0; index < 4; index++) {
+              const userName = weekData[`${day}-${turno}-${index}`] || "";
+
+              if (!userName) {
+                // Solo agregar "Turno disponible" para las primeras 3 posiciones
+                if (index < 3) {
+                  usuarios.push("Turno disponible");
+                }
+                continue;
+              }
+
+              const fullName = getFullName(userName);
+              const isFirstInShift = index === 0;
+
+              let displayText = fullName;
+              if (isFirstInShift) {
+                displayText = `★ ${fullName}`; // Marcar primer nombre con estrella
+              }
+
+              // Agregar número de teléfono si está disponible
+              const phoneNumber = phoneNumberCache[userName];
+              if (
+                phoneNumber &&
+                phoneNumber !== "Sin teléfono" &&
+                phoneNumber !== "Error"
+              ) {
+                displayText += `\n${phoneNumber}`;
+              }
+
+              usuarios.push(displayText);
+            }
+
+            row.push(usuarios.join("\n\n"));
+          });
+
+          tableData.push(row);
+        });
+
+        // Calcular ancho de columnas
+        const totalColumns = headers.length;
+        const turnoColumnWidth = 80;
+        const dayColumnWidth =
+          (pageWidth - margin * 2 - turnoColumnWidth) / (totalColumns - 1);
+
+        // Configurar estilos de columnas
+        const columnStyles = {
+          0: {
+            cellWidth: turnoColumnWidth,
             halign: "center",
             valign: "middle",
-            fillColor: [255, 255, 255],
-            textColor: [0, 0, 0],
+          },
+        };
+
+        for (let i = 1; i < totalColumns; i++) {
+          columnStyles[i] = {
+            cellWidth: dayColumnWidth,
+            halign: "center",
+            valign: "top",
+            fontSize: 7,
+          };
+        }
+
+        // Generar la tabla
+        doc.autoTable({
+          head: [headers],
+          body: tableData,
+          startY: yPosition,
+          margin: { left: margin, right: margin },
+          theme: "grid",
+          styles: {
+            fontSize: 7,
+            cellPadding: 4,
+            valign: "top",
             lineWidth: 0.1,
+            lineColor: [0, 0, 0],
+            overflow: "linebreak",
           },
           headStyles: {
-            fillColor: [6, 2, 112],
+            fillColor: [59, 130, 246], // bg-blue-600
             textColor: [255, 255, 255],
             fontStyle: "bold",
-            cellPadding: 6,
+            fontSize: 8,
+            halign: "center",
+            valign: "middle",
           },
+          columnStyles: columnStyles,
           alternateRowStyles: {
-            fillColor: [226, 234, 244],
+            fillColor: [243, 244, 246], // bg-gray-100
           },
-          tableLineColor: [0, 0, 0],
-          tableLineWidth: 0.1,
+          didParseCell: function (data) {
+            // Get cell text - handle both string and array formats
+            let cellText = "";
+            
+            if (data.cell.text) {
+              if (typeof data.cell.text === "string") {
+                cellText = data.cell.text;
+              } else if (Array.isArray(data.cell.text)) {
+                cellText = data.cell.text.join(" ");
+              }
+            }
+            
+            if (!cellText && data.cell.raw) {
+              cellText = String(data.cell.raw);
+            }
+
+            console.log("Processing cell:", cellText);
+
+            // Check for "Turno disponible" ONLY if it's the entire content
+            if (cellText && cellText.trim() === "Turno disponible") {
+              console.log('Found ONLY "Turno disponible" - applying RED and BOLD');
+              // Apply styles directly without Object.assign
+              data.cell.styles.fillColor = [220, 38, 38];
+              data.cell.styles.textColor = [255, 255, 255];
+              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.halign = 'center';
+              data.cell.styles.valign = 'middle';
+              data.cell.styles.fontSize = 8;
+              return;
+            }
+
+            // Check for first volunteer (★) - second priority
+            if (cellText && cellText.includes("★")) {
+              console.log('Found first volunteer (★) - applying BLUE and BOLD');
+              
+              // Remove the star from display
+              if (Array.isArray(data.cell.text)) {
+                data.cell.text = data.cell.text.map((line) =>
+                  line.replace(/★/g, "").trim()
+                );
+              } else if (typeof data.cell.text === "string") {
+                data.cell.text = data.cell.text.replace(/★/g, "").trim();
+              }
+              
+              // Apply blue bold styling directly
+              data.cell.styles.textColor = [29, 78, 216];
+              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.halign = 'center';
+              data.cell.styles.valign = 'top';
+              data.cell.styles.fontSize = 7;
+              return;
+            }
+
+            // Default styling for regular volunteers
+            if (cellText && data.column.index > 0) {
+              data.cell.styles.halign = 'center';
+              data.cell.styles.valign = 'top';
+              data.cell.styles.fontSize = 7;
+            }
+          },
+          willDrawCell: function (data) {
+            // willDrawCell se ejecuta justo antes de dibujar, garantizando que los estilos se apliquen
+            if (data.cell.raw) {
+              const cellText = String(data.cell.raw);
+              if (cellText.includes("Turno disponible")) {
+                // Forzar el centrado justo antes de dibujar
+                data.cell.styles.halign = "center";
+                data.cell.styles.valign = "middle";
+                data.cell.styles.fillColor = [254, 226, 226];
+                data.cell.styles.textColor = [153, 27, 27];
+              }
+            }
+          },
         });
 
         // Descargar el PDF
-        doc.save("calendar.pdf");
+        doc.save("calendario-programa.pdf");
+      };
 
-        // Ocultar la tabla de escritorio nuevamente
-        desktopTableWrapper.style.display = originalDisplay;
+      // Nueva función para capturar la tabla directamente con html2canvas
+      const captureTableAsPDF = async () => {
+        try {
+          const { jsPDF } = window.jspdf;
+
+          // Seleccionar el elemento de la tabla a capturar
+          const tableElement = document.getElementById("calendarView");
+
+          if (!tableElement) {
+            alert("No se encontró la tabla del calendario");
+            return;
+          }
+
+          // Pequeño delay para asegurar que todos los estilos están aplicados
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
+          // Configurar html2canvas para mejor calidad
+          const canvas = await html2canvas(tableElement, {
+            scale: 2, // Mayor resolución
+            useCORS: true, // Permitir recursos externos
+            allowTaint: false,
+            backgroundColor: "#ffffff",
+            scrollX: 0,
+            scrollY: 0,
+            width: tableElement.scrollWidth,
+            height: tableElement.scrollHeight,
+            removeContainer: true,
+            logging: false,
+            onclone: (clonedDoc) => {
+              // Asegurar que el elemento clonado sea visible
+              const clonedElement = clonedDoc.getElementById("calendarView");
+              if (clonedElement) {
+                clonedElement.style.display = "block";
+                clonedElement.style.visibility = "visible";
+
+                // Forzar que se muestre la vista de escritorio en el clon
+                const desktopView =
+                  clonedElement.querySelector(".hidden.md\\:block");
+                if (desktopView) {
+                  desktopView.classList.remove("hidden");
+                  desktopView.classList.add("block");
+                }
+
+                // Ocultar vista móvil en el clon
+                const mobileView = clonedElement.querySelector(".md\\:hidden");
+                if (mobileView) {
+                  mobileView.style.display = "none";
+                }
+
+                // Asegurar que los estilos de centrado se apliquen correctamente
+                const headers = clonedElement.querySelectorAll("th");
+                headers.forEach((header) => {
+                  header.style.textAlign = "center";
+                  header.classList.add("text-center");
+                });
+
+                // Asegurar que "Turno disponible" esté centrado
+                const emptySlots =
+                  clonedElement.querySelectorAll(".empty-slot");
+                emptySlots.forEach((slot) => {
+                  slot.style.textAlign = "center";
+                  slot.style.display = "flex";
+                  slot.style.alignItems = "center";
+                  slot.style.justifyContent = "center";
+                  slot.style.width = "100%";
+                  slot.style.height = "100%";
+                });
+
+                // Añadir estilos CSS directamente al documento clonado
+                const style = clonedDoc.createElement("style");
+                style.textContent = `
+                  th { text-align: center !important; }
+                  .empty-slot { 
+                    text-align: center !important; 
+                    display: flex !important; 
+                    align-items: center !important; 
+                    justify-content: center !important; 
+                    width: 100% !important;
+                    height: 100% !important;
+                  }
+                `;
+                clonedDoc.head.appendChild(style);
+
+                // Forzar recálculo de estilos
+                clonedElement.style.transform = "translateZ(0)";
+                clonedElement.offsetHeight; // Trigger reflow
+              }
+            },
+          });
+
+          // Crear el PDF
+          const imgWidth = 297; // A4 landscape width in mm
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          const doc = new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: "a4",
+          });
+
+          // Agregar título y fecha
+          doc.setFontSize(16);
+          doc.setFont(undefined, "bold");
+          const weekDatesForTitle = getWeekDates(currentDate);
+          const startDateForTitle = weekDatesForTitle[1]; // Martes
+          const monthNameCapture = startDateForTitle.toLocaleDateString(
+            "es-ES",
+            { month: "long" }
+          );
+          const yearCapture = startDateForTitle.getFullYear();
+          const capitalizedMonthCapture =
+            monthNameCapture.charAt(0).toUpperCase() +
+            monthNameCapture.slice(1);
+          doc.text(
+            `PPAM Programa Semanal - ${capitalizedMonthCapture} ${yearCapture}`,
+            doc.internal.pageSize.getWidth() / 2,
+            15,
+            { align: "center" }
+          );
+
+          doc.setFontSize(10);
+          doc.setFont(undefined, "normal");
+
+          // Agregar la imagen capturada
+          const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+          // Calcular posición para centrar la imagen
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const startY = 30;
+          const availableHeight = pageHeight - startY - 10;
+
+          let finalWidth = imgWidth;
+          let finalHeight = imgHeight;
+
+          // Ajustar tamaño si es muy alto
+          if (finalHeight > availableHeight) {
+            finalHeight = availableHeight;
+            finalWidth = (canvas.width * finalHeight) / canvas.height;
+          }
+
+          // Centrar horizontalmente
+          const startX = (pageWidth - finalWidth) / 2;
+
+          doc.addImage(
+            imgData,
+            "JPEG",
+            startX,
+            startY,
+            finalWidth,
+            finalHeight
+          );
+
+          // Descargar el PDF
+          doc.save("calendario-capturado.pdf");
+        } catch (error) {
+          console.error("Error capturando la tabla:", error);
+          alert("Error al generar el PDF. Por favor, inténtalo de nuevo.");
+        }
       };
     </script>
   </div>
@@ -447,6 +964,10 @@ const { isAdmin } = Astro.locals;
 <script
   is:inline
   src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"
+></script>
+<script
+  is:inline
+  src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
 ></script>
 
 <!-- <script is:inline>

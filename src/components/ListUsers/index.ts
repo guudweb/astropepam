@@ -8,6 +8,7 @@ import { TableData } from "./TableData";
 import { TableHead } from "./TableHead";
 import { TableRow } from "./TableRow";
 import { TableUser } from "./TableUser";
+import { CongregationFilter } from "./CongregationFilter";
 
 
 
@@ -31,6 +32,7 @@ export {
     LoadingMovile,
     LoadingTable,
     SelectFilter,
+    CongregationFilter,
 }
 
 

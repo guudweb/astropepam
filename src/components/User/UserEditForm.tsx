@@ -22,6 +22,7 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
   const [privilegios, setPrivilegios] = useState<string[]>(user.privilegios || []); // NUEVO ESTADO PARA PRIVILEGIOS
   const [customPrivilege, setCustomPrivilege] = useState(""); // PARA AGREGAR PRIVILEGIOS PERSONALIZADOS
   const [participationRules, setParticipationRules] = useState<ParticipationRule[]>(user.participation_rules || []); // REGLAS DE PARTICIPACIÓN
+  const [serviceLink, setServiceLink] = useState(user.service_link || false); // ESTADO PARA SERVICE_LINK
 
   const handleDisponibilityChange = useCallback((newAvailability) => {
     setAvailability(newAvailability);
@@ -63,6 +64,7 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
     setUsername(user.userName);
     setPrivilegios(user.privilegios || []); // Actualizar privilegios cuando cambie el usuario
     setParticipationRules(user.participation_rules || []); // Actualizar reglas de participación
+    setServiceLink(user.service_link || false); // Actualizar service_link cuando cambie el usuario
   }, [user]);
 
   const handleSubmit = async (e) => {
@@ -82,6 +84,7 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
       descripcion, // NUEVO
       privilegios, // AÑADIR PRIVILEGIOS
       participation_rules: participationRules, // AÑADIR REGLAS DE PARTICIPACIÓN
+      service_link: serviceLink, // AÑADIR SERVICE_LINK
     };
 
     try {
@@ -328,6 +331,29 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
         </div>
       )}
 
+      {/* CAMPO DE SERVICE LINK - Solo para admins */}
+      {session.user.role === "admin" && (
+        <div className="mb-5">
+          <label className="block mb-2 text-sm font-medium text-gray-900">
+            Servicio de enlace (Solo Admins)
+          </label>
+          <p className="text-sm text-gray-600 mb-3">
+            Habilita permisos especiales para gestionar personas interesadas
+          </p>
+          <label className="inline-flex items-center cursor-pointer space-x-2">
+            <span className="text-sm font-medium text-gray-900">Deshabilitado</span>
+            <input
+              type="checkbox"
+              checked={serviceLink}
+              onChange={(e) => setServiceLink(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="relative w-11 h-6 bg-red-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+            <span className="text-sm font-medium text-gray-900">Habilitado</span>
+          </label>
+        </div>
+      )}
+
       {/* CAMPO DE PRIVILEGIOS - Solo para admins */}
       {session.user.role === "admin" ? (
         <div className="mb-5">
@@ -359,9 +385,33 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
                 Capitán
               </label>
             </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="anciano"
+                checked={privilegios.includes("anciano")}
+                onChange={() => handlePrivilegeToggle("anciano")}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="anciano" className="ml-2 text-sm font-medium text-gray-900">
+                Anciano
+              </label>
+            </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="siervo"
+                checked={privilegios.includes("siervo")}
+                onChange={() => handlePrivilegeToggle("siervo")}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="siervo" className="ml-2 text-sm font-medium text-gray-900">
+                Siervo
+              </label>
+            </div>
             
             {/* Mostrar privilegios personalizados */}
-            {privilegios.filter(p => !["precursor", "capitan"].includes(p)).map((privilege, index) => (
+            {privilegios.filter(p => !["precursor", "capitan", "anciano", "siervo"].includes(p)).map((privilege, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center">
                   <input
@@ -406,11 +456,33 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
               Mis Privilegios
             </label>
             <div className="flex flex-wrap gap-2">
-              {privilegios.map((privilege, index) => (
-                <span key={index} className="px-3 py-1 text-sm text-blue-600 bg-blue-100 rounded-full">
-                  {privilege}
-                </span>
-              ))}
+              {privilegios.map((privilege, index) => {
+                // Función para obtener el color según el privilegio
+                const getPrivilegeColor = (priv: string) => {
+                  const privilegeLower = priv.toLowerCase();
+                  switch (privilegeLower) {
+                    case 'capitán':
+                    case 'capitan':
+                      return 'text-blue-600 bg-blue-100';
+                    case 'precursor':
+                      return 'text-green-600 bg-green-100';
+                    case 'especial':
+                      return 'text-red-600 bg-red-100';
+                    case 'anciano':
+                      return 'text-gray-600 bg-gray-100';
+                    case 'siervo':
+                      return 'text-orange-600 bg-orange-100';
+                    default:
+                      return 'text-violet-600 bg-violet-100'; // Color para categorías personalizadas
+                  }
+                };
+                
+                return (
+                  <span key={index} className={`px-3 py-1 text-sm ${getPrivilegeColor(privilege)} rounded-full`}>
+                    {privilege}
+                  </span>
+                );
+              })}
             </div>
           </div>
         )

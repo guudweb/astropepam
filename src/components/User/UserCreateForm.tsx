@@ -24,6 +24,7 @@ export const UserCreateForm = ({ congregacionData }) => {
   const [privilegios, setPrivilegios] = useState<string[]>([]); // NUEVO ESTADO PARA PRIVILEGIOS
   const [customPrivilege, setCustomPrivilege] = useState(""); // PARA AGREGAR PRIVILEGIOS PERSONALIZADOS
   const [participationRules, setParticipationRules] = useState<ParticipationRule[]>([]); // REGLAS DE PARTICIPACIÓN
+  const [serviceLink, setServiceLink] = useState(false); // ESTADO PARA SERVICE_LINK
 
   const handleDisponibilityChange = useCallback((newAvailability) => {
     setAvailability(newAvailability);
@@ -79,6 +80,7 @@ export const UserCreateForm = ({ congregacionData }) => {
       descripcion, // AÑADIR DESCRIPCIÓN
       privilegios, // AÑADIR PRIVILEGIOS
       participation_rules: participationRules, // AÑADIR REGLAS DE PARTICIPACIÓN
+      service_link: serviceLink, // AÑADIR SERVICE_LINK
     };
 
     if (
@@ -129,6 +131,7 @@ export const UserCreateForm = ({ congregacionData }) => {
         setDescripcion(""); // LIMPIAR DESCRIPCIÓN
         setPrivilegios([]); // LIMPIAR PRIVILEGIOS
         setParticipationRules([]); // LIMPIAR REGLAS DE PARTICIPACIÓN
+        setServiceLink(false); // LIMPIAR SERVICE_LINK
 
       } else {
         notyf.error("Error al actualizar el usuario. Inténtalo más tarde");
@@ -392,6 +395,27 @@ export const UserCreateForm = ({ congregacionData }) => {
         </select>
       </div>
 
+      {/* CAMPO DE SERVICE LINK */}
+      <div className="mb-5">
+        <label className="block mb-2 text-sm font-medium text-gray-900">
+          Servicio de enlace
+        </label>
+        <p className="text-sm text-gray-600 mb-3">
+          Habilita permisos especiales para gestionar personas interesadas
+        </p>
+        <label className="inline-flex items-center cursor-pointer space-x-2">
+          <span className="text-sm font-medium text-gray-900">Deshabilitado</span>
+          <input
+            type="checkbox"
+            checked={serviceLink}
+            onChange={(e) => setServiceLink(e.target.checked)}
+            className="sr-only peer"
+          />
+          <div className="relative w-11 h-6 bg-red-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+          <span className="text-sm font-medium text-gray-900">Habilitado</span>
+        </label>
+      </div>
+
       {/* CAMPO DE PRIVILEGIOS */}
       <div className="mb-5">
         <label className="block mb-2 text-sm font-medium text-gray-900">
@@ -422,9 +446,33 @@ export const UserCreateForm = ({ congregacionData }) => {
               Capitán
             </label>
           </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="anciano"
+              checked={privilegios.includes("anciano")}
+              onChange={() => handlePrivilegeToggle("anciano")}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="anciano" className="ml-2 text-sm font-medium text-gray-900">
+              Anciano
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="siervo"
+              checked={privilegios.includes("siervo")}
+              onChange={() => handlePrivilegeToggle("siervo")}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="siervo" className="ml-2 text-sm font-medium text-gray-900">
+              Siervo
+            </label>
+          </div>
           
           {/* Mostrar privilegios personalizados */}
-          {privilegios.filter(p => !["precursor", "capitan"].includes(p)).map((privilege, index) => (
+          {privilegios.filter(p => !["precursor", "capitan", "anciano", "siervo"].includes(p)).map((privilege, index) => (
             <div key={index} className="flex items-center justify-between">
               <div className="flex items-center">
                 <input

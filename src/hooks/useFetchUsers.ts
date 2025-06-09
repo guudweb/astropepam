@@ -11,6 +11,8 @@ const useFetchUsers = (limit: number) => {
   const [turn, setTurn] = useState<string | null>(null);
   const [isActive, setIsActive] = useState<boolean | null>(null);
   const [privileges, setPrivileges] = useState<string[]>([]);
+  const [serviceLink, setServiceLink] = useState<boolean | null>(null);
+  const [congregations, setCongregations] = useState<string[]>([]);
 
   // Función principal de obtención de datos
   const fetchData = async () => {
@@ -79,6 +81,8 @@ const useFetchUsers = (limit: number) => {
       if (day) url.searchParams.append("day", day);
       if (turn) url.searchParams.append("turn", turn);
       if (privileges.length > 0) url.searchParams.append("privileges", privileges.join(","));
+      if (serviceLink !== null) url.searchParams.append("serviceLink", serviceLink.toString());
+      if (congregations.length > 0) url.searchParams.append("congregations", congregations.join(","));
 
       const response = await fetch(url.toString());
       if (!response.ok) {
@@ -120,7 +124,7 @@ const useFetchUsers = (limit: number) => {
 
   // Lógica principal de selección de la función a ejecutar
   useEffect(() => {
-    if (day || turn || privileges.length > 0) {
+    if (day || turn || privileges.length > 0 || serviceLink !== null || congregations.length > 0) {
       filterUsers();
     } else if (searchTerm) {
       fetchSearchResults();
@@ -129,7 +133,7 @@ const useFetchUsers = (limit: number) => {
     } else {
       fetchData();
     }
-  }, [searchTerm, day, turn, isActive, privileges, page]);
+  }, [searchTerm, day, turn, isActive, privileges, serviceLink, congregations, page]);
 
   const handleNextPage = () => {
     setPage((prevPage) => prevPage + 1);
@@ -164,6 +168,16 @@ const useFetchUsers = (limit: number) => {
     setPage(1); // Reinicia la página a 1 al cambiar los privilegios
   };
 
+  const handleServiceLinkChange = (value: boolean | null) => {
+    setServiceLink(value);
+    setPage(1); // Reinicia la página a 1 al cambiar service link
+  };
+
+  const handleCongregationsChange = (selectedCongregations: string[]) => {
+    setCongregations(selectedCongregations);
+    setPage(1); // Reinicia la página a 1 al cambiar las congregaciones
+  };
+
   return {
     comments,
     isLoading,
@@ -173,6 +187,8 @@ const useFetchUsers = (limit: number) => {
     setTurn: handleTurnChange,
     setIsActive: handleActiveChange,
     setPrivileges: handlePrivilegesChange,
+    setServiceLink: handleServiceLinkChange,
+    setCongregations: handleCongregationsChange,
     handleNextPage,
     handlePreviousPage,
   };

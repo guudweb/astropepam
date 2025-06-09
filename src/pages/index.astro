@@ -12,6 +12,13 @@ const { isAdmin, user } = Astro.locals;
 const hasSpecialAccess = isAdmin;
 //const hasSpecialAccess = isAdmin || user?.service_link || user?.privilegios?.includes("capitan");
 
+console.log('Index page - User info:', { 
+  isAdmin, 
+  userId: session?.user?.id,
+  hasServiceLink: user?.service_link,
+  userName: user?.nombre 
+});
+
 ---
 
 <Layout title="Inicio">

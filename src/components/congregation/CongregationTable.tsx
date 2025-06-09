@@ -13,6 +13,8 @@ export const CongregationTable = () => {
 
     const [loadingDelete, setLoadingDelete] = useState(false);
     const [filteredCongres, setFilteredCongres] = useState<Congregation[]>(congregaciones);
+    const [sortField, setSortField] = useState<string>('nombre');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     const notyf = new Notyf({
         duration: 4000,
@@ -22,9 +24,32 @@ export const CongregationTable = () => {
         }
     });
 
+    // Función para manejar el sorting
+    const handleSort = (field: string) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
+    // Función para ordenar las congregaciones
+    const sortCongregations = (congresToSort: Congregation[]) => {
+        return [...congresToSort].sort((a, b) => {
+            let aValue: any = a[sortField as keyof Congregation];
+            let bValue: any = b[sortField as keyof Congregation];
+
+            // Comparación
+            if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+            if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    };
+
     useEffect(() => {
-        setFilteredCongres(congregaciones);
-    }, [congregaciones]);
+        setFilteredCongres(sortCongregations(congregaciones));
+    }, [congregaciones, sortField, sortDirection]);
 
     const handleDelete = async () => {
         if (congreId === null) return;
@@ -58,9 +83,27 @@ export const CongregationTable = () => {
             <table className="hidden md:table w-full text-sm text-left rtl:text-right text-gray-500">
                 <thead className="text-xs uppercase bg-gray-300 text-gray-900">
                     <tr>
-                        <TableHead title="Nombre" />
-                        <TableHead title="Dia de Reunión" />
-                        <TableHead title="Turno" />
+                        <TableHead 
+                            title="Nombre"
+                            sortKey="nombre"
+                            onSort={handleSort}
+                            sortField={sortField}
+                            sortDirection={sortDirection}
+                        />
+                        <TableHead 
+                            title="Dia de Reunión"
+                            sortKey="dia"
+                            onSort={handleSort}
+                            sortField={sortField}
+                            sortDirection={sortDirection}
+                        />
+                        <TableHead 
+                            title="Turno"
+                            sortKey="turno"
+                            onSort={handleSort}
+                            sortField={sortField}
+                            sortDirection={sortDirection}
+                        />
                         <TableHead title="Acciones" />
                     </tr>
                 </thead>

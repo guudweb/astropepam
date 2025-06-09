@@ -74,6 +74,7 @@ const iconId = `icon-${day}-${turno}-${index}`;
       const savedValue = programStore.getAssignment(this.day, this.turno, this.index);
       if (savedValue) {
         this.element.value = savedValue;
+        this.updatePrecursorBackground(savedValue);
         await this.validateCurrentSelection();
       }
     }
@@ -159,6 +160,9 @@ const iconId = `icon-${day}-${turno}-${index}`;
       
       programStore.assignUser(assignment);
 
+      // Verificar si el usuario es precursor y mostrar fondo verde
+      this.updatePrecursorBackground(userName);
+
       // Validar inmediatamente
       await this.validateCurrentSelection();
     }
@@ -166,6 +170,7 @@ const iconId = `icon-${day}-${turno}-${index}`;
     private clearAssignment() {
       programStore.removeUser(this.day, this.turno, this.index);
       this.clearValidationIcon();
+      this.updatePrecursorBackground("");
       
       // Notificar si había restricciones previas
       const previousState = programStore.getValidationState(this.day, this.turno, this.index);
@@ -284,6 +289,50 @@ const iconId = `icon-${day}-${turno}-${index}`;
       this.iconElement.title = "Estado de validación";
     }
 
+    private updatePrecursorBackground(userName: string) {
+      if (!userName) {
+        // Remover estilo de precursor
+        this.element.classList.remove('precursor-select');
+        const container = this.element.closest('.inline-block');
+        if (container) {
+          container.classList.remove('precursor-container');
+        }
+        return;
+      }
+
+      // Obtener información del usuario desde la opción seleccionada
+      const selectedOption = this.element.options[this.element.selectedIndex];
+      if (!selectedOption) {
+        this.element.classList.remove('precursor-select');
+        const container = this.element.closest('.inline-block');
+        if (container) {
+          container.classList.remove('precursor-container');
+        }
+        return;
+      }
+
+      // Verificar si el usuario es precursor revisando el texto de display
+      const displayText = selectedOption.textContent || '';
+      const isPrecursor = displayText.toLowerCase().includes('precursor') || 
+                         displayText.includes('[P]');
+
+      if (isPrecursor) {
+        // Aplicar estilo de precursor
+        this.element.classList.add('precursor-select');
+        const container = this.element.closest('.inline-block');
+        if (container) {
+          container.classList.add('precursor-container');
+        }
+      } else {
+        // Remover estilo de precursor
+        this.element.classList.remove('precursor-select');
+        const container = this.element.closest('.inline-block');
+        if (container) {
+          container.classList.remove('precursor-container');
+        }
+      }
+    }
+
     private showUserModal() {
       // Implementar modal de selección de usuarios
       // Por ahora, revertir la selección
@@ -314,5 +363,18 @@ const iconId = `icon-${day}-${turno}-${index}`;
   
   .icon {
     @apply inline-block w-6 text-center;
+  }
+
+  /* Estilos para precursores */
+  .precursor-select {
+    background-color: #dcfce7 !important; /* bg-green-100 */
+    border-color: #16a34a !important; /* border-green-600 */
+  }
+
+  .precursor-container {
+    background-color: #f0fdf4; /* bg-green-50 */
+    border-radius: 0.375rem; /* rounded-md */
+    padding: 0.25rem; /* p-1 */
+    border: 1px solid #bbf7d0; /* border-green-200 */
   }
 </style>

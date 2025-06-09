@@ -18,7 +18,8 @@ import {
     TableData,
     TableHead,
     TableRow,
-    TableUser
+    TableUser,
+    CongregationFilter
 } from './ListUsers'
 
 import { 
@@ -92,4 +93,5 @@ export {
     TableHead,
     TableRow,
     TableUser,
+    CongregationFilter,
 }

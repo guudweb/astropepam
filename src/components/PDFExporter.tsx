@@ -11,6 +11,8 @@ interface PDFExporterProps {
     turn?: string;
     isActive?: boolean | null;
     privileges?: string[];
+    congregations?: string[];
+    serviceLink?: boolean | null;
   };
 }
 
@@ -22,9 +24,15 @@ export const PDFExporter: React.FC<PDFExporterProps> = ({ users, currentFilters 
     if (!privilegios || privilegios.length === 0) return 'Ninguno';
     
     return privilegios.map(p => {
-      const firstLetter = p.charAt(0).toUpperCase();
-      if (p.toLowerCase() === 'capitan') return `[C] ${p}`;
-      return `[${firstLetter}] ${p}`;
+      const privilege = p.toLowerCase();
+      switch (privilege) {
+        case 'capitan': return 'Capitan';
+        case 'precursor': return 'Precursor';
+        case 'anciano': return 'Anciano';
+        case 'siervo': return 'Siervo';
+        case 'especial': return 'Especial';
+        default: return p;
+      }
     }).join(', ');
   };
 
@@ -57,12 +65,20 @@ export const PDFExporter: React.FC<PDFExporterProps> = ({ users, currentFilters 
       descriptions.push(`Búsqueda: "${currentFilters.searchTerm}"`);
     }
     
-    if (currentFilters.isActive !== null) {
+    if (currentFilters.isActive !== null && currentFilters.isActive !== undefined) {
       descriptions.push(currentFilters.isActive ? 'Solo activos' : 'Solo inactivos');
+    }
+    
+    if (currentFilters.serviceLink !== null && currentFilters.serviceLink !== undefined) {
+      descriptions.push(currentFilters.serviceLink ? 'Servicio habilitado' : 'Servicio deshabilitado');
     }
     
     if (currentFilters.privileges && currentFilters.privileges.length > 0) {
       descriptions.push(`Privilegios: ${currentFilters.privileges.join(', ')}`);
+    }
+    
+    if (currentFilters.congregations && currentFilters.congregations.length > 0) {
+      descriptions.push(`${currentFilters.congregations.length} congregación(es) seleccionada(s)`);
     }
     
     if (currentFilters.day && currentFilters.turn) {
@@ -157,6 +173,12 @@ export const PDFExporter: React.FC<PDFExporterProps> = ({ users, currentFilters 
           if (currentFilters?.privileges && currentFilters.privileges.length > 0) {
             url.searchParams.append('privileges', currentFilters.privileges.join(','));
           }
+          if (currentFilters?.congregations && currentFilters.congregations.length > 0) {
+            url.searchParams.append('congregations', currentFilters.congregations.join(','));
+          }
+          if (currentFilters?.serviceLink !== null && currentFilters?.serviceLink !== undefined) {
+            url.searchParams.append('serviceLink', currentFilters.serviceLink.toString());
+          }
 
           const response = await fetch(url.toString());
           if (response.ok) {
@@ -221,19 +243,25 @@ export const PDFExporter: React.FC<PDFExporterProps> = ({ users, currentFilters 
         }
       }
       
+      // Ordenar usuarios alfabéticamente por nombre
+      const sortedUsers = [...filteredUsers].sort((a, b) => 
+        (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' })
+      );
+      
       // Preparar datos para la tabla
-      const tableData = filteredUsers.map(user => [
+      const tableData = sortedUsers.map(user => [
         user.nombre || 'Sin nombre',
         user.congregacion?.nombre || 'Sin congregación',
         user.telefono?.toString() || 'Sin teléfono',
-        user.isActive ? 'Activo' : 'Inactivo',
+        user.isActive ? 'Si' : 'X',
+        user.service_link ? 'Si' : 'X',
         getPrivilegeText(user.privilegios),
         getParticipationRulesText(user.participation_rules)
       ]);
       
       // Configuración de la tabla
       autoTable(doc, {
-        head: [['Nombre', 'Congregación', 'Teléfono', 'Estado', 'Privilegios', 'Condiciones']],
+        head: [['Nombre', 'Congregación', 'Teléfono', 'Estado', 'Servicio', 'Privilegios', 'Condiciones']],
         body: tableData,
         startY: 55,
         margin: { left: margin, right: margin },
@@ -247,31 +275,48 @@ export const PDFExporter: React.FC<PDFExporterProps> = ({ users, currentFilters 
           fontStyle: 'bold',
         },
         columnStyles: {
-          0: { cellWidth: 35 }, // Nombre
-          1: { cellWidth: 30 }, // Congregación
-          2: { cellWidth: 25 }, // Teléfono
-          3: { cellWidth: 20 }, // Estado
-          4: { cellWidth: 35 }, // Privilegios
-          5: { cellWidth: 40 }, // Condiciones
+          0: { cellWidth: 32 }, // Nombre
+          1: { cellWidth: 28 }, // Congregación
+          2: { cellWidth: 22 }, // Teléfono
+          3: { cellWidth: 18 }, // Estado
+          4: { cellWidth: 20 }, // Servicio
+          5: { cellWidth: 32 }, // Privilegios
+          6: { cellWidth: 35 }, // Condiciones
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245]
         },
         didDrawCell: (data) => {
-          // Colorear celdas de estado
+          // Colorear celdas de estado (columna 3)
           if (data.column.index === 3 && data.section === 'body') {
-            const isActive = data.cell.text[0] === 'Activo';
-            if (isActive) {
+            const cellText = data.cell.text[0] || '';
+            if (cellText === 'Si') {
               data.cell.styles.fillColor = [220, 252, 231]; // Verde claro
               data.cell.styles.textColor = [22, 101, 52]; // Verde oscuro
-            } else {
+              data.cell.styles.fontStyle = 'bold';
+            } else if (cellText === 'X') {
               data.cell.styles.fillColor = [254, 226, 226]; // Rojo claro
               data.cell.styles.textColor = [185, 28, 28]; // Rojo oscuro
+              data.cell.styles.fontStyle = 'bold';
             }
           }
           
-          // Estilo especial para privilegios
+          // Colorear celdas de servicio de enlace (columna 4)
           if (data.column.index === 4 && data.section === 'body') {
+            const cellText = data.cell.text[0] || '';
+            if (cellText === 'Si') {
+              data.cell.styles.fillColor = [220, 252, 231]; // Verde claro
+              data.cell.styles.textColor = [22, 101, 52]; // Verde oscuro
+              data.cell.styles.fontStyle = 'bold';
+            } else if (cellText === 'X') {
+              data.cell.styles.fillColor = [254, 226, 226]; // Rojo claro
+              data.cell.styles.textColor = [185, 28, 28]; // Rojo oscuro
+              data.cell.styles.fontStyle = 'bold';
+            }
+          }
+          
+          // Estilo especial para privilegios (columna 5)
+          if (data.column.index === 5 && data.section === 'body') {
             if (data.cell.text[0] !== 'Ninguno') {
               data.cell.styles.fillColor = [219, 234, 254]; // Azul claro
               data.cell.styles.textColor = [29, 78, 216]; // Azul oscuro
@@ -279,8 +324,8 @@ export const PDFExporter: React.FC<PDFExporterProps> = ({ users, currentFilters 
             }
           }
           
-          // Estilo para condiciones de participación
-          if (data.column.index === 5 && data.section === 'body') {
+          // Estilo para condiciones de participación (columna 6)
+          if (data.column.index === 6 && data.section === 'body') {
             if (data.cell.text[0] !== 'Sin restricciones') {
               data.cell.styles.fillColor = [254, 243, 199]; // Amarillo claro
               data.cell.styles.textColor = [146, 64, 14]; // Amarillo oscuro
@@ -307,36 +352,66 @@ export const PDFExporter: React.FC<PDFExporterProps> = ({ users, currentFilters 
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
       
-      const activeUsers = filteredUsers.filter(u => u.isActive).length;
-      const inactiveUsers = filteredUsers.filter(u => !u.isActive).length;
-      const privilegedUsers = filteredUsers.filter(u => u.privilegios && u.privilegios.length > 0).length;
-      const captains = filteredUsers.filter(u => u.privilegios && u.privilegios.some(p => p.toLowerCase() === 'capitan')).length;
-      const pioneers = filteredUsers.filter(u => u.privilegios && u.privilegios.some(p => p.toLowerCase() === 'precursor')).length;
+      const activeUsers = sortedUsers.filter(u => u.isActive).length;
+      const inactiveUsers = sortedUsers.filter(u => !u.isActive).length;
+      const privilegedUsers = sortedUsers.filter(u => u.privilegios && u.privilegios.length > 0).length;
+      const serviceEnabled = sortedUsers.filter(u => u.service_link).length;
+      const captains = sortedUsers.filter(u => u.privilegios && u.privilegios.some(p => p.toLowerCase() === 'capitan')).length;
+      const pioneers = sortedUsers.filter(u => u.privilegios && u.privilegios.some(p => p.toLowerCase() === 'precursor')).length;
+      const elders = sortedUsers.filter(u => u.privilegios && u.privilegios.some(p => p.toLowerCase() === 'anciano')).length;
+      const servants = sortedUsers.filter(u => u.privilegios && u.privilegios.some(p => p.toLowerCase() === 'siervo')).length;
+      const special = sortedUsers.filter(u => u.privilegios && u.privilegios.some(p => p.toLowerCase() === 'especial')).length;
       
       const statsData = [
-        ['Total de usuarios:', filteredUsers.length.toString()],
-        ['Usuarios activos:', `${activeUsers} (${Math.round((activeUsers/filteredUsers.length)*100)}%)`],
-        ['Usuarios inactivos:', `${inactiveUsers} (${Math.round((inactiveUsers/filteredUsers.length)*100)}%)`],
+        ['Total de usuarios:', sortedUsers.length.toString()],
+        ['Usuarios activos:', `${activeUsers} (${Math.round((activeUsers/sortedUsers.length)*100)}%)`],
+        ['Usuarios inactivos:', `${inactiveUsers} (${Math.round((inactiveUsers/sortedUsers.length)*100)}%)`],
+        ['Servicio de enlace:', `${serviceEnabled} habilitados`],
         ['Con privilegios:', privilegedUsers.toString()],
         ['Capitanes:', captains.toString()],
-        ['Precursores:', pioneers.toString()]
+        ['Precursores:', pioneers.toString()],
+        ['Ancianos:', elders.toString()],
+        ['Siervos:', servants.toString()],
+        ['Especiales:', special.toString()]
       ];
       
-      // Crear tabla de estadísticas
+      // Crear tabla de estadísticas en dos columnas
+      const leftStats = statsData.slice(0, 5);
+      const rightStats = statsData.slice(5);
+      
+      // Tabla izquierda
       autoTable(doc, {
-        body: statsData,
+        body: leftStats,
         startY: finalY + 25,
-        margin: { left: margin, right: pageWidth/2 },
+        margin: { left: margin, right: pageWidth/2 + 10 },
         styles: {
           fontSize: 9,
           cellPadding: 2,
         },
         columnStyles: {
-          0: { cellWidth: 40, fontStyle: 'bold' },
-          1: { cellWidth: 30, halign: 'right' },
+          0: { cellWidth: 50, fontStyle: 'bold' },
+          1: { cellWidth: 35, halign: 'right' },
         },
         theme: 'plain'
       });
+      
+      // Tabla derecha
+      if (rightStats.length > 0) {
+        autoTable(doc, {
+          body: rightStats,
+          startY: finalY + 25,
+          margin: { left: pageWidth/2 + 10, right: margin },
+          styles: {
+            fontSize: 9,
+            cellPadding: 2,
+          },
+          columnStyles: {
+            0: { cellWidth: 50, fontStyle: 'bold' },
+            1: { cellWidth: 25, halign: 'right' },
+          },
+          theme: 'plain'
+        });
+      }
       
       // Información adicional en el pie
       const footerY = (doc as any).lastAutoTable.finalY + 15;

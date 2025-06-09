@@ -10,7 +10,7 @@ export const PrivilegeFilter: React.FC<PrivilegeFilterProps> = ({ onChange, valu
   const [customPrivilege, setCustomPrivilege] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const defaultPrivileges = ['precursor', 'capitan'];
+  const defaultPrivileges = ['precursor', 'capitan', 'anciano', 'siervo', 'especial'];
 
   useEffect(() => {
     onChange(selectedPrivileges);

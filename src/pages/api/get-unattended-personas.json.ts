@@ -6,8 +6,11 @@ export const GET: APIRoute = async ({ request }) => {
   const session = await getSession(request);
 
   if (!session) {
+    console.log('No session found in get-unattended-personas');
     return new Response(JSON.stringify([]), { status: 401 });
   }
+
+  console.log('get-unattended-personas - Session:', { userId: session.user.id, role: session.user.role });
 
   try {
     // Obtener información del usuario actual
@@ -18,6 +21,12 @@ export const GET: APIRoute = async ({ request }) => {
 
     const isAdmin = session.user.role === "admin";
     const hasServiceLink = currentUser?.service_link || false;
+
+    console.log('User permissions:', { 
+      isAdmin, 
+      hasServiceLink, 
+      userCongregacion: currentUser?.congregacion 
+    });
 
     let personasQuery;
 
@@ -63,6 +72,8 @@ export const GET: APIRoute = async ({ request }) => {
         .where(eq(PersonasInteresadas.atendido, false))
         .where(eq(PersonasInteresadas.añadido_por, session.user.id));
     }
+
+    console.log('Found personas:', personasQuery.length);
 
     return new Response(JSON.stringify(personasQuery), {
       headers: { "Content-Type": "application/json" },

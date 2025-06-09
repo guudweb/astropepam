@@ -26,7 +26,8 @@ export const ParticipationRules: React.FC<ParticipationRulesProps> = ({
     'max_per_month': 'Máximo por mes',
     'max_per_week': 'Máximo por semana',
     'specific_weeks': 'Semanas específicas',
-    'alternating_weeks': 'Semanas alternadas'
+    'alternating_weeks': 'Semanas alternadas',
+    'weekly_availability': 'Envío de disponibilidad semanal'
   };
 
   const getRuleDescription = (rule: ParticipationRule): string => {
@@ -40,6 +41,8 @@ export const ParticipationRules: React.FC<ParticipationRulesProps> = ({
         return `Solo semanas: ${weeks.join(', ')}`;
       case 'alternating_weeks':
         return 'Semanas alternadas (una sí, una no)';
+      case 'weekly_availability':
+        return 'Envía su disponibilidad semanalmente';
       default:
         return rule.description || '';
     }
@@ -60,6 +63,10 @@ export const ParticipationRules: React.FC<ParticipationRulesProps> = ({
         description = getRuleDescription({ type: newRuleType, value, description: '' });
         break;
       case 'alternating_weeks':
+        value = 1;
+        description = getRuleDescription({ type: newRuleType, value, description: '' });
+        break;
+      case 'weekly_availability':
         value = 1;
         description = getRuleDescription({ type: newRuleType, value, description: '' });
         break;
@@ -128,6 +135,7 @@ export const ParticipationRules: React.FC<ParticipationRulesProps> = ({
                 {rule.type === 'max_per_week' && '📆'}
                 {rule.type === 'specific_weeks' && '📌'}
                 {rule.type === 'alternating_weeks' && '🔄'}
+                {rule.type === 'weekly_availability' && '📨'}
               </span>
               <span className="text-sm text-gray-700">{rule.description}</span>
             </div>

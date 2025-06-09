@@ -16,6 +16,8 @@ export const TableUser: React.FC<TableProps> = ({ comments, isLoading, isAdmin }
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const [filteredComments, setFilteredComments] = useState<User[]>(comments);
+    const [sortField, setSortField] = useState<string>('nombre');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     const notyf = new Notyf({
         duration: 4000,
@@ -25,10 +27,45 @@ export const TableUser: React.FC<TableProps> = ({ comments, isLoading, isAdmin }
         }
     });
 
-    // Sincronizar filteredComments con comments cuando cambian
+    // Función para manejar el sorting
+    const handleSort = (field: string) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
+    // Función para ordenar los comentarios
+    const sortComments = (commentsToSort: User[]) => {
+        return [...commentsToSort].sort((a, b) => {
+            let aValue: any = a[sortField as keyof User];
+            let bValue: any = b[sortField as keyof User];
+
+            // Manejo especial para congregación
+            if (sortField === 'congregacion') {
+                aValue = a.congregacion?.nombre || '';
+                bValue = b.congregacion?.nombre || '';
+            }
+
+            // Manejo especial para disponible
+            if (sortField === 'isActive') {
+                aValue = a.isActive ? 'Sí' : 'No';
+                bValue = b.isActive ? 'Sí' : 'No';
+            }
+
+            // Comparación
+            if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+            if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    };
+
+    // Sincronizar y ordenar filteredComments cuando cambian los comments o el sorting
     useEffect(() => {
-        setFilteredComments(comments);
-    }, [comments]);
+        setFilteredComments(sortComments(comments));
+    }, [comments, sortField, sortDirection]);
 
     const handleClick = (userId: number) => {
         setSelectedUserId(userId);
@@ -66,10 +103,28 @@ export const TableUser: React.FC<TableProps> = ({ comments, isLoading, isAdmin }
             <table className="hidden md:table w-full text-sm text-left rtl:text-right text-gray-500">
                 <thead className="text-xs uppercase bg-gray-300 text-gray-900">
                     <tr>
-                        <TableHead title="Nombre" />
-                        <TableHead title="Congregación" />
+                        <TableHead 
+                            title="Nombre" 
+                            sortKey="nombre"
+                            onSort={handleSort}
+                            sortField={sortField}
+                            sortDirection={sortDirection}
+                        />
+                        <TableHead 
+                            title="Congregación"
+                            sortKey="congregacion"
+                            onSort={handleSort}
+                            sortField={sortField}
+                            sortDirection={sortDirection}
+                        />
                         <TableHead title="Teléfono" />
-                        <TableHead title="Disponible" />
+                        <TableHead 
+                            title="Disponible"
+                            sortKey="isActive"
+                            onSort={handleSort}
+                            sortField={sortField}
+                            sortDirection={sortDirection}
+                        />
                         {isAdmin && <TableHead title="Descripción" />}
                         <TableHead title="Acciones" />
                     </tr>

@@ -13,19 +13,23 @@ export const PersonasInteresadasNotification = ({ userId, isServiceLink }: { use
   const [personas, setPersonas] = useState<PersonaInteresada[]>([]);
 
   useEffect(() => {
+    console.log('PersonasInteresadasNotification mounted', { userId, isServiceLink });
     fetchUnattendedPersonas();
   }, []);
 
   const fetchUnattendedPersonas = async () => {
     try {
+      console.log('Fetching unattended personas...');
       const response = await fetch('/api/get-unattended-personas.json');
       const data = await response.json();
+      console.log('API Response:', data);
       
       // Filtrar según permisos del usuario
       const filtered = isServiceLink 
         ? data // Si tiene service_link, ve todas
         : data.filter((p: PersonaInteresada) => p.añadido_por === userId); // Si no, solo las suyas
       
+      console.log('Filtered personas:', filtered);
       setPersonas(filtered);
       setUnattendedCount(filtered.length);
     } catch (error) {

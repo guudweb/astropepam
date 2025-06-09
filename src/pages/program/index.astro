@@ -489,6 +489,45 @@ const weekDates = getWeekDates(currentDate);
     }
   };
   
+  // Function to update precursor background for a select
+  const updatePrecursorBackground = (select, userName) => {
+    if (!userName) {
+      // Remover estilo de precursor
+      select.classList.remove('precursor-select');
+      // También buscar contenedor padre si existe
+      const container = select.closest('.flex');
+      if (container) {
+        container.classList.remove('precursor-container');
+      }
+      return;
+    }
+    
+    // Verificar si el usuario es precursor revisando el texto de display
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption) {
+      const displayText = selectedOption.textContent || '';
+      const isPrecursor = displayText.toLowerCase().includes('precursor') || 
+                         displayText.includes('[P]');
+      
+      if (isPrecursor) {
+        // Aplicar estilo de precursor
+        select.classList.add('precursor-select');
+        // También al contenedor padre si existe
+        const container = select.closest('.flex');
+        if (container) {
+          container.classList.add('precursor-container');
+        }
+      } else {
+        // Remover estilo de precursor
+        select.classList.remove('precursor-select');
+        const container = select.closest('.flex');
+        if (container) {
+          container.classList.remove('precursor-container');
+        }
+      }
+    }
+  };
+
   // Function to clear users cache (useful when week changes)
   const clearUsersCache = () => {
     allUsersCache = null;
@@ -647,6 +686,9 @@ const weekDates = getWeekDates(currentDate);
         }
         
         select.value = savedValue;
+        
+        // Actualizar fondo de precursor para valores cargados
+        updatePrecursorBackground(select, savedValue);
       });
 
       // Hide spinner
@@ -1087,6 +1129,9 @@ const weekDates = getWeekDates(currentDate);
     }
   };
 
+  // Hacer notify global para que pueda ser usado desde otros módulos
+  (window as any).notify = notify;
+
   // Load week data when the DOM is fully loaded
   document.addEventListener("DOMContentLoaded", async () => {
     await loadWeekData();
@@ -1186,6 +1231,9 @@ const weekDates = getWeekDates(currentDate);
                       // Actualizar el valor del select
                       select.value = newUserName;
                       
+                      // Verificar si es precursor y mostrar fondo verde
+                      updatePrecursorBackground(select, newUserName);
+                      
                       // Verificar las asignaciones después de añadir un usuario
                       await checkUserAssignment(select);
                       
@@ -1215,6 +1263,9 @@ const weekDates = getWeekDates(currentDate);
           loadModalUsers();
           
         } else if (select.value !== "") {
+          // Verificar si es precursor y mostrar fondo verde
+          updatePrecursorBackground(select, select.value);
+          
           // Validación inmediata para feedback visual rápido
           const icon = document.getElementById(`icon-${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`);
           if (icon) {
@@ -1223,6 +1274,9 @@ const weekDates = getWeekDates(currentDate);
           
           // Validación completa con debounce para evitar spam de API
           debouncedValidation(select);
+        } else {
+          // Si se vacía el select, quitar fondo de precursor
+          updatePrecursorBackground(select, "");
         }
       });
     });
@@ -1592,5 +1646,18 @@ const weekDates = getWeekDates(currentDate);
 
   .spinner-overlay.active {
     display: flex;
+  }
+
+  /* Estilos para precursores */
+  .precursor-select {
+    background-color: #dcfce7 !important; /* bg-green-100 */
+    border-color: #16a34a !important; /* border-green-600 */
+  }
+
+  .precursor-container {
+    background-color: #f0fdf4; /* bg-green-50 */
+    border-radius: 0.375rem; /* rounded-md */
+    padding: 0.25rem; /* p-1 */
+    border: 1px solid #bbf7d0; /* border-green-200 */
   }
 </style>

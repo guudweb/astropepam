@@ -5,7 +5,9 @@
       "Bash(sed:*)",
       "Bash(npm run dev:*)",
       "Bash(mkdir:*)",
-      "Bash(claude doctor)"
+      "Bash(claude doctor)",
+      "Bash(rg:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }

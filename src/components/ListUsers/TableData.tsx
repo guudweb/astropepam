@@ -11,8 +11,31 @@ interface Props {
 const PrivilegeBadge: React.FC<{ privilege: string }> = ({ privilege }) => {
     const firstLetter = privilege.charAt(0).toUpperCase();
     
+    // Función para obtener el color según el privilegio
+    const getPrivilegeColor = (priv: string) => {
+        const privilegeLower = priv.toLowerCase();
+        switch (privilegeLower) {
+            case 'capitán':
+            case 'capitan':
+                return 'bg-blue-600';
+            case 'precursor':
+                return 'bg-green-600';
+            case 'especial':
+                return 'bg-red-600';
+            case 'anciano':
+                return 'bg-gray-600';
+            case 'siervo':
+                return 'bg-orange-600';
+            default:
+                return 'bg-violet-600'; // Color para categorías personalizadas
+        }
+    };
+    
     return (
-        <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-600 rounded-full">
+        <span 
+            className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white ${getPrivilegeColor(privilege)} rounded-full`}
+            title={privilege}
+        >
             {firstLetter}
         </span>
     );

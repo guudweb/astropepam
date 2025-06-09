@@ -8,7 +8,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
     const id = params.id;
 
     try {
-        const { nombre, contraseña, telefono, correo, congregacion, isActive, sexo, estadoCivil, availability, role, descripcion, privilegios, participation_rules } = await request.json();
+        const { nombre, contraseña, telefono, correo, congregacion, isActive, sexo, estadoCivil, availability, role, descripcion, privilegios, participation_rules, service_link } = await request.json();
         console.log({
             availability
         });
@@ -33,7 +33,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
 
         // Consulta de actualización por ID
         const updatedUser = await db.update(Usuario)
-            .set({ nombre, contraseña, telefono, correo, congregacion, isActive, sexo, disponibilidad: JSON.stringify(availability), estado_civil: estadoCivil, role, descripcion, privilegios: privilegios || [], participation_rules: participation_rules || [] })
+            .set({ nombre, contraseña, telefono, correo, congregacion, isActive, sexo, disponibilidad: JSON.stringify(availability), estado_civil: estadoCivil, role, descripcion, privilegios: privilegios || [], participation_rules: participation_rules || [], service_link: service_link ?? false })
             .where(eq(Usuario.user_id, Number(id)))
 
 
