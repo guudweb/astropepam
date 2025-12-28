@@ -30,3 +30,15 @@ export interface Congregacion {
   diaReunion: string;
   turnoReunion: string;
 }
+
+// Incidencia para registrar cuando un voluntario no está disponible
+export interface Incidencia {
+  id: number;
+  userName: string;
+  fechaInicio: Date | string;
+  fechaFin: Date | string;
+  motivo: string;
+  creadoPor: string;
+  fechaCreacion: Date | string;
+  activo: boolean;
+}

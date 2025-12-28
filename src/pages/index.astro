@@ -1,5 +1,5 @@
 ---
-import { IndexCard, Program, Time, Users, CreateUser, Congregation } from "@/components/index";
+import { IndexCard, Program, Time, Users, CreateUser, Congregation, Incidencias } from "@/components/index";
 import { PersonasInteresadasNotification } from "@/components/PersonasInteresadasNotification";
 import { Layout } from "@/layouts/index";
 import { getSession } from 'auth-astro/server';
@@ -73,6 +73,15 @@ console.log('Index page - User info:', {
       subtitle="Consulta el programa de PPAM para ver todos los participantes."
     >
       <Program
+        className="size-16 md:size-28 text-cyan-600 mx-auto group-hover:text-white"
+      />
+    </IndexCard>
+    <IndexCard
+      href="/incidencias"
+      title="Incidencias"
+      subtitle="Registra cuando no estarás disponible para participar."
+    >
+      <Incidencias
         className="size-16 md:size-28 text-cyan-600 mx-auto group-hover:text-white"
       />
     </IndexCard>

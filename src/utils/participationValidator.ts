@@ -1,4 +1,4 @@
-import type { ParticipationRule } from '@/interfaces/user.interface';
+import type { ParticipationRule, Congregacion, Incidencia } from '@/interfaces/user.interface';
 
 export interface ValidationResult {
   canParticipate: boolean;
@@ -15,6 +15,14 @@ export interface UserParticipation {
   date: string;
   day: string;
   turno: string;
+}
+
+// Contexto adicional para validación de reunión e incidencias
+export interface ValidationContext {
+  congregacion?: Congregacion;
+  incidencias?: Incidencia[];
+  day?: string; // Día de la semana seleccionado (lunes, martes, etc.)
+  turno?: string; // Turno seleccionado (T1, T2, T3, T4)
 }
 
 // Nombres de meses en español
@@ -291,30 +299,212 @@ export class ParticipationValidator {
   static async validateUserForDate(
     userName: string,
     participationRules: ParticipationRule[] | string,
-    selectedDate: Date
+    selectedDate: Date,
+    context?: ValidationContext
   ): Promise<ExtendedValidationResult> {
     const rules: ParticipationRule[] = typeof participationRules === 'string'
       ? JSON.parse(participationRules)
       : participationRules;
 
-    if (!rules || rules.length === 0) {
+    const result: ExtendedValidationResult = {
+      canParticipate: true,
+      warnings: [],
+      restrictions: [],
+      icon: '✅',
+      rulesDescription: []
+    };
+
+    // Validar reglas de participación si existen
+    if (rules && rules.length > 0) {
+      const userHistory = await this.getUserParticipationHistory(userName);
+      const ruleValidation = this.validateUserParticipation(rules, selectedDate, userHistory);
+
+      result.canParticipate = ruleValidation.canParticipate;
+      result.warnings.push(...ruleValidation.warnings);
+      result.restrictions.push(...ruleValidation.restrictions);
+      result.rulesDescription = rules.map(rule => this.getRuleDescription(rule));
+    }
+
+    // Validar conflicto con reunión de congregación
+    if (context?.congregacion && context?.day && context?.turno) {
+      const meetingConflict = this.validateMeetingConflict(
+        context.congregacion,
+        context.day,
+        context.turno
+      );
+
+      if (meetingConflict.hasConflict) {
+        result.canParticipate = false;
+        result.restrictions.push(meetingConflict.message);
+      }
+    }
+
+    // Validar incidencias activas
+    if (context?.incidencias && context.incidencias.length > 0) {
+      const incidenciaConflict = this.validateIncidencias(
+        context.incidencias,
+        selectedDate
+      );
+
+      if (incidenciaConflict.hasConflict) {
+        result.canParticipate = false;
+        result.restrictions.push(...incidenciaConflict.messages);
+      }
+    }
+
+    // Actualizar icono según resultado final
+    if (!result.canParticipate) {
+      result.icon = '🚫';
+    } else if (result.warnings.length > 0) {
+      result.icon = '⚠️';
+    } else {
+      result.icon = '✅';
+    }
+
+    return result;
+  }
+
+  /**
+   * Valida si hay conflicto con la reunión de la congregación del usuario
+   * @param congregacion - Datos de la congregación del usuario
+   * @param day - Día seleccionado (lunes, martes, etc.)
+   * @param turno - Turno seleccionado (T1, T2, T3, T4)
+   * @returns Objeto con información del conflicto
+   */
+  static validateMeetingConflict(
+    congregacion: Congregacion,
+    day: string,
+    turno: string
+  ): { hasConflict: boolean; message: string } {
+    if (!congregacion?.diaReunion || !congregacion?.turnoReunion) {
+      return { hasConflict: false, message: '' };
+    }
+
+    // Normalizar los valores para comparación (minúsculas, sin acentos)
+    const normalizeString = (str: string) =>
+      str.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+
+    const selectedDay = normalizeString(day);
+    const meetingDay = normalizeString(congregacion.diaReunion);
+    const selectedTurno = turno.toUpperCase();
+    const meetingTurno = congregacion.turnoReunion.toUpperCase();
+
+    if (selectedDay === meetingDay && selectedTurno === meetingTurno) {
       return {
-        canParticipate: true,
-        warnings: [],
-        restrictions: [],
-        icon: '✅',
-        rulesDescription: []
+        hasConflict: true,
+        message: `⛪ Conflicto de reunión: La congregación "${congregacion.nombre}" tiene reunión el ${congregacion.diaReunion} en el turno ${congregacion.turnoReunion}`
       };
     }
 
-    const userHistory = await this.getUserParticipationHistory(userName);
-    const validation = this.validateUserParticipation(rules, selectedDate, userHistory);
+    return { hasConflict: false, message: '' };
+  }
+
+  /**
+   * Valida si el usuario tiene incidencias activas para la fecha seleccionada
+   * @param incidencias - Lista de incidencias del usuario
+   * @param selectedDate - Fecha seleccionada
+   * @returns Objeto con información de conflictos de incidencias
+   */
+  static validateIncidencias(
+    incidencias: Incidencia[],
+    selectedDate: Date
+  ): { hasConflict: boolean; messages: string[] } {
+    const messages: string[] = [];
+    const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+
+    for (const incidencia of incidencias) {
+      if (!incidencia.activo) continue;
+
+      const fechaInicio = new Date(incidencia.fechaInicio);
+      const fechaFin = new Date(incidencia.fechaFin);
+
+      // Normalizar fechas (solo día, sin hora)
+      const inicioOnly = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), fechaInicio.getDate());
+      const finOnly = new Date(fechaFin.getFullYear(), fechaFin.getMonth(), fechaFin.getDate());
+
+      if (selectedDateOnly >= inicioOnly && selectedDateOnly <= finOnly) {
+        const formatDate = (d: Date) => d.toLocaleDateString('es-ES', {
+          day: 'numeric',
+          month: 'short'
+        });
+
+        messages.push(
+          `📋 Incidencia activa: "${incidencia.motivo}" ` +
+          `(${formatDate(inicioOnly)} - ${formatDate(finOnly)})`
+        );
+      }
+    }
 
     return {
-      ...validation,
-      icon: this.getUserStatusIcon(rules, selectedDate, userHistory),
-      rulesDescription: rules.map(rule => this.getRuleDescription(rule))
+      hasConflict: messages.length > 0,
+      messages
     };
+  }
+
+  /**
+   * Obtener incidencias activas de un usuario desde la API
+   * @param userName - Nombre de usuario
+   * @param fromDate - Fecha desde la cual buscar incidencias (opcional)
+   * @returns Lista de incidencias activas
+   */
+  static async getUserIncidencias(userName: string, fromDate?: Date): Promise<Incidencia[]> {
+    try {
+      const url = new URL('/api/incidencias/getByUser.json', window.location.origin);
+      url.searchParams.append('userName', userName);
+      if (fromDate) {
+        url.searchParams.append('fromDate', fromDate.toISOString().split('T')[0]);
+      }
+
+      const response = await fetch(url.toString());
+
+      if (!response.ok) {
+        console.error(`Error fetching incidencias: ${response.status}`);
+        return [];
+      }
+
+      const data = await response.json();
+      return data.data || [];
+    } catch (error) {
+      console.error('Error fetching user incidencias:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Validación completa con contexto (incluyendo reunión e incidencias)
+   * @param userName - Nombre de usuario
+   * @param participationRules - Reglas de participación
+   * @param selectedDate - Fecha seleccionada
+   * @param congregacion - Datos de la congregación
+   * @param day - Día de la semana
+   * @param turno - Turno
+   * @returns Resultado de validación extendido
+   */
+  static async validateUserComplete(
+    userName: string,
+    participationRules: ParticipationRule[] | string,
+    selectedDate: Date,
+    congregacion?: Congregacion,
+    day?: string,
+    turno?: string
+  ): Promise<ExtendedValidationResult> {
+    // Obtener incidencias del usuario
+    const incidencias = await this.getUserIncidencias(userName, selectedDate);
+
+    return this.validateUserForDate(
+      userName,
+      participationRules,
+      selectedDate,
+      {
+        congregacion,
+        incidencias,
+        day,
+        turno
+      }
+    );
   }
 }
 

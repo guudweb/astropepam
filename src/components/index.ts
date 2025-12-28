@@ -8,6 +8,7 @@ import Time from "./icons/Time.astro";
 import Users from "./icons/Users.astro";
 import Plus from "./icons/Plus.astro";
 import Congregation from "./icons/Congregation.astro";
+import Incidencias from "./icons/Incidencias.astro";
 import {
     LoadingMovile,
     LoadingTable,
@@ -64,6 +65,7 @@ export {
     Time,
     Users,
     Congregation,
+    Incidencias,
     LoadingMovile,
     LoadingTable,
     PrivilegeFilter,

@@ -80,6 +80,20 @@ const UserHistory = defineTable({
   },
 });
 
+// Tabla de Incidencias - Para registrar cuando un voluntario no está disponible
+const Incidencias = defineTable({
+  columns: {
+    id: column.number({ primaryKey: true, autoIncrement: true }),
+    userName: column.text({ references: () => Usuario.columns.userName }), // Usuario afectado
+    fechaInicio: column.date(),   // Fecha desde cuando no está disponible
+    fechaFin: column.date(),      // Fecha hasta cuando no está disponible
+    motivo: column.text(),        // Motivo de la incidencia
+    creadoPor: column.text(),     // Quién registró la incidencia (admin o el propio usuario)
+    fechaCreacion: column.date(), // Cuándo se creó la incidencia
+    activo: column.boolean({ default: true }), // Si la incidencia sigue activa
+  },
+});
+
 export default defineDb({
   tables: {
     Usuario,
@@ -89,5 +103,6 @@ export default defineDb({
     Congregacion,
     Preajustes,
     PersonasInteresadas,
+    Incidencias,
   },
 });

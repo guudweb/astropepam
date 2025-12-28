@@ -129,11 +129,14 @@ export class ValidationManager {
         }
       }
 
-      // Validar con el sistema existente
-      const validation = await ParticipationValidatorJS.validateUserForDate(
+      // Validar con el sistema existente (incluyendo reunión e incidencias)
+      const validation = await ParticipationValidatorJS.validateUserComplete(
         userName,
-        user.participation_rules,
-        selectedDate
+        user.participation_rules || [],
+        selectedDate,
+        user.congregacion, // Datos de la congregación para validar conflicto de reunión
+        day, // Día seleccionado
+        turno // Turno seleccionado
       );
 
       // Guardar en cache

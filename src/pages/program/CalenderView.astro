@@ -732,15 +732,21 @@ const { isAdmin } = Astro.locals;
         doc.save("calendario-programa.pdf");
       };
 
+      // Detectar si estamos en vista móvil
+      const isMobileView = () => {
+        return window.innerWidth < 768;
+      };
+
       // Nueva función para capturar la tabla directamente con html2canvas
       const captureTableAsPDF = async () => {
         try {
           const { jsPDF } = window.jspdf;
+          const isMobile = isMobileView();
 
-          // Seleccionar el elemento de la tabla a capturar
-          const tableElement = document.getElementById("calendarView");
+          // Seleccionar el elemento correcto según la vista
+          const calendarView = document.getElementById("calendarView");
 
-          if (!tableElement) {
+          if (!calendarView) {
             alert("No se encontró la tabla del calendario");
             return;
           }
@@ -748,49 +754,97 @@ const { isAdmin } = Astro.locals;
           // Pequeño delay para asegurar que todos los estilos están aplicados
           await new Promise((resolve) => setTimeout(resolve, 100));
 
-          // Configurar html2canvas para mejor calidad
-          const canvas = await html2canvas(tableElement, {
-            scale: 2, // Mayor resolución
-            useCORS: true, // Permitir recursos externos
+          // Configuración diferente para móvil vs desktop
+          const captureConfig = isMobile ? {
+            scale: 2,
+            useCORS: true,
             allowTaint: false,
-            backgroundColor: "#ffffff",
+            backgroundColor: "#f3f4f6", // bg-gray-100 para móvil
             scrollX: 0,
-            scrollY: 0,
-            width: tableElement.scrollWidth,
-            height: tableElement.scrollHeight,
+            scrollY: -window.scrollY, // Capturar desde el top
+            windowWidth: window.innerWidth,
             removeContainer: true,
             logging: false,
             onclone: (clonedDoc) => {
-              // Asegurar que el elemento clonado sea visible
               const clonedElement = clonedDoc.getElementById("calendarView");
               if (clonedElement) {
                 clonedElement.style.display = "block";
                 clonedElement.style.visibility = "visible";
 
-                // Forzar que se muestre la vista de escritorio en el clon
-                const desktopView =
-                  clonedElement.querySelector(".hidden.md\\:block");
+                // En móvil: mostrar solo la vista móvil
+                const desktopView = clonedElement.querySelector(".hidden.md\\:block");
+                if (desktopView) {
+                  desktopView.style.display = "none";
+                }
+
+                const mobileView = clonedElement.querySelector(".md\\:hidden");
+                if (mobileView) {
+                  mobileView.style.display = "block";
+                  mobileView.classList.remove("md:hidden");
+                  // Asegurar que las tarjetas se muestren correctamente
+                  mobileView.style.width = "100%";
+                }
+
+                // Asegurar estilos para las tarjetas móviles
+                const emptySlots = clonedElement.querySelectorAll(".empty-slot");
+                emptySlots.forEach((slot) => {
+                  slot.style.textAlign = "center";
+                  slot.style.display = "flex";
+                  slot.style.alignItems = "center";
+                  slot.style.justifyContent = "center";
+                });
+
+                // Añadir estilos CSS para móvil
+                const style = clonedDoc.createElement("style");
+                style.textContent = `
+                  .empty-slot {
+                    text-align: center !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                  }
+                `;
+                clonedDoc.head.appendChild(style);
+              }
+            },
+          } : {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: "#ffffff",
+            scrollX: 0,
+            scrollY: 0,
+            width: calendarView.scrollWidth,
+            height: calendarView.scrollHeight,
+            removeContainer: true,
+            logging: false,
+            onclone: (clonedDoc) => {
+              const clonedElement = clonedDoc.getElementById("calendarView");
+              if (clonedElement) {
+                clonedElement.style.display = "block";
+                clonedElement.style.visibility = "visible";
+
+                // En desktop: mostrar la vista de escritorio
+                const desktopView = clonedElement.querySelector(".hidden.md\\:block");
                 if (desktopView) {
                   desktopView.classList.remove("hidden");
                   desktopView.classList.add("block");
                 }
 
-                // Ocultar vista móvil en el clon
+                // Ocultar vista móvil
                 const mobileView = clonedElement.querySelector(".md\\:hidden");
                 if (mobileView) {
                   mobileView.style.display = "none";
                 }
 
-                // Asegurar que los estilos de centrado se apliquen correctamente
+                // Asegurar estilos de centrado para headers
                 const headers = clonedElement.querySelectorAll("th");
                 headers.forEach((header) => {
                   header.style.textAlign = "center";
-                  header.classList.add("text-center");
                 });
 
-                // Asegurar que "Turno disponible" esté centrado
-                const emptySlots =
-                  clonedElement.querySelectorAll(".empty-slot");
+                // Asegurar "Turno disponible" centrado
+                const emptySlots = clonedElement.querySelectorAll(".empty-slot");
                 emptySlots.forEach((slot) => {
                   slot.style.textAlign = "center";
                   slot.style.display = "flex";
@@ -800,15 +854,15 @@ const { isAdmin } = Astro.locals;
                   slot.style.height = "100%";
                 });
 
-                // Añadir estilos CSS directamente al documento clonado
+                // Añadir estilos CSS para desktop
                 const style = clonedDoc.createElement("style");
                 style.textContent = `
                   th { text-align: center !important; }
-                  .empty-slot { 
-                    text-align: center !important; 
-                    display: flex !important; 
-                    align-items: center !important; 
-                    justify-content: center !important; 
+                  .empty-slot {
+                    text-align: center !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
                     width: 100% !important;
                     height: 100% !important;
                   }
@@ -817,76 +871,92 @@ const { isAdmin } = Astro.locals;
 
                 // Forzar recálculo de estilos
                 clonedElement.style.transform = "translateZ(0)";
-                clonedElement.offsetHeight; // Trigger reflow
+                clonedElement.offsetHeight;
               }
             },
-          });
+          };
 
-          // Crear el PDF
-          const imgWidth = 297; // A4 landscape width in mm
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          // Capturar el elemento correcto
+          const elementToCapture = isMobile
+            ? calendarView.querySelector(".md\\:hidden") || calendarView
+            : calendarView;
 
+          const canvas = await html2canvas(elementToCapture, captureConfig);
+
+          // Crear el PDF con orientación diferente según vista
+          const orientation = isMobile ? "portrait" : "landscape";
           const doc = new jsPDF({
-            orientation: "landscape",
+            orientation: orientation,
             unit: "mm",
             format: "a4",
           });
 
           // Agregar título y fecha
-          doc.setFontSize(16);
+          doc.setFontSize(14);
           doc.setFont(undefined, "bold");
           const weekDatesForTitle = getWeekDates(currentDate);
           const startDateForTitle = weekDatesForTitle[1]; // Martes
-          const monthNameCapture = startDateForTitle.toLocaleDateString(
-            "es-ES",
-            { month: "long" }
-          );
+          const endDateForTitle = weekDatesForTitle[6]; // Domingo
+          const monthNameCapture = startDateForTitle.toLocaleDateString("es-ES", { month: "long" });
           const yearCapture = startDateForTitle.getFullYear();
-          const capitalizedMonthCapture =
-            monthNameCapture.charAt(0).toUpperCase() +
-            monthNameCapture.slice(1);
+          const capitalizedMonthCapture = monthNameCapture.charAt(0).toUpperCase() + monthNameCapture.slice(1);
+
           doc.text(
             `PPAM Programa Semanal - ${capitalizedMonthCapture} ${yearCapture}`,
             doc.internal.pageSize.getWidth() / 2,
-            15,
+            12,
             { align: "center" }
           );
 
-          doc.setFontSize(10);
+          doc.setFontSize(9);
           doc.setFont(undefined, "normal");
+          doc.text(
+            `${startDateForTitle.toLocaleDateString("es-ES", { weekday: 'short', day: 'numeric', month: 'short' })} - ${endDateForTitle.toLocaleDateString("es-ES", { weekday: 'short', day: 'numeric', month: 'short' })}`,
+            doc.internal.pageSize.getWidth() / 2,
+            18,
+            { align: "center" }
+          );
 
           // Agregar la imagen capturada
           const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
-          // Calcular posición para centrar la imagen
+          // Calcular dimensiones según orientación
           const pageWidth = doc.internal.pageSize.getWidth();
           const pageHeight = doc.internal.pageSize.getHeight();
-          const startY = 30;
-          const availableHeight = pageHeight - startY - 10;
+          const startY = 24;
+          const margin = 10;
+          const availableWidth = pageWidth - (margin * 2);
+          const availableHeight = pageHeight - startY - margin;
 
-          let finalWidth = imgWidth;
-          let finalHeight = imgHeight;
+          // Calcular el tamaño de la imagen manteniendo la proporción
+          const imgRatio = canvas.width / canvas.height;
+          let finalWidth, finalHeight;
 
-          // Ajustar tamaño si es muy alto
-          if (finalHeight > availableHeight) {
-            finalHeight = availableHeight;
-            finalWidth = (canvas.width * finalHeight) / canvas.height;
+          if (isMobile) {
+            // En móvil, ajustar al ancho disponible y permitir múltiples páginas si es necesario
+            finalWidth = availableWidth;
+            finalHeight = finalWidth / imgRatio;
+
+            // Agregar la imagen (si es muy alta, jsPDF la recortará automáticamente)
+            doc.addImage(imgData, "JPEG", margin, startY, finalWidth, finalHeight);
+          } else {
+            // En desktop, ajustar al espacio disponible
+            const widthRatio = availableWidth / canvas.width;
+            const heightRatio = availableHeight / canvas.height;
+            const ratio = Math.min(widthRatio, heightRatio);
+
+            finalWidth = canvas.width * ratio;
+            finalHeight = canvas.height * ratio;
+
+            // Centrar horizontalmente
+            const startX = (pageWidth - finalWidth) / 2;
+
+            doc.addImage(imgData, "JPEG", startX, startY, finalWidth, finalHeight);
           }
 
-          // Centrar horizontalmente
-          const startX = (pageWidth - finalWidth) / 2;
-
-          doc.addImage(
-            imgData,
-            "JPEG",
-            startX,
-            startY,
-            finalWidth,
-            finalHeight
-          );
-
           // Descargar el PDF
-          doc.save("calendario-capturado.pdf");
+          const fileName = isMobile ? "calendario-movil.pdf" : "calendario-capturado.pdf";
+          doc.save(fileName);
         } catch (error) {
           console.error("Error capturando la tabla:", error);
           alert("Error al generar el PDF. Por favor, inténtalo de nuevo.");
