@@ -1,55 +1,67 @@
 import { db, WeekData, UserHistory, eq, and, gte, lte } from "astro:db";
-import { validateDate, validateWeekData, sanitizeString, createErrorResponse, createSuccessResponse } from "../../utils/validation";
+import { validateDate, validateWeekData, createErrorResponse, createSuccessResponse, requireAdmin } from "../../utils/validation";
 
 import type { APIRoute } from "astro";
 
 // Función auxiliar para extraer participaciones del weekData
+// CORREGIDO: Ahora parsea claves planas "lunes-T1-0" en lugar de estructura anidada
 const extractParticipations = (weekData: any, baseDate: Date) => {
-  const participations = [];
+  const participations: Array<{
+    userName: string;
+    date: Date;
+    day: string;
+    turno: string;
+    indexValue: number;
+  }> = [];
   const daysOfWeek = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
-  
+
   if (weekData && typeof weekData === 'object') {
-    Object.keys(weekData).forEach(dayKey => {
-      const dayData = weekData[dayKey];
-      if (dayData && typeof dayData === 'object') {
-        
-        // Calcular la fecha específica del día
-        const dayIndex = daysOfWeek.indexOf(dayKey.toLowerCase());
-        if (dayIndex !== -1) {
-          const participationDate = new Date(baseDate);
-          participationDate.setDate(baseDate.getDate() + dayIndex);
-          
-          // Recorrer los turnos del día
-          Object.keys(dayData).forEach(turnoKey => {
-            const turnoData = dayData[turnoKey];
-            if (turnoData && typeof turnoData === 'object') {
-              
-              // Recorrer los índices del turno
-              Object.keys(turnoData).forEach(indexKey => {
-                const userData = turnoData[indexKey];
-                if (userData && userData.userName) {
-                  participations.push({
-                    userName: userData.userName,
-                    date: participationDate,
-                    day: dayKey,
-                    turno: turnoKey,
-                    indexValue: parseInt(indexKey)
-                  });
-                }
-              });
-            }
-          });
+    Object.keys(weekData).forEach(key => {
+      const value = weekData[key];
+
+      // Parsear clave plana: "lunes-T1-0" -> { day: "lunes", turno: "T1", index: "0" }
+      const parts = key.split('-');
+
+      if (parts.length === 3) {
+        const [day, turno, indexStr] = parts;
+        const userName = value;
+
+        // Validar que el valor sea un userName válido (string no vacío)
+        if (userName && typeof userName === 'string' &&
+            userName !== '--separator--' &&
+            userName !== '--error--' &&
+            userName !== 'add') {
+
+          const dayIndex = daysOfWeek.indexOf(day.toLowerCase());
+
+          if (dayIndex !== -1) {
+            // Calcular la fecha específica del día
+            const participationDate = new Date(baseDate);
+            participationDate.setDate(baseDate.getDate() + dayIndex);
+
+            participations.push({
+              userName: userName,
+              date: participationDate,
+              day: day,
+              turno: turno,
+              indexValue: parseInt(indexStr, 10)
+            });
+          }
         }
       }
     });
   }
-  
+
   return participations;
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
   try {
-    const { date, weekData } = await request.json();
+    // Verificar que el usuario sea admin
+    const { error } = await requireAdmin(context);
+    if (error) return error;
+
+    const { date, weekData } = await context.request.json();
     
     // Validar fecha
     const validDate = validateDate(date);
@@ -104,20 +116,24 @@ export const POST: APIRoute = async ({ request }) => {
       )
       .execute();
 
-    // Insertar los nuevos registros (solo si hay participaciones)
+    // Insertar los nuevos registros en batch (más eficiente)
     if (participations.length > 0) {
-      console.log(`[DEBUG] Insertando ${participations.length} nuevas participaciones`);
-      for (const participation of participations) {
-        await db
-          .insert(UserHistory)
-          .values({
-            userName: participation.userName,
-            date: participation.date,
-            day: participation.day,
-            turno: participation.turno,
-            indexValue: participation.indexValue
-          })
-          .execute();
+      console.log(`[DEBUG] Insertando ${participations.length} nuevas participaciones en batch`);
+
+      // Preparar valores para inserción batch
+      const batchValues = participations.map(p => ({
+        userName: p.userName,
+        date: p.date,
+        day: p.day,
+        turno: p.turno,
+        indexValue: p.indexValue
+      }));
+
+      // Insertar en lotes de 50 para evitar problemas con límites de BD
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < batchValues.length; i += BATCH_SIZE) {
+        const batch = batchValues.slice(i, i + BATCH_SIZE);
+        await db.insert(UserHistory).values(batch).execute();
       }
     } else {
       console.log(`[DEBUG] No hay nuevas participaciones que insertar - historial limpio`);

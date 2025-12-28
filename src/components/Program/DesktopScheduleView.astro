@@ -11,74 +11,126 @@ const { days, turnos, weekDates } = Astro.props;
 
 <!-- Vista Desktop del Programa -->
 <div class="hidden lg:block">
-  <div class="overflow-x-auto">
-    <div class="min-w-full">
-      {days.map((day, dayIndex) => (
-        <div class="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
-            <h2 class="text-xl font-bold">
-              {day.charAt(0).toUpperCase() + day.slice(1)} - {weekDates[dayIndex].toLocaleDateString('es-ES', {
-                weekday: 'long',
-                day: 'numeric', 
-                month: 'long'
-              })}
-            </h2>
+  <div class="space-y-6">
+    {days.map((day, dayIndex) => (
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden day-card">
+        <!-- Header del día con mejor jerarquía -->
+        <div class="bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 text-white px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight">
+                {day.charAt(0).toUpperCase() + day.slice(1)}
+              </h2>
+              <p class="text-blue-100 text-sm mt-0.5">
+                {weekDates[dayIndex].toLocaleDateString('es-ES', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </p>
+            </div>
+            <!-- Indicador de estado del día -->
+            <div class="flex items-center gap-2">
+              <span
+                class="day-captain-indicator hidden px-3 py-1 bg-amber-500 text-white text-xs font-semibold rounded-full shadow-sm"
+                data-day={day}
+              >
+                Sin capitán
+              </span>
+              <span
+                class="day-status-indicator px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full"
+                data-day={day}
+              >
+                0/16 asignados
+              </span>
+            </div>
           </div>
-          
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                    Turno
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Asignaciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                {turnos.map((turno) => (
-                  <tr class="hover:bg-gray-50 transition-colors duration-150">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">{turno}</div>
-                    </td>
-                    <td class="px-6 py-4">
-                      <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-4 gap-4">
-                        {[...Array(4)].map((_, index) => (
+        </div>
+
+        <!-- Tabla de turnos -->
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">
+                  Turno
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Asignaciones
+                </th>
+                <th class="px-4 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">
+                  Capitán
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              {turnos.map((turno, turnoIndex) => (
+                <tr class={`hover:bg-blue-50/50 transition-colors duration-150 turno-row ${turnoIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`} data-day={day} data-turno={turno}>
+                  <td class="px-6 py-5 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                      <span class="text-sm font-semibold text-gray-900">{turno}</span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-5">
+                    <div class="grid grid-cols-4 gap-4">
+                      {[...Array(4)].map((_, index) => (
+                        <div class="position-slot group">
+                          <label class="block text-xs font-medium text-gray-500 mb-1.5 group-hover:text-blue-600 transition-colors">
+                            Posición {index + 1}
+                          </label>
                           <div class="flex items-center gap-2">
-                            <div class="flex-1 min-w-0">
-                              <label class="block text-xs font-medium text-gray-700 mb-1">
-                                Posición {index + 1}
-                              </label>
-                              <select
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 user-select"
-                                data-day={day}
-                                data-turno={turno}
-                                data-index={index}
-                                data-date={weekDates[dayIndex].toISOString().split("T")[0]}
-                              >
-                                <option value="">Sin asignar</option>
-                                <option value="--separator--" disabled>Seleccionar usuario...</option>
-                              </select>
-                            </div>
-                            <span 
-                              class="flex-shrink-0 w-6 h-6 flex items-center justify-center text-sm"
+                            <select
+                              class="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 user-select hover:border-gray-400 transition-all"
+                              data-day={day}
+                              data-turno={turno}
+                              data-index={index}
+                              data-date={weekDates[dayIndex].toISOString().split("T")[0]}
+                            >
+                              <option value="">Sin asignar</option>
+                              <option value="--separator--" disabled>Seleccionar usuario...</option>
+                            </select>
+                            <span
+                              class="flex-shrink-0 w-7 h-7 flex items-center justify-center text-base rounded-full bg-gray-100 status-icon"
                               id={`icon-${day}-${turno}-${index}`}
                             >
                             </span>
                           </div>
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                  <td class="px-4 py-5 text-center">
+                    <!-- Indicador prominente de capitán por turno -->
+                    <div
+                      class="captain-indicator inline-flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200"
+                      data-day={day}
+                      data-turno={turno}
+                      title="Estado del capitán para este turno"
+                    >
+                      <span class="captain-icon text-lg">⚪</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer con resumen del día -->
+        <div class="bg-gray-50 px-6 py-3 border-t border-gray-200">
+          <div class="flex items-center justify-between text-xs text-gray-500">
+            <span class="day-assignments-count" data-day={day}>
+              0 de 16 posiciones asignadas
+            </span>
+            <span class="day-captain-count" data-day={day}>
+              0 de 4 turnos con capitán
+            </span>
           </div>
         </div>
-      ))}
-    </div>
+      </div>
+    ))}
   </div>
 </div>
 
@@ -93,7 +145,7 @@ const { days, turnos, weekDates } = Astro.props;
   }
 
   .user-select:focus {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     outline: none;
   }
 
@@ -114,14 +166,126 @@ const { days, turnos, weekDates } = Astro.props;
   }
 
   /* Hover effects para mejor UX */
-  tr:hover .user-select {
-    border-color: #6b7280;
+  .turno-row:hover .user-select {
+    border-color: #93c5fd;
+  }
+
+  /* Indicadores de capitán prominentes */
+  .captain-indicator {
+    background-color: #f3f4f6;
+  }
+
+  .captain-indicator[data-has-captain="true"] {
+    background-color: #dcfce7;
+    box-shadow: 0 0 0 2px #22c55e;
+  }
+
+  .captain-indicator[data-has-captain="true"] .captain-icon::before {
+    content: '✓';
+    color: #16a34a;
+  }
+
+  .captain-indicator[data-has-captain="false"] {
+    background-color: #fef3c7;
+    box-shadow: 0 0 0 2px #f59e0b;
+    animation: pulse-warning 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-warning {
+    0%, 100% {
+      box-shadow: 0 0 0 2px #f59e0b;
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.3);
+    }
+  }
+
+  /* Status icons con fondo */
+  .status-icon {
+    transition: all 0.2s ease;
+  }
+
+  .status-icon:empty {
+    background-color: #f9fafb;
+  }
+
+  /* Day card hover effect */
+  .day-card {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .day-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Position slot hover */
+  .position-slot {
+    transition: background-color 0.15s ease;
+    padding: 0.5rem;
+    margin: -0.5rem;
+    border-radius: 0.5rem;
+  }
+
+  .position-slot:hover {
+    background-color: rgba(59, 130, 246, 0.05);
+  }
+
+  /* Loading state */
+  .user-select.loading {
+    opacity: 0.7;
+    pointer-events: none;
+    background-image: linear-gradient(
+      90deg,
+      #f3f4f6 0%,
+      #e5e7eb 50%,
+      #f3f4f6 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Feedback visual al cambiar */
+  .user-select.just-changed {
+    animation: highlight-change 0.6s ease-out;
+  }
+
+  @keyframes highlight-change {
+    0% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
   }
 
   /* Mejores espacios en pantallas grandes */
   @media (min-width: 1536px) {
     .user-select {
-      min-width: 200px;
+      min-width: 180px;
+    }
+
+    .position-slot {
+      padding: 0.75rem;
+      margin: -0.75rem;
+    }
+  }
+
+  /* Responsive grid para posiciones */
+  @media (max-width: 1280px) {
+    .grid-cols-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 </style>

@@ -1,7 +1,7 @@
-
 import type { APIRoute } from "astro";
 import { db, eq, Usuario } from "astro:db";
 import { getSession } from "auth-astro/server";
+import { requireAdmin, createErrorResponse, createSuccessResponse } from "../../../utils/validation";
 
 export const PUT: APIRoute = async ({ request, params }) => {
     const session = await getSession(request);
@@ -45,24 +45,28 @@ export const PUT: APIRoute = async ({ request, params }) => {
 };
 
 
-export const DELETE: APIRoute = async ({ request, params }) => {
-
-    const id = params.id;
-
-    const user = await db.select().from(Usuario).where(eq(Usuario.user_id, Number(id)));
-
-    if(!user) {
-        return new Response(null, {
-            status: 404,
-            statusText: 'Not found'
-        });
-    }
-
+export const DELETE: APIRoute = async (context) => {
     try {
-         await db.delete(Usuario).where(eq(Usuario.user_id, Number(id)));
-        return new Response(JSON.stringify(user), { status: 200 });
+        // Verificar que el usuario sea admin
+        const { error } = await requireAdmin(context);
+        if (error) return error;
+
+        const id = context.params.id;
+
+        const user = await db.select().from(Usuario).where(eq(Usuario.user_id, Number(id)));
+
+        if (!user || user.length === 0) {
+            return createErrorResponse("Usuario no encontrado", 404);
+        }
+
+        await db.delete(Usuario).where(eq(Usuario.user_id, Number(id)));
+        return createSuccessResponse({ message: "Usuario eliminado", user: user[0] });
     } catch (error) {
         console.error("Error al eliminar el usuario:", error);
-        return new Response(JSON.stringify({ error: "Error al eliminar el usuario." }), { status: 500 });
+        return createErrorResponse(
+            "Error al eliminar el usuario",
+            500,
+            error instanceof Error ? error.message : "Unknown error"
+        );
     }
 }

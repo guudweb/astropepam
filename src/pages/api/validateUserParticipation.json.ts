@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { db, UserHistory, Usuario, eq, and, gte, lte, asc } from "astro:db";
+import { calculateWeekOfMonth } from "../../utils/participationValidator";
 
 interface ParticipationRule {
   type: 'max_per_month' | 'max_per_week' | 'specific_weeks' | 'alternating_weeks';
@@ -103,8 +104,8 @@ const validateParticipationRules = async (
 
       case 'specific_weeks':
         const weekNumbers = Array.isArray(rule.value) ? rule.value : [rule.value];
-        const currentWeek = Math.ceil(selectedDate.getDate() / 7);
-        
+        const currentWeek = calculateWeekOfMonth(selectedDate);
+
         if (!weekNumbers.includes(currentWeek)) {
           return {
             canParticipate: false,

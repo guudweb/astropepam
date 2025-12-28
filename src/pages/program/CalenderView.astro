@@ -5,122 +5,81 @@ const { isAdmin } = Astro.locals;
 ---
 
 <Layout title="program">
-  <div class="container mx-auto mt-8 text-center">
-    <div class="flex justify-between mb-4 text-center mx-3">
-      <button class="bg-cyan-600 text-white px-4 py-2 rounded" id="prevWeekBtn">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-chevrons-left"
-          ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
-            d="M11 7l-5 5l5 5"></path><path d="M17 7l-5 5l5 5"></path></svg
-        >
+  <div class="container mx-auto mt-6 text-center px-4">
+    <!-- Header con navegación y acciones -->
+    <div class="flex items-center justify-between mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <!-- Botón anterior -->
+      <button
+        class="w-12 h-12 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors touch-manipulation"
+        id="prevWeekBtn"
+        aria-label="Semana anterior"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 7l-5 5l5 5"></path>
+          <path d="M17 7l-5 5l5 5"></path>
+        </svg>
       </button>
-      <div class="text-center items-center flex justify-center gap-4">
-        {
-          isAdmin && (
-            <a href="/program">
-              <button
-                class="bg-cyan-500 text-white px-3 py-2 rounded flex"
-                id="CalenderViewBtn"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-left"
-                >
-                  <>
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path d="M15 6l-6 6l6 6" />
-                  </>
-                </svg>
-                Editar
-              </button>
-            </a>
-          )
-        }
-        <button
-          onclick="saveTableAsPDF()"
-          class="px-4 py-2 bg-blue-700 text-white font-bold rounded-md"
-          title="PDF Estructurado"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf"
+
+      <!-- Título con fecha de la semana -->
+      <div class="flex-1 text-center">
+        <h1 class="text-lg md:text-xl font-bold text-gray-800" id="weekTitle">Cargando semana...</h1>
+        <p class="text-sm text-gray-500" id="weekDateRange"></p>
+      </div>
+
+      <!-- Controles centrales -->
+      <div class="flex items-center gap-3 flex-wrap justify-center">
+        {isAdmin && (
+          <a href="/program">
+            <button class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 6l-6 6l6 6" />
+              </svg>
+              Editar
+            </button>
+          </a>
+        )}
+
+        <!-- Grupo de exportación -->
+        <div class="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
+          <button
+            onclick="saveTableAsPDF()"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+            title="Exportar como PDF estructurado (tabla)"
           >
-            <>
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 3v4a1 1 0 0 0 1 1h4" />
               <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
               <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
               <path d="M17 18h2" />
               <path d="M20 15h-3v6" />
               <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" />
-            </>
-          </svg>
-        </button>
-        <button
-          onclick="captureTableAsPDF()"
-          class="px-4 py-2 bg-green-700 text-white font-bold rounded-md ml-2"
-          title="PDF Vista Capturada"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="icon icon-tabler icons-tabler-outline icon-tabler-camera"
+            </svg>
+            <span class="hidden sm:inline">PDF</span>
+          </button>
+          <button
+            onclick="captureTableAsPDF()"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 transition-colors"
+            title="Capturar vista como imagen PDF"
           >
-            <>
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
               <path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
-            </>
-          </svg>
-        </button>
+            </svg>
+            <span class="hidden sm:inline">Imagen</span>
+          </button>
+        </div>
       </div>
-      <button class="bg-cyan-600 text-white px-4 py-2 rounded" id="nextWeekBtn">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-chevrons-right"
-          ><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path
-            d="M7 7l5 5l-5 5"></path><path d="M13 7l5 5l-5 5"></path></svg
-        >
+
+      <!-- Botón siguiente -->
+      <button
+        class="w-12 h-12 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors touch-manipulation"
+        id="nextWeekBtn"
+        aria-label="Semana siguiente"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 7l5 5l-5 5"></path>
+          <path d="M13 7l5 5l-5 5"></path>
+        </svg>
       </button>
     </div>
     <div
@@ -150,7 +109,7 @@ const { isAdmin } = Astro.locals;
       ];
       const turnos = ["T1", "T2", "T3", "T4"];
       const turnoTimes = {
-        T1: "9:30 - 11:30",
+        T1: "09:30 - 11:30",
         T2: "11:30 - 13:30",
         T3: "13:30 - 15:30",
         T4: "15:30 - 17:30",
@@ -332,144 +291,129 @@ const { isAdmin } = Astro.locals;
         const weekDates = getWeekDates(currentDate);
         const weekData = await fetchWeekData(currentDate);
 
+        // Actualizar el título con las fechas de la semana
+        const weekTitleEl = document.getElementById("weekTitle");
+        const weekDateRangeEl = document.getElementById("weekDateRange");
+
+        if (weekTitleEl && weekDateRangeEl) {
+          const startDate = weekDates[1]; // Martes (índice 1, excluyendo lunes)
+          const endDate = weekDates[6]; // Domingo (índice 6)
+          const monthName = startDate.toLocaleDateString("es-ES", { month: "long" });
+          const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+          const year = startDate.getFullYear();
+
+          weekTitleEl.textContent = `Programa Semanal - ${capitalizedMonth} ${year}`;
+          weekDateRangeEl.textContent = `${startDate.toLocaleDateString("es-ES", { weekday: 'short', day: 'numeric', month: 'short' })} - ${endDate.toLocaleDateString("es-ES", { weekday: 'short', day: 'numeric', month: 'short' })}`;
+        }
+
         const calendarView = document.getElementById("calendarView");
         const user = calendarView.dataset.userName || "";
-        calendarView.innerHTML = `
-  <div class="hidden md:block">
-    <table id="desktopTable" class="min-w-full bg-white border border-gray-200 mb-4">
-      <thead>
-        <tr>
-          <th class="px-4 py-2 border-b text-center">Turno</th>
-          ${weekDates
-            .map((date, index) => {
-              if (days[index] !== "lunes") {
-                return `<th class="px-4 py-2 border-b text-center">${formatDate(date, days[index])}</th>`;
-              }
-              return "";
-            })
-            .join("")}
-        </tr>
-      </thead>
-      <tbody>
-        ${turnos
-          .map(
-            (turno, turnoIndex) => `
-          <tr class="${turnoIndex % 2 === 0 ? "bg-gray-100" : "bg-white"}">
-            <td class="px-4 py-2 border-b">${turnoTimes[turno]}</td>
-            ${days
-              .map((day, dayIndex) => {
-                if (day !== "lunes") {
-                  const date = weekDates[dayIndex];
-                  return `
-                    <td class="px-4 py-2 border-b" data-day="${day}">
-                      ${Array.from({ length: 4 })
-                        .map((_, index) => {
-                          const userName =
-                            weekData[`${day}-${turno}-${index}`] || "";
-                          const fullName = getFullName(userName);
-                          const isCurrentUser = userName === user;
-                          const isFirstInShift = index === 0;
 
-                          if (!userName) {
-                            // Solo mostrar "Turno disponible" para las primeras 3 posiciones
-                            if (index < 3) {
-                              return '<div class="empty-slot" style="margin-bottom: 8px; padding: 8px; background-color: #fee2e2; color: #991b1b; text-align: center; border-radius: 4px; display: flex; align-items: center; justify-content: center;">Turno disponible</div>';
-                            } else {
-                              return ""; // No mostrar nada para la 4ta posición vacía
-                            }
-                          }
+        // Función helper para generar el HTML de un usuario
+        function renderUserSlot(userName, index, isCurrentUser, isFirstInShift) {
+          if (!userName) {
+            if (index < 3) {
+              return '<div class="empty-slot px-3 py-2 bg-red-50 border border-red-200 text-red-700 text-sm text-center rounded-lg font-medium">Turno disponible</div>';
+            }
+            return "";
+          }
 
-                          return `<div class="user" data-nombre="${userName}" style="margin-bottom: 8px;${
-                            isCurrentUser
-                              ? "color: blue; font-weight: bold;"
-                              : isFirstInShift
-                                ? "font-weight: bold; color: #1e3a8a;"
-                                : ""
-                          }">
-                            <div>${fullName}</div>
-                            <div class="phone-number" style="font-size: 0.8em; color: #666; margin-top: 2px;" data-user="${userName}">Cargando...</div>
-                          </div>`;
-                        })
-                        .join("")}
-                    </td>
-                  `;
-                }
-                return "";
-              })
-              .join("")}
-          </tr>
-        `
-          )
-          .join("")}
-      </tbody>
-    </table>
-  </div>
-  <div class="md:hidden">
-    ${days
-      .map((day, dayIndex) => {
-        if (day !== "lunes") {
-          const date = weekDates[dayIndex];
-          return `
-            <div class="mb-4">
-              <h2 class="text-lg font-bold mb-2">${day.charAt(0).toUpperCase() + day.slice(1)}</h2>
-              <table class="min-w-full bg-white border border-gray-200 mb-4">
-                <thead>
-                  <tr>
-                    <th class="px-4 py-2 border-b text-center">Turno</th>
-                    <th class="px-4 py-2 border-b text-center">${formatDate(date, day)}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${turnos
-                    .map(
-                      (turno, turnoIndex) => `
-                    <tr class="${turnoIndex % 2 === 0 ? "bg-gray-100" : "bg-white"}">
-                      <td class="px-4 py-2 border-b">${turnoTimes[turno]}</td>
-                      <td class="px-4 py-2 border-b">
-                        ${Array.from({ length: 4 })
-                          .map((_, index) => {
-                            const userName =
-                              weekData[`${day}-${turno}-${index}`] || "";
-                            const fullName = getFullName(userName);
-                            const isCurrentUser = userName === user;
-                            const isFirstInShift = index === 0;
+          const fullName = getFullName(userName);
+          let userClasses = "bg-gray-50 border-gray-200";
+          let textClass = "text-gray-900";
 
-                            if (!userName) {
-                              // Solo mostrar "Turno disponible" para las primeras 3 posiciones
-                              if (index < 3) {
-                                return '<div class="empty-slot" style="margin-bottom: 8px; padding: 8px; background-color: #fee2e2; color: #991b1b; text-align: center; border-radius: 4px; display: flex; align-items: center; justify-content: center;">Turno disponible</div>';
-                              } else {
-                                return ""; // No mostrar nada para la 4ta posición vacía
-                              }
-                            }
+          if (isCurrentUser) {
+            userClasses = "bg-blue-50 border-blue-300";
+            textClass = "text-blue-800";
+          } else if (isFirstInShift) {
+            userClasses = "bg-amber-50 border-amber-300";
+            textClass = "text-amber-800";
+          }
 
-                            return `<div class="user" data-nombre="${userName}" style="margin-bottom: 8px; ${
-                              isCurrentUser
-                                ? "color: blue; font-weight: bold;"
-                                : isFirstInShift
-                                  ? "font-weight: bold; color: #1e3a8a;"
-                                  : ""
-                            }">
-                              <div>${fullName}</div>
-                              <div class="phone-number" style="font-size: 0.8em; color: #666; margin-top: 2px;" data-user="${userName}">Cargando...</div>
-                            </div>`;
-                          })
-                          .join("")}
-                      </td>
-                    </tr>
-                  `
-                    )
-                    .join("")}
-                </tbody>
-              </table>
-            </div>
-          `;
+          return '<div class="user-slot user px-3 py-2 border rounded-lg cursor-pointer hover:shadow-sm transition-shadow ' + userClasses + '" data-nombre="' + userName + '">' +
+            '<div class="font-medium text-sm ' + textClass + '">' + fullName + '</div>' +
+            '<div class="phone-number text-xs text-gray-500 mt-0.5" data-user="' + userName + '">Cargando...</div>' +
+          '</div>';
         }
-        return "";
-      })
-      .join("")}
-  </div>
-`;
+
+        // Generar tabla desktop
+        let desktopHeaders = '<th class="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">Turno</th>';
+        weekDates.forEach((date, index) => {
+          if (days[index] !== "lunes") {
+            desktopHeaders += '<th class="px-4 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider">' + formatDate(date, days[index]) + '</th>';
+          }
+        });
+
+        let desktopRows = "";
+        turnos.forEach((turno, turnoIndex) => {
+          const rowClass = turnoIndex % 2 === 0 ? "bg-white" : "bg-gray-50/50";
+          let dayCells = "";
+
+          days.forEach((day) => {
+            if (day !== "lunes") {
+              let slots = "";
+              for (let i = 0; i < 4; i++) {
+                const key = day + "-" + turno + "-" + i;
+                const userName = weekData[key] || "";
+                const isCurrentUser = userName === user;
+                const isFirstInShift = i === 0;
+                slots += renderUserSlot(userName, i, isCurrentUser, isFirstInShift);
+              }
+              dayCells += '<td class="px-4 py-4" data-day="' + day + '"><div class="space-y-2">' + slots + '</div></td>';
+            }
+          });
+
+          desktopRows += '<tr class="' + rowClass + ' hover:bg-blue-50/30 transition-colors">' +
+            '<td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500"></span><span class="text-sm font-semibold text-gray-900">' + turnoTimes[turno] + '</span></div></td>' +
+            dayCells +
+          '</tr>';
+        });
+
+        // Generar vista mobile
+        let mobileCards = "";
+        days.forEach((day, dayIndex) => {
+          if (day !== "lunes") {
+            const date = weekDates[dayIndex];
+            let turnoSections = "";
+
+            turnos.forEach((turno, turnoIndex) => {
+              const sectionClass = turnoIndex % 2 === 0 ? "bg-white" : "bg-gray-50/50";
+              let slots = "";
+
+              for (let i = 0; i < 4; i++) {
+                const key = day + "-" + turno + "-" + i;
+                const userName = weekData[key] || "";
+                const isCurrentUser = userName === user;
+                const isFirstInShift = i === 0;
+                slots += renderUserSlot(userName, i, isCurrentUser, isFirstInShift);
+              }
+
+              turnoSections += '<div class="p-4 ' + sectionClass + '">' +
+                '<div class="flex items-center gap-2 mb-3"><span class="w-2 h-2 rounded-full bg-blue-500"></span><span class="text-sm font-semibold text-gray-900">' + turnoTimes[turno] + '</span></div>' +
+                '<div class="space-y-2">' + slots + '</div>' +
+              '</div>';
+            });
+
+            mobileCards += '<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">' +
+              '<div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3">' +
+                '<h2 class="text-lg font-bold">' + day.charAt(0).toUpperCase() + day.slice(1) + '</h2>' +
+                '<p class="text-blue-100 text-sm">' + formatDate(date, day) + '</p>' +
+              '</div>' +
+              '<div class="divide-y divide-gray-100">' + turnoSections + '</div>' +
+            '</div>';
+          }
+        });
+
+        calendarView.innerHTML =
+          '<div class="hidden md:block">' +
+            '<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">' +
+              '<table id="desktopTable" class="min-w-full">' +
+                '<thead class="bg-gradient-to-r from-blue-600 to-blue-700"><tr>' + desktopHeaders + '</tr></thead>' +
+                '<tbody class="divide-y divide-gray-100">' + desktopRows + '</tbody>' +
+              '</table>' +
+            '</div>' +
+          '</div>' +
+          '<div class="md:hidden space-y-4">' + mobileCards + '</div>';
 
         // Cargar números de teléfono para todos los usuarios visibles
         const phoneNumberElements = document.querySelectorAll(".phone-number");
@@ -634,10 +578,8 @@ const { isAdmin } = Astro.locals;
               const fullName = getFullName(userName);
               const isFirstInShift = index === 0;
 
-              let displayText = fullName;
-              if (isFirstInShift) {
-                displayText = `★ ${fullName}`; // Marcar primer nombre con estrella
-              }
+              // Marcar capitanes con prefijo especial para el PDF (se renderizará diferente)
+              let displayText = isFirstInShift ? `[CAP]${fullName}` : fullName;
 
               // Agregar número de teléfono si está disponible
               const phoneNumber = phoneNumberCache[userName];
@@ -652,7 +594,7 @@ const { isAdmin } = Astro.locals;
               usuarios.push(displayText);
             }
 
-            row.push(usuarios.join("\n\n"));
+            row.push(usuarios.join("\n"));
           });
 
           tableData.push(row);
@@ -670,6 +612,7 @@ const { isAdmin } = Astro.locals;
             cellWidth: turnoColumnWidth,
             halign: "center",
             valign: "middle",
+            fontStyle: "bold",
           },
         };
 
@@ -677,7 +620,6 @@ const { isAdmin } = Astro.locals;
           columnStyles[i] = {
             cellWidth: dayColumnWidth,
             halign: "center",
-            valign: "top",
             fontSize: 7,
           };
         }
@@ -691,19 +633,22 @@ const { isAdmin } = Astro.locals;
           theme: "grid",
           styles: {
             fontSize: 7,
-            cellPadding: 4,
-            valign: "top",
+            cellPadding: { top: 6, right: 4, bottom: 6, left: 4 },
+            valign: "middle",
+            halign: "center",
             lineWidth: 0.1,
             lineColor: [0, 0, 0],
             overflow: "linebreak",
+            minCellHeight: 20,
           },
           headStyles: {
             fillColor: [59, 130, 246], // bg-blue-600
             textColor: [255, 255, 255],
             fontStyle: "bold",
-            fontSize: 8,
+            fontSize: 9,
             halign: "center",
             valign: "middle",
+            cellPadding: { top: 8, right: 4, bottom: 8, left: 4 },
           },
           columnStyles: columnStyles,
           alternateRowStyles: {
@@ -725,47 +670,42 @@ const { isAdmin } = Astro.locals;
               cellText = String(data.cell.raw);
             }
 
-            console.log("Processing cell:", cellText);
-
-            // Check for "Turno disponible" ONLY if it's the entire content
-            if (cellText && cellText.trim() === "Turno disponible") {
-              console.log('Found ONLY "Turno disponible" - applying RED and BOLD');
-              // Apply styles directly without Object.assign
-              data.cell.styles.fillColor = [220, 38, 38];
-              data.cell.styles.textColor = [255, 255, 255];
+            // Check for "Turno disponible" - apply red styling matching desktop view
+            if (cellText && cellText.includes("Turno disponible")) {
+              data.cell.styles.fillColor = [254, 226, 226]; // bg-red-50
+              data.cell.styles.textColor = [185, 28, 28]; // text-red-700
               data.cell.styles.fontStyle = 'bold';
               data.cell.styles.halign = 'center';
               data.cell.styles.valign = 'middle';
-              data.cell.styles.fontSize = 8;
-              return;
-            }
-
-            // Check for first volunteer (★) - second priority
-            if (cellText && cellText.includes("★")) {
-              console.log('Found first volunteer (★) - applying BLUE and BOLD');
-              
-              // Remove the star from display
-              if (Array.isArray(data.cell.text)) {
-                data.cell.text = data.cell.text.map((line) =>
-                  line.replace(/★/g, "").trim()
-                );
-              } else if (typeof data.cell.text === "string") {
-                data.cell.text = data.cell.text.replace(/★/g, "").trim();
-              }
-              
-              // Apply blue bold styling directly
-              data.cell.styles.textColor = [29, 78, 216];
-              data.cell.styles.fontStyle = 'bold';
-              data.cell.styles.halign = 'center';
-              data.cell.styles.valign = 'top';
               data.cell.styles.fontSize = 7;
               return;
             }
 
-            // Default styling for regular volunteers
+            // Check for captain [CAP] prefix - apply amber styling matching desktop view
+            if (cellText && cellText.includes("[CAP]")) {
+              // Remove the [CAP] prefix from display
+              if (Array.isArray(data.cell.text)) {
+                data.cell.text = data.cell.text.map((line) =>
+                  line.replace(/\[CAP\]/g, "").trim()
+                );
+              } else if (typeof data.cell.text === "string") {
+                data.cell.text = data.cell.text.replace(/\[CAP\]/g, "").trim();
+              }
+
+              // Apply amber styling like desktop (bg-amber-50, border-amber-300, text-amber-800)
+              data.cell.styles.fillColor = [255, 251, 235]; // bg-amber-50
+              data.cell.styles.textColor = [146, 64, 14]; // text-amber-800
+              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.halign = 'center';
+              data.cell.styles.valign = 'middle';
+              data.cell.styles.fontSize = 7;
+              return;
+            }
+
+            // Default styling for volunteers - match desktop view
             if (cellText && data.column.index > 0) {
               data.cell.styles.halign = 'center';
-              data.cell.styles.valign = 'top';
+              data.cell.styles.valign = 'middle';
               data.cell.styles.fontSize = 7;
             }
           },
@@ -774,11 +714,15 @@ const { isAdmin } = Astro.locals;
             if (data.cell.raw) {
               const cellText = String(data.cell.raw);
               if (cellText.includes("Turno disponible")) {
-                // Forzar el centrado justo antes de dibujar
                 data.cell.styles.halign = "center";
                 data.cell.styles.valign = "middle";
                 data.cell.styles.fillColor = [254, 226, 226];
-                data.cell.styles.textColor = [153, 27, 27];
+                data.cell.styles.textColor = [185, 28, 28];
+              } else if (cellText.includes("[CAP]")) {
+                data.cell.styles.halign = "center";
+                data.cell.styles.valign = "middle";
+                data.cell.styles.fillColor = [255, 251, 235];
+                data.cell.styles.textColor = [146, 64, 14];
               }
             }
           },
@@ -995,3 +939,40 @@ const { isAdmin } = Astro.locals;
     text-align: center; /* Center the text */
   }
 </style> -->
+
+<style>
+  /* Estilos para uniformar los cuadros de nombres */
+  .user-slot {
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .empty-slot {
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Desktop: cuadros uniformes */
+  @media (min-width: 768px) {
+    .user-slot,
+    .empty-slot {
+      min-height: 56px;
+      min-width: 120px;
+    }
+  }
+
+  /* Estilos para el espacio de nombres dentro de cada celda */
+  #calendarView td .space-y-2 {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  #calendarView td .space-y-2 > div {
+    flex: 1;
+  }
+</style>

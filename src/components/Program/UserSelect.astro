@@ -175,8 +175,105 @@ const iconId = `icon-${day}-${turno}-${index}`;
       // Notificar si había restricciones previas
       const previousState = programStore.getValidationState(this.day, this.turno, this.index);
       if (previousState && (previousState.hasRestrictions || previousState.hasWarnings)) {
-        programStore.addNotification('info', 
-          `${this.day} ${this.turno} posición ${this.index + 1}: Sin restricciones (vacío)`);
+        const message = `${this.day} ${this.turno} posición ${this.index + 1}: Sin restricciones (vacío)`;
+        programStore.addNotification('info', message);
+        // También mostrar con Notyf
+        if ((window as any).notify) {
+          (window as any).notify.info(message);
+        }
+      }
+    }
+
+    private async showUserConditionsInfo(userName: string, user: any) {
+      const fullName = await programStore.getUserFullName(userName);
+      const notify = (window as any).notify;
+      
+      console.log('🔍 DEBUG - showUserConditionsInfo iniciando para:', userName);
+      
+      // Intentar obtener las reglas de participación 
+      let participationRules = null;
+      
+      // PRIMERO: Intentar desde el data attribute del select (más confiable)
+      const selectedOption = this.element.options[this.element.selectedIndex];
+      console.log('🔍 DEBUG - selectedOption:', selectedOption);
+      
+      if (selectedOption && selectedOption.dataset.participationRules) {
+        try {
+          participationRules = JSON.parse(selectedOption.dataset.participationRules);
+          console.log('🔍 DEBUG - Reglas obtenidas desde DOM:', participationRules);
+        } catch (error) {
+          console.error('Error parsing participation rules from DOM:', error);
+        }
+      }
+      
+      // SEGUNDO: Si no hay en DOM, intentar desde el store
+      if (!participationRules || participationRules.length === 0) {
+        if (user && user.participation_rules) {
+          participationRules = user.participation_rules;
+          console.log('🔍 DEBUG - Reglas obtenidas desde store:', participationRules);
+        }
+      }
+      
+      if (!participationRules || participationRules.length === 0) {
+        console.log('🔍 DEBUG - No se encontraron reglas de participación para', userName);
+        return;
+      }
+      
+      console.log('🔍 DEBUG - Procesando', participationRules.length, 'reglas para', userName);
+      
+      // Generar descripción de las condiciones configuradas
+      const conditionsDescriptions: string[] = [];
+      
+      participationRules.forEach((rule: any) => {
+        console.log('🔍 DEBUG - Procesando regla:', rule);
+        switch (rule.type) {
+          case 'max_per_month':
+            conditionsDescriptions.push(`Máximo ${rule.value} ${rule.value === 1 ? 'vez' : 'veces'} al mes`);
+            break;
+          case 'max_per_week':
+            conditionsDescriptions.push(`Máximo ${rule.value} ${rule.value === 1 ? 'vez' : 'veces'} por semana`);
+            break;
+          case 'specific_weeks':
+            const weeks = Array.isArray(rule.value) ? rule.value : [rule.value];
+            conditionsDescriptions.push(`Solo puede participar en las semanas: ${weeks.join(', ')}`);
+            break;
+          case 'alternating_weeks':
+            conditionsDescriptions.push(`Participa en semanas alternadas (una sí, una no)`);
+            break;
+          case 'weekly_availability':
+            conditionsDescriptions.push(`Envía su disponibilidad semanalmente`);
+            break;
+          default:
+            if (rule.description) {
+              conditionsDescriptions.push(rule.description);
+            }
+            break;
+        }
+      });
+      
+      console.log('🔍 DEBUG - Condiciones generadas:', conditionsDescriptions);
+      
+      if (conditionsDescriptions.length > 0) {
+        const conditionsMessage = `🔍 Condiciones de ${fullName}: ${conditionsDescriptions.join(' • ')}`;
+        
+        console.log('🔍 DEBUG - Enviando notificación:', conditionsMessage);
+        
+        // Mostrar con Notyf como notificación informativa
+        if (notify) {
+          notify.open({
+            type: 'info',
+            message: conditionsMessage,
+            duration: 8000  // Duración más larga para leer las condiciones
+          });
+        } else {
+          console.log('🔍 DEBUG - notify no está disponible');
+        }
+        
+        // También agregar al panel de notificaciones
+        programStore.addNotification('info', conditionsMessage);
+        console.log('🔍 DEBUG - Notificación enviada al store');
+      } else {
+        console.log('🔍 DEBUG - No se generaron descripciones de condiciones');
       }
     }
 
@@ -190,7 +287,31 @@ const iconId = `icon-${day}-${turno}-${index}`;
       this.iconElement.innerHTML = "⏳";
 
       try {
-        // Verificar conflictos
+        // PRIMERO: Mostrar las condiciones del usuario si las tiene
+        const user = programStore.getUser(userName);
+        console.log('🔍 DEBUG - User from store:', user);
+        
+        // Verificar si tiene reglas desde el store O desde el DOM
+        let hasRules = user && user.participation_rules && user.participation_rules.length > 0;
+        
+        if (!hasRules) {
+          // Verificar desde el data attribute del select
+          const selectedOption = this.element.options[this.element.selectedIndex];
+          if (selectedOption && selectedOption.dataset.participationRules) {
+            try {
+              const rulesFromDOM = JSON.parse(selectedOption.dataset.participationRules);
+              hasRules = rulesFromDOM && rulesFromDOM.length > 0;
+              console.log('🔍 DEBUG - Rules from DOM:', rulesFromDOM, 'hasRules:', hasRules);
+            } catch (error) {
+              console.error('Error parsing participation rules from DOM:', error);
+            }
+          }
+        }
+        
+        // Siempre intentar mostrar condiciones si las encontramos
+        await this.showUserConditionsInfo(userName, user || {});
+
+        // SEGUNDO: Verificar conflictos
         const conflicts = ValidationManager.findAssignmentConflicts(
           userName, 
           programStore.getState().weekData,
@@ -202,11 +323,33 @@ const iconId = `icon-${day}-${turno}-${index}`;
           return;
         }
 
-        // Validar reglas de participación
-        const user = programStore.getUser(userName);
-        if (user && user.participation_rules && user.participation_rules.length > 0) {
+        // TERCERO: Validar reglas de participación
+        let userForValidation = user;
+        let hasRulesForValidation = user && user.participation_rules && user.participation_rules.length > 0;
+        
+        // Si no hay reglas en el store, verificar en el DOM y crear un objeto temporal
+        if (!hasRulesForValidation) {
+          const selectedOption = this.element.options[this.element.selectedIndex];
+          if (selectedOption && selectedOption.dataset.participationRules) {
+            try {
+              const rulesFromDOM = JSON.parse(selectedOption.dataset.participationRules);
+              if (rulesFromDOM && rulesFromDOM.length > 0) {
+                userForValidation = {
+                  ...user,
+                  participation_rules: rulesFromDOM
+                };
+                hasRulesForValidation = true;
+                console.log('🔍 DEBUG - Created temporary user object with rules from DOM');
+              }
+            } catch (error) {
+              console.error('Error parsing participation rules from DOM for validation:', error);
+            }
+          }
+        }
+        
+        if (hasRulesForValidation) {
           const validation = await ValidationManager.validateUserAssignment(
-            userName, this.day, this.turno, this.index, this.date, user
+            userName, this.day, this.turno, this.index, this.date, userForValidation
           );
           
           await this.showValidationResult(userName, validation);
@@ -223,8 +366,13 @@ const iconId = `icon-${day}-${turno}-${index}`;
       this.iconElement.innerHTML = "⚠️";
       
       const fullName = programStore.getUserFullName(userName);
-      programStore.addNotification('error',
-        `${fullName} ya participa esta semana en ${conflicts.join(", ")}.`);
+      const message = `${fullName} ya participa esta semana en ${conflicts.join(", ")}.`;
+      programStore.addNotification('error', message);
+      
+      // También mostrar con Notyf
+      if ((window as any).notify) {
+        (window as any).notify.error(message);
+      }
 
       const validationState = {
         userName,
@@ -255,24 +403,52 @@ const iconId = `icon-${day}-${turno}-${index}`;
 
       // Mostrar notificaciones apropiadas
       const messages = ValidationManager.formatValidationMessages(validation, fullName);
+      const notify = (window as any).notify;
       
       if (shouldShow.showRestrictions) {
-        messages.restrictions.forEach(msg => programStore.addNotification('error', msg));
+        messages.restrictions.forEach(msg => {
+          programStore.addNotification('error', msg);
+          // También mostrar con Notyf
+          if (notify) {
+            notify.error(msg);
+          }
+        });
         if (validation.rulesDescription) {
-          programStore.addNotification('error', `Condiciones de ${fullName}: ${validation.rulesDescription.join(', ')}`);
+          const conditionsMsg = `Condiciones de ${fullName}: ${validation.rulesDescription.join(', ')}`;
+          programStore.addNotification('error', conditionsMsg);
+          if (notify) {
+            notify.error(conditionsMsg);
+          }
         }
       }
       
       if (shouldShow.showWarnings) {
-        messages.warnings.forEach(msg => programStore.addNotification('warning', msg));
+        messages.warnings.forEach(msg => {
+          programStore.addNotification('warning', msg);
+          // También mostrar con Notyf
+          if (notify) {
+            notify.warning(msg);
+          }
+        });
       }
       
       if (shouldShow.showSuccess) {
-        messages.success.forEach(msg => programStore.addNotification('success', msg));
+        messages.success.forEach(msg => {
+          programStore.addNotification('success', msg);
+          // También mostrar con Notyf
+          if (notify) {
+            notify.success(msg);
+          }
+        });
       }
       
       if (shouldShow.showImprovement) {
-        programStore.addNotification('info', `${fullName}: ✓ Ya puede participar (con advertencias)`);
+        const improvementMsg = `${fullName}: ✓ Ya puede participar (con advertencias)`;
+        programStore.addNotification('info', improvementMsg);
+        // También mostrar con Notyf
+        if (notify) {
+          notify.info(improvementMsg);
+        }
       }
 
       // Actualizar tooltip

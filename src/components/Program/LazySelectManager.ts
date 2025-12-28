@@ -24,7 +24,7 @@ export class LazySelectManager {
   }
 
   private setupViewportObserver(): void {
-    let resizeTimeout: number;
+    let resizeTimeout: ReturnType<typeof setTimeout>;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {

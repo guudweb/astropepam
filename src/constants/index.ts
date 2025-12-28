@@ -1,8 +1,5 @@
-import { DAYS } from "./days"
+import { DAYS, PROGRAMMABLE_DAYS, type ProgrammableDay } from "./days"
 import { TURNS } from "./turns"
-
-
-
 
 
 
@@ -10,5 +7,7 @@ import { TURNS } from "./turns"
 
 export {
     DAYS,
-    TURNS
+    TURNS,
+    PROGRAMMABLE_DAYS,
+    type ProgrammableDay
 }

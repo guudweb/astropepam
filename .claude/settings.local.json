@@ -7,8 +7,14 @@
       "Bash(mkdir:*)",
       "Bash(claude doctor)",
       "Bash(rg:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(ls:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "notion"
+  ]
 }

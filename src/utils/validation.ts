@@ -1,4 +1,6 @@
 // Utilidades de validación y sanitización
+import { getSession } from "auth-astro/server";
+import type { APIContext } from "astro";
 
 /**
  * Sanitiza una cadena de texto eliminando caracteres peligrosos
@@ -204,4 +206,70 @@ export const createSuccessResponse = (data: any, status: number = 200) => {
       headers: { "Content-Type": "application/json" },
     }
   );
+};
+
+/**
+ * Verifica si el usuario está autenticado
+ * Retorna la sesión si está autenticado, null si no
+ */
+export const requireAuth = async (context: APIContext): Promise<{ session: any; error?: Response }> => {
+  try {
+    const session = await getSession(context.request);
+
+    if (!session || !session.user) {
+      return {
+        session: null,
+        error: createErrorResponse("No autorizado. Debe iniciar sesión.", 401)
+      };
+    }
+
+    return { session };
+  } catch (error) {
+    console.error("Error verificando autenticación:", error);
+    return {
+      session: null,
+      error: createErrorResponse("Error de autenticación", 500)
+    };
+  }
+};
+
+/**
+ * Verifica si el usuario es administrador
+ * Retorna la sesión si es admin, error si no
+ */
+export const requireAdmin = async (context: APIContext): Promise<{ session: any; error?: Response }> => {
+  const { session, error } = await requireAuth(context);
+
+  if (error) return { session: null, error };
+
+  if (session?.user?.role !== "admin") {
+    return {
+      session: null,
+      error: createErrorResponse("Acceso denegado. Se requieren permisos de administrador.", 403)
+    };
+  }
+
+  return { session };
+};
+
+/**
+ * Wrapper para proteger endpoints de API que requieren autenticación
+ */
+export const withAuth = (handler: (context: APIContext, session: any) => Promise<Response>) => {
+  return async (context: APIContext): Promise<Response> => {
+    const { session, error } = await requireAuth(context);
+    if (error) return error;
+    return handler(context, session);
+  };
+};
+
+/**
+ * Wrapper para proteger endpoints de API que requieren rol admin
+ */
+export const withAdmin = (handler: (context: APIContext, session: any) => Promise<Response>) => {
+  return async (context: APIContext): Promise<Response> => {
+    const { session, error } = await requireAdmin(context);
+    if (error) return error;
+    return handler(context, session);
+  };
 };

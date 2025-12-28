@@ -1,10 +1,89 @@
 // Utilidades para gestión de validaciones
 import type { ValidationResult, ValidationState, UserData, WeekDay, Turno } from '../../types/program';
-import { ParticipationValidatorJS } from '../participationValidator.js';
+import { ParticipationValidatorJS } from '../participationValidator';
+
+// Cache de validaciones para evitar recálculos costosos
+interface ValidationCacheEntry {
+  result: ValidationResult;
+  timestamp: number;
+  weekKey: string; // Para invalidar al cambiar de semana
+}
 
 export class ValidationManager {
   private static debounceTimeouts = new Map<string, NodeJS.Timeout>();
   private static readonly DEBOUNCE_DELAY = 300;
+
+  // Cache de validaciones
+  private static validationCache = new Map<string, ValidationCacheEntry>();
+  private static readonly CACHE_DURATION = 2 * 60 * 1000; // 2 minutos
+  private static currentWeekKey: string = '';
+
+  // Batch de validaciones pendientes para procesamiento eficiente
+  private static pendingValidations = new Map<string, {
+    userName: string;
+    day: WeekDay;
+    turno: Turno;
+    index: number;
+    selectedDate: Date;
+    user?: UserData;
+    callback?: (result: ValidationResult) => void;
+  }>();
+  private static batchProcessTimeout: NodeJS.Timeout | null = null;
+  private static readonly BATCH_DELAY = 50; // 50ms para agrupar validaciones
+
+  // Generar clave única para cache basada en usuario y semana
+  private static getCacheKey(userName: string, selectedDate: Date): string {
+    const weekStart = new Date(selectedDate);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+    return `${userName}-${weekStart.toISOString().split('T')[0]}`;
+  }
+
+  // Obtener clave de semana para invalidación
+  private static getWeekKey(date: Date): string {
+    const weekStart = new Date(date);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+    return weekStart.toISOString().split('T')[0];
+  }
+
+  // Establecer semana actual (llamar al cambiar de semana)
+  static setCurrentWeek(date: Date): void {
+    const newWeekKey = this.getWeekKey(date);
+    if (newWeekKey !== this.currentWeekKey) {
+      this.currentWeekKey = newWeekKey;
+      // Limpiar cache de semanas anteriores
+      this.clearOldCache();
+    }
+  }
+
+  // Limpiar cache antiguo
+  private static clearOldCache(): void {
+    const now = Date.now();
+    const keysToDelete: string[] = [];
+
+    this.validationCache.forEach((entry, key) => {
+      if (entry.weekKey !== this.currentWeekKey || now - entry.timestamp > this.CACHE_DURATION) {
+        keysToDelete.push(key);
+      }
+    });
+
+    keysToDelete.forEach(key => this.validationCache.delete(key));
+  }
+
+  // Invalidar cache de un usuario específico (cuando cambian sus asignaciones)
+  static invalidateUserCache(userName: string): void {
+    const keysToDelete: string[] = [];
+    this.validationCache.forEach((_, key) => {
+      if (key.startsWith(userName + '-')) {
+        keysToDelete.push(key);
+      }
+    });
+    keysToDelete.forEach(key => this.validationCache.delete(key));
+  }
+
+  // Limpiar todo el cache
+  static clearCache(): void {
+    this.validationCache.clear();
+  }
 
   static async validateUserAssignment(
     userName: string,
@@ -12,12 +91,12 @@ export class ValidationManager {
     turno: Turno,
     index: number,
     selectedDate: Date,
-    user?: UserData
+    user?: UserData,
+    skipCache: boolean = false
   ): Promise<ValidationResult> {
     try {
       // Si no tenemos los datos del usuario, intentar obtenerlos del store o API
       if (!user) {
-        // Aquí podríamos obtener del store o hacer una consulta API
         console.warn('User data not provided for validation');
         return {
           canParticipate: true,
@@ -37,15 +116,16 @@ export class ValidationManager {
         };
       }
 
-      // Verificar si tiene la condición de disponibilidad semanal
-      const hasWeeklyAvailabilityRule = user.participation_rules.some(
-        rule => rule.type === 'weekly_availability'
-      );
+      // Verificar cache (si no se salta)
+      const cacheKey = this.getCacheKey(userName, selectedDate);
+      if (!skipCache && this.validationCache.has(cacheKey)) {
+        const cached = this.validationCache.get(cacheKey)!;
+        const now = Date.now();
 
-      if (hasWeeklyAvailabilityRule) {
-        // Mostrar notificación directamente usando notify (si está disponible)
-        if (typeof window !== 'undefined' && (window as any).notify) {
-          (window as any).notify.info(`${userName}: Envía su disponibilidad semanalmente`);
+        // Usar cache si es válido y de la misma semana
+        if (cached.weekKey === this.currentWeekKey &&
+            now - cached.timestamp < this.CACHE_DURATION) {
+          return cached.result;
         }
       }
 
@@ -55,6 +135,13 @@ export class ValidationManager {
         user.participation_rules,
         selectedDate
       );
+
+      // Guardar en cache
+      this.validationCache.set(cacheKey, {
+        result: validation,
+        timestamp: Date.now(),
+        weekKey: this.currentWeekKey || this.getWeekKey(selectedDate)
+      });
 
       return validation;
     } catch (error) {
@@ -66,6 +153,36 @@ export class ValidationManager {
         icon: '❌'
       };
     }
+  }
+
+  // Validar múltiples usuarios en batch (más eficiente)
+  static async validateBatch(
+    validations: Array<{
+      userName: string;
+      day: WeekDay;
+      turno: Turno;
+      index: number;
+      selectedDate: Date;
+      user?: UserData;
+    }>
+  ): Promise<Map<string, ValidationResult>> {
+    const results = new Map<string, ValidationResult>();
+
+    // Procesar en paralelo para mejor rendimiento
+    const promises = validations.map(async (v) => {
+      const key = `${v.day}-${v.turno}-${v.index}`;
+      const result = await this.validateUserAssignment(
+        v.userName, v.day, v.turno, v.index, v.selectedDate, v.user
+      );
+      return { key, result };
+    });
+
+    const resolvedResults = await Promise.all(promises);
+    resolvedResults.forEach(({ key, result }) => {
+      results.set(key, result);
+    });
+
+    return results;
   }
 
   static async validateUserAssignmentDebounced(
@@ -182,5 +299,19 @@ export class ValidationManager {
   static cleanup() {
     this.debounceTimeouts.forEach(timeout => clearTimeout(timeout));
     this.debounceTimeouts.clear();
+    this.validationCache.clear();
+    this.pendingValidations.clear();
+    if (this.batchProcessTimeout) {
+      clearTimeout(this.batchProcessTimeout);
+      this.batchProcessTimeout = null;
+    }
+  }
+
+  // Obtener estadísticas del cache (para debugging)
+  static getCacheStats(): { size: number; currentWeek: string } {
+    return {
+      size: this.validationCache.size,
+      currentWeek: this.currentWeekKey
+    };
   }
 }

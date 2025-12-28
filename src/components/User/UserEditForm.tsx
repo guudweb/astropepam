@@ -23,6 +23,8 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
   const [customPrivilege, setCustomPrivilege] = useState(""); // PARA AGREGAR PRIVILEGIOS PERSONALIZADOS
   const [participationRules, setParticipationRules] = useState<ParticipationRule[]>(user.participation_rules || []); // REGLAS DE PARTICIPACIÓN
   const [serviceLink, setServiceLink] = useState(user.service_link || false); // ESTADO PARA SERVICE_LINK
+  const [conyuje, setConyuje] = useState(user.conyuje || ""); // ESTADO PARA CÓNYUGE
+  const [showConyuje, setShowConyuje] = useState(false); // ESTADO PARA MOSTRAR/OCULTAR CAMPO CÓNYUGE
 
   const handleDisponibilityChange = useCallback((newAvailability) => {
     setAvailability(newAvailability);
@@ -65,7 +67,18 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
     setPrivilegios(user.privilegios || []); // Actualizar privilegios cuando cambie el usuario
     setParticipationRules(user.participation_rules || []); // Actualizar reglas de participación
     setServiceLink(user.service_link || false); // Actualizar service_link cuando cambie el usuario
+    setConyuje(user.conyuje || ""); // Actualizar cónyuge cuando cambie el usuario
+    setShowConyuje(user.estadoCivil === "casado"); // Mostrar campo si está casado
   }, [user]);
+
+  useEffect(() => {
+    if (estadoCivil === "casado") {
+      setShowConyuje(true);
+    } else {
+      setShowConyuje(false);
+      setConyuje(""); // Limpiar el campo cuando no está casado
+    }
+  }, [estadoCivil]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -79,6 +92,7 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
       isActive,
       sexo,
       estadoCivil,
+      conyuje: estadoCivil === "casado" ? conyuje : null, // AÑADIR CÓNYUGE
       availability,
       role,
       descripcion, // NUEVO
@@ -297,6 +311,25 @@ export const UserEditForm = ({ user, congregacionData, session }) => {
           <option value="soltero">Soltero</option>
         </select>
       </div>
+
+      {showConyuje && (
+        <div className="mb-5">
+          <label
+            htmlFor="conyuje"
+            className="block mb-2 text-sm font-medium text-gray-900"
+          >
+            Nombre del Cónyuge
+          </label>
+          <input
+            type="text"
+            id="conyuje"
+            className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+            placeholder="Nombre del cónyuge"
+            value={conyuje}
+            onChange={(e) => setConyuje(e.target.value)}
+          />
+        </div>
+      )}
 
       <div className="mb-10">
         <h5 className="block mb-4 text-sm font-medium text-gray-900">

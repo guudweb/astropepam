@@ -29,9 +29,9 @@ export interface ValidationResult {
 }
 
 export interface ParticipationRule {
-  type: 'max_per_month' | 'max_per_week' | 'specific_weeks' | 'alternating_weeks';
+  type: 'max_per_month' | 'max_per_week' | 'specific_weeks' | 'alternating_weeks' | 'weekly_availability';
   value: number | number[];
-  description?: string;
+  description: string;
 }
 
 export interface UserData {

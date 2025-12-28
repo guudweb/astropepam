@@ -1,6 +1,5 @@
 ---
 // Componente optimizado para vista móvil del programa
-import type { WeekDay, Turno } from '../../types/program';
 
 interface Props {
   days: string[];
@@ -13,22 +12,57 @@ const { days, turnos, weekDates } = Astro.props;
 
 <!-- Vista Mobile del Programa -->
 <div class="block lg:hidden">
-  <!-- Selector de día para mobile -->
-  <div class="mb-4">
-    <select 
-      id="mobileDaySelector" 
-      class="w-full p-3 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-    >
+  <!-- Header con navegación mejorada -->
+  <div class="mb-4 space-y-3">
+    <!-- Botones de navegación rápida -->
+    <div class="flex items-center justify-between gap-2">
+      <button
+        id="prevDayBtn"
+        class="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Día anterior"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <select
+        id="mobileDaySelector"
+        class="flex-1 p-3 border border-gray-300 rounded-lg text-base font-medium text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-h-[48px]"
+      >
+        {days.map((day, index) => (
+          <option value={day} data-index={index}>
+            {day.charAt(0).toUpperCase() + day.slice(1)} - {weekDates[index].toLocaleDateString('es-ES', {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short'
+            })}
+          </option>
+        ))}
+      </select>
+
+      <button
+        id="nextDayBtn"
+        class="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Día siguiente"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Indicadores de puntos (dots) -->
+    <div class="flex items-center justify-center gap-2" id="dayDots">
       {days.map((day, index) => (
-        <option value={day} data-index={index}>
-          {day.charAt(0).toUpperCase() + day.slice(1)} - {weekDates[index].toLocaleDateString('es-ES', { 
-            weekday: 'short', 
-            day: 'numeric', 
-            month: 'short' 
-          })}
-        </option>
+        <button
+          class={`day-dot w-3 h-3 rounded-full transition-all duration-200 touch-manipulation ${index === 0 ? 'bg-blue-600 scale-125' : 'bg-gray-300 hover:bg-gray-400'}`}
+          data-day={day}
+          data-index={index}
+          aria-label={`Ir a ${day}`}
+        ></button>
       ))}
-    </select>
+    </div>
   </div>
 
   <!-- Contenedor de días -->
@@ -55,42 +89,60 @@ const { days, turnos, weekDates } = Astro.props;
 
         <div class="divide-y divide-gray-200">
           {turnos.map((turno) => (
-            <div class="p-4">
+            <div class="p-4 turno-section" data-turno={turno}>
+              <!-- Header del turno con indicador de capitán -->
               <div class="flex items-center justify-between mb-3">
-                <h4 class="font-medium text-gray-900 text-base">
-                  {turno}
-                </h4>
-                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  4 posiciones
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <h4 class="font-semibold text-gray-900 text-base">
+                    {turno}
+                  </h4>
+                  <!-- Indicador de capitán mobile -->
+                  <span
+                    class="captain-badge hidden px-2 py-0.5 text-xs font-medium rounded-full"
+                    data-day={day}
+                    data-turno={turno}
+                  >
+                  </span>
+                </div>
+                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                  4 pos.
                 </span>
               </div>
-              
-              <!-- Grid de posiciones para mobile -->
-              <div class="grid grid-cols-1 gap-3">
-                {[...Array(4)].map((_, index) => (
-                  <div class="relative">
-                    <label class="block text-xs font-medium text-gray-700 mb-1">
-                      Posición {index + 1}
-                    </label>
-                    <div class="flex items-center gap-2">
-                      <select
-                        class="flex-1 p-3 border border-gray-300 rounded-lg text-base bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 user-select"
-                        data-day={day}
-                        data-turno={turno}
-                        data-index={index}
-                        data-date={weekDates[dayIndex].toISOString().split("T")[0]}
-                      >
-                        <option value="">Sin asignar</option>
-                        <option value="--separator--" disabled>Seleccionar usuario...</option>
-                      </select>
-                      <span 
-                        class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-lg"
-                        id={`icon-${day}-${turno}-${index}`}
-                      >
-                      </span>
+
+              <!-- Scroll horizontal de posiciones -->
+              <div class="turno-scroll-container -mx-4 px-4">
+                <div class="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+                  {[...Array(4)].map((_, index) => (
+                    <div class="flex-shrink-0 w-[calc(50%-0.375rem)] min-w-[160px] snap-start position-card">
+                      <label class="block text-xs font-medium text-gray-500 mb-1.5">
+                        Pos. {index + 1} {index === 0 && <span class="text-amber-600">(Cap)</span>}
+                      </label>
+                      <div class="flex items-center gap-2">
+                        <select
+                          class="flex-1 p-3 border border-gray-300 rounded-lg text-base bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 user-select"
+                          data-day={day}
+                          data-turno={turno}
+                          data-index={index}
+                          data-date={weekDates[dayIndex].toISOString().split("T")[0]}
+                        >
+                          <option value="">Sin asignar</option>
+                          <option value="--separator--" disabled>Seleccionar usuario...</option>
+                        </select>
+                        <span
+                          class="flex-shrink-0 w-10 h-10 flex items-center justify-center text-lg rounded-full bg-gray-100 status-icon"
+                          id={`icon-${day}-${turno}-${index}`}
+                        >
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <!-- Indicador de scroll -->
+                <div class="scroll-indicator flex justify-center gap-1.5 mt-2">
+                  <span class="w-6 h-1 rounded-full bg-blue-500"></span>
+                  <span class="w-6 h-1 rounded-full bg-gray-300"></span>
+                </div>
               </div>
             </div>
           ))}
@@ -101,33 +153,157 @@ const { days, turnos, weekDates } = Astro.props;
 </div>
 
 <script>
-  // Manejo del selector de día en mobile
+  // Manejo mejorado del selector de día en mobile con swipe y navegación
   document.addEventListener('DOMContentLoaded', () => {
     const daySelector = document.getElementById('mobileDaySelector') as HTMLSelectElement;
     const dayContainers = document.querySelectorAll('.mobile-day-container') as NodeListOf<HTMLElement>;
+    const prevBtn = document.getElementById('prevDayBtn') as HTMLButtonElement;
+    const nextBtn = document.getElementById('nextDayBtn') as HTMLButtonElement;
+    const dayDots = document.querySelectorAll('.day-dot') as NodeListOf<HTMLButtonElement>;
 
-    if (daySelector && dayContainers.length > 0) {
+    let currentDayIndex = 0;
+    const totalDays = dayContainers.length;
+
+    // Función principal para cambiar de día
+    function switchToDay(index: number, direction: 'left' | 'right' | 'none' = 'none') {
+      if (index < 0 || index >= totalDays) return;
+
+      const previousIndex = currentDayIndex;
+      currentDayIndex = index;
+
+      // Animar salida del día actual
+      dayContainers.forEach((container, i) => {
+        if (i === previousIndex && direction !== 'none') {
+          container.classList.add(direction === 'left' ? 'slide-out-left' : 'slide-out-right');
+        }
+        container.style.display = 'none';
+        container.classList.remove('slide-out-left', 'slide-out-right', 'slide-in-left', 'slide-in-right');
+      });
+
+      // Mostrar nuevo día con animación
+      const newContainer = dayContainers[index];
+      if (newContainer) {
+        newContainer.style.display = 'block';
+        if (direction !== 'none') {
+          newContainer.classList.add(direction === 'left' ? 'slide-in-right' : 'slide-in-left');
+        }
+      }
+
+      // Actualizar selector
+      if (daySelector) {
+        daySelector.selectedIndex = index;
+      }
+
+      // Actualizar dots
+      dayDots.forEach((dot, i) => {
+        if (i === index) {
+          dot.classList.remove('bg-gray-300', 'hover:bg-gray-400');
+          dot.classList.add('bg-blue-600', 'scale-125');
+        } else {
+          dot.classList.remove('bg-blue-600', 'scale-125');
+          dot.classList.add('bg-gray-300', 'hover:bg-gray-400');
+        }
+      });
+
+      // Actualizar estado de botones
+      updateNavButtons();
+    }
+
+    function updateNavButtons() {
+      if (prevBtn) {
+        prevBtn.disabled = currentDayIndex === 0;
+      }
+      if (nextBtn) {
+        nextBtn.disabled = currentDayIndex === totalDays - 1;
+      }
+    }
+
+    // Event listeners
+    if (daySelector) {
       daySelector.addEventListener('change', (e) => {
         const target = e.target as HTMLSelectElement;
-        const selectedDay = target.value;
-        
-        // Ocultar todos los contenedores
-        dayContainers.forEach(container => {
-          container.style.display = 'none';
-        });
-        
-        // Mostrar el contenedor seleccionado
-        const selectedContainer = document.querySelector(`[data-day="${selectedDay}"]`) as HTMLElement;
-        if (selectedContainer) {
-          selectedContainer.style.display = 'block';
+        const newIndex = target.selectedIndex;
+        const direction = newIndex > currentDayIndex ? 'left' : 'right';
+        switchToDay(newIndex, direction);
+      });
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (currentDayIndex > 0) {
+          switchToDay(currentDayIndex - 1, 'right');
         }
       });
     }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        if (currentDayIndex < totalDays - 1) {
+          switchToDay(currentDayIndex + 1, 'left');
+        }
+      });
+    }
+
+    // Click en dots
+    dayDots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const index = parseInt(dot.dataset.index || '0');
+        const direction = index > currentDayIndex ? 'left' : index < currentDayIndex ? 'right' : 'none';
+        switchToDay(index, direction);
+      });
+    });
+
+    // Soporte para swipe gestures
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const swipeThreshold = 50;
+
+    const mobileContainer = document.querySelector('.block.lg\\:hidden') as HTMLElement;
+
+    if (mobileContainer) {
+      mobileContainer.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+
+      mobileContainer.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      }, { passive: true });
+    }
+
+    function handleSwipe() {
+      const swipeDistance = touchEndX - touchStartX;
+
+      if (Math.abs(swipeDistance) < swipeThreshold) return;
+
+      if (swipeDistance > 0 && currentDayIndex > 0) {
+        // Swipe right - día anterior
+        switchToDay(currentDayIndex - 1, 'right');
+      } else if (swipeDistance < 0 && currentDayIndex < totalDays - 1) {
+        // Swipe left - día siguiente
+        switchToDay(currentDayIndex + 1, 'left');
+      }
+    }
+
+    // Soporte para teclado (accesibilidad)
+    document.addEventListener('keydown', (e) => {
+      // Solo en mobile view
+      if (window.innerWidth >= 1024) return;
+
+      if (e.key === 'ArrowLeft' && currentDayIndex > 0) {
+        switchToDay(currentDayIndex - 1, 'right');
+      } else if (e.key === 'ArrowRight' && currentDayIndex < totalDays - 1) {
+        switchToDay(currentDayIndex + 1, 'left');
+      }
+    });
+
+    // Inicializar
+    updateNavButtons();
   });
 </script>
 
 <style>
-  /* Optimización touch para mobile */
+  /* Optimización touch para mobile - mínimo 44px para targets táctiles */
   .user-select {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -137,11 +313,29 @@ const { days, turnos, weekDates } = Astro.props;
     background-position: right 0.7rem center;
     background-size: 1.5em 1.5em;
     padding-right: 2.5rem;
+    min-height: 48px; /* WCAG touch target */
+    font-size: 16px; /* Previene zoom en iOS */
   }
 
-  /* Animaciones suaves para cambio de vista */
+  /* Animaciones de slide para navegación swipe */
   .mobile-day-container {
-    animation: fadeIn 0.3s ease-in-out;
+    animation: fadeIn 0.25s ease-out;
+  }
+
+  .slide-in-left {
+    animation: slideInLeft 0.25s ease-out;
+  }
+
+  .slide-in-right {
+    animation: slideInRight 0.25s ease-out;
+  }
+
+  .slide-out-left {
+    animation: slideOutLeft 0.2s ease-in;
+  }
+
+  .slide-out-right {
+    animation: slideOutRight 0.2s ease-in;
   }
 
   @keyframes fadeIn {
@@ -155,12 +349,61 @@ const { days, turnos, weekDates } = Astro.props;
     }
   }
 
-  /* Mejorar contraste en selects */
-  .user-select:focus {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
-  /* Estados de validación visual */
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideOutLeft {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+  }
+
+  @keyframes slideOutRight {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+  }
+
+  /* Mejorar contraste en selects */
+  .user-select:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+  }
+
+  /* Estados de validación visual con transición */
+  .user-select {
+    transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+  }
+
   .user-select[data-valid="true"] {
     border-color: #10b981;
     background-color: #f0fdf4;
@@ -174,5 +417,119 @@ const { days, turnos, weekDates } = Astro.props;
   .user-select[data-valid="error"] {
     border-color: #ef4444;
     background-color: #fef2f2;
+  }
+
+  /* Day dots con mejor área táctil */
+  .day-dot {
+    min-width: 12px;
+    min-height: 12px;
+    padding: 8px; /* Área táctil extendida invisible */
+    margin: -8px;
+    background-clip: content-box;
+  }
+
+  /* Loading state para selects */
+  .user-select.loading {
+    background-color: #f3f4f6;
+    pointer-events: none;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  /* Feedback visual al cambiar selección */
+  .user-select.changed {
+    animation: highlight 0.5s ease-out;
+  }
+
+  @keyframes highlight {
+    0% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+  }
+
+  /* Scroll horizontal suave para turnos */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .turno-scroll-container {
+    position: relative;
+  }
+
+  /* Position cards con sombra suave */
+  .position-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .position-card:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  }
+
+  /* Captain badge estilos */
+  .captain-badge.has-captain {
+    display: inline-flex;
+    background-color: #dcfce7;
+    color: #166534;
+  }
+
+  .captain-badge.no-captain {
+    display: inline-flex;
+    background-color: #fef3c7;
+    color: #92400e;
+    animation: pulse-badge 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-badge {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* Status icon mejorado */
+  .status-icon {
+    transition: all 0.2s ease;
+  }
+
+  .status-icon:not(:empty) {
+    background-color: transparent;
+  }
+
+  /* Scroll indicator dinámico */
+  .scroll-indicator span {
+    transition: all 0.3s ease;
+  }
+
+  /* Snap scroll más suave en iOS */
+  @supports (-webkit-touch-callout: none) {
+    .snap-x {
+      scroll-snap-type: x proximity;
+    }
   }
 </style>

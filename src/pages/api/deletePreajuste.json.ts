@@ -1,18 +1,17 @@
 import { db, Preajustes, eq } from "astro:db";
 import type { APIRoute } from "astro";
+import { requireAdmin, createErrorResponse, createSuccessResponse } from "../../utils/validation";
 
-export const DELETE: APIRoute = async ({ request }) => {
+export const DELETE: APIRoute = async (context) => {
   try {
-    const { name } = await request.json();
-    
+    // Verificar que el usuario sea admin
+    const { error } = await requireAdmin(context);
+    if (error) return error;
+
+    const { name } = await context.request.json();
+
     if (!name || typeof name !== "string") {
-      return new Response(
-        JSON.stringify({ error: "Name parameter is required" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return createErrorResponse("Name parameter is required", 400);
     }
 
     // Verificar que el preajuste existe
@@ -23,13 +22,7 @@ export const DELETE: APIRoute = async ({ request }) => {
       .execute();
 
     if (existingRecord.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Preajuste not found" }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return createErrorResponse("Preajuste not found", 404);
     }
 
     // Eliminar el preajuste
@@ -38,24 +31,13 @@ export const DELETE: APIRoute = async ({ request }) => {
       .where(eq(Preajustes.name, name))
       .execute();
 
-    return new Response(
-      JSON.stringify({ message: "Preajuste deleted successfully" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return createSuccessResponse({ message: "Preajuste deleted successfully" });
   } catch (error) {
     console.error("Error deleting preajuste:", error);
-    return new Response(
-      JSON.stringify({
-        error: "Error deleting preajuste",
-        details: error instanceof Error ? error.message : "Unknown error",
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+    return createErrorResponse(
+      "Error deleting preajuste",
+      500,
+      error instanceof Error ? error.message : "Unknown error"
     );
   }
 };

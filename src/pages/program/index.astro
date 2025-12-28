@@ -48,6 +48,31 @@ const weekDates = getWeekDates(currentDate);
     <!-- Nueva navegación responsive -->
     <WeekNavigation currentDate={currentDate} />
 
+    <!-- Barra de búsqueda en vista principal -->
+    <div class="mb-4 relative">
+      <div class="flex items-center gap-2 bg-white border-2 border-gray-200 rounded-lg px-4 py-2 focus-within:border-blue-500 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          id="programSearchInput"
+          class="flex-1 outline-none text-base placeholder-gray-400"
+          placeholder="Buscar usuario en el programa..."
+        />
+        <button
+          id="clearSearchBtn"
+          class="text-gray-400 hover:text-gray-600 hidden"
+          title="Limpiar búsqueda"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div id="searchResultsInfo" class="absolute right-4 top-full mt-1 text-sm text-gray-500 hidden"></div>
+    </div>
+
     <!-- Barra de herramientas mobile-friendly -->
     <div class="flex flex-col sm:flex-row gap-3 mb-6 items-stretch sm:items-center sm:justify-center">
       <!-- Preajustes dropdown - Mobile first -->
@@ -61,6 +86,57 @@ const weekDates = getWeekDates(currentDate);
           <option value="guardar">Guardar Preajuste</option>
         </select>
       </div>
+
+      <!-- Botón Copiar Semana Anterior -->
+      <button
+        id="copyPreviousWeekBtn"
+        class="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 active:bg-purple-800 transition-colors duration-200 touch-manipulation"
+        title="Copiar semana anterior"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+
+      <!-- Botones de Undo/Redo -->
+      <div class="flex gap-2">
+        <button
+          id="undoBtn"
+          class="p-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 active:bg-gray-400 transition-colors duration-200 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Deshacer (Ctrl+Z)"
+          disabled
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7v6h6"></path>
+            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+          </svg>
+        </button>
+        <button
+          id="redoBtn"
+          class="p-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 active:bg-gray-400 transition-colors duration-200 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Rehacer (Ctrl+Y)"
+          disabled
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 7v6h-6"></path>
+            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Botón Verificar Capitanes -->
+      <button
+        id="validateCapitanesBtn"
+        class="p-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 active:bg-amber-800 transition-colors duration-200 touch-manipulation"
+        title="Verificar capitanes por turno"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+          <path d="M2 17l10 5 10-5"></path>
+          <path d="M2 12l10 5 10-5"></path>
+        </svg>
+      </button>
 
       <!-- Botones de acción -->
       <div class="flex gap-3">
@@ -283,6 +359,63 @@ const weekDates = getWeekDates(currentDate);
       </svg>
       <span id="floatingNotificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center hidden">0</span>
     </button>
+
+    <!-- Panel de Conflictos Global -->
+    <div
+      id="conflictsPanel"
+      class="fixed top-4 left-4 w-96 bg-white rounded-lg shadow-xl border z-50 hidden max-h-[80vh] flex flex-col"
+    >
+      <div class="flex items-center justify-between p-4 border-b bg-red-50 rounded-t-lg">
+        <h3 class="text-lg font-semibold text-red-800 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          Conflictos de la Semana
+          <span id="conflictsCount" class="ml-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">0</span>
+        </h3>
+        <button
+          id="closeConflictsBtn"
+          class="text-gray-500 hover:text-gray-700 p-1"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4">
+        <div id="conflictsList">
+          <div class="text-center text-gray-500 py-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p>No hay conflictos detectados</p>
+          </div>
+        </div>
+      </div>
+      <div class="p-3 border-t bg-gray-50 rounded-b-lg">
+        <button
+          id="refreshConflictsBtn"
+          class="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors text-sm flex items-center justify-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Analizar Conflictos
+        </button>
+      </div>
+    </div>
+
+    <!-- Botón flotante para ver conflictos -->
+    <button
+      id="conflictsToggle"
+      class="fixed bottom-6 left-6 bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition-colors z-40"
+      title="Ver conflictos de la semana"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <span id="floatingConflictsBadge" class="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center hidden">0</span>
+    </button>
   </div>
 </Layout>
 
@@ -314,6 +447,9 @@ const weekDates = getWeekDates(currentDate);
 
   // OPTIMIZACIÓN: Cache de usuarios para evitar múltiples consultas
   let allUsersCache = null;
+
+  // NUEVO: Tracking de cambios sin guardar
+  let hasUnsavedChanges = false;
   
   // OPTIMIZACIÓN: Memoización para cálculos costosos
   const memoCache = new Map();
@@ -430,7 +566,7 @@ const weekDates = getWeekDates(currentDate);
   // Function to populate all selects with filtered users
   const populateAllSelects = (allUsers) => {
     // Vista única responsiva
-    const selects = document.querySelectorAll('.user-select');
+    const selects = document.querySelectorAll<HTMLSelectElement>('.user-select');
     selects.forEach(select => {
       const day = select.dataset.day;
       const turno = select.dataset.turno;
@@ -539,15 +675,45 @@ const weekDates = getWeekDates(currentDate);
 
   // Vista única responsiva - no necesita sincronización
   // Asegurar que syncViewValues no existe (evitar errores de cache)
-  window.syncViewValues = undefined;
+  (window as any).syncViewValues = undefined;
 
   // Exponer función globalmente para navegación
   window.clearUsersCache = clearUsersCache;
   
   // Event listener para detectar cambios de página y limpiar cache
-  window.addEventListener('beforeunload', () => {
+  window.addEventListener('beforeunload', (event) => {
     clearUsersCache();
+
+    // Advertir al usuario si hay cambios sin guardar
+    if (hasUnsavedChanges) {
+      event.preventDefault();
+      // Mensaje estándar del navegador (el texto personalizado ya no funciona en navegadores modernos)
+      return 'Tiene cambios sin guardar. ¿Está seguro que desea salir?';
+    }
   });
+
+  // Función para marcar que hay cambios sin guardar
+  const markAsChanged = () => {
+    if (!hasUnsavedChanges) {
+      hasUnsavedChanges = true;
+      // Actualizar UI para indicar cambios pendientes
+      const saveBtn = document.getElementById('saveBtn');
+      if (saveBtn && !saveBtn.textContent.includes('*')) {
+        saveBtn.textContent = '* Guardar Programa';
+        saveBtn.classList.add('animate-pulse');
+      }
+    }
+  };
+
+  // Función para marcar que los cambios fueron guardados
+  const markAsSaved = () => {
+    hasUnsavedChanges = false;
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+      saveBtn.textContent = 'Guardar Programa';
+      saveBtn.classList.remove('animate-pulse');
+    }
+  };
 
   // OPTIMIZACIÓN: Función unificada para cargar datos de semana
   const fetchWeekDataFromAPI = async (date: Date) => {
@@ -626,7 +792,7 @@ const weekDates = getWeekDates(currentDate);
       }
       
       // Segunda pasada: aplicar valores y crear opciones si es necesario
-      document.querySelectorAll("select.user-select").forEach((select) => {
+      document.querySelectorAll<HTMLSelectElement>("select.user-select").forEach((select) => {
         const day = select.dataset.day;
         const turno = select.dataset.turno;
         const index = select.dataset.index;
@@ -733,7 +899,7 @@ const weekDates = getWeekDates(currentDate);
         `/api/getPreajustesData.json?name=${encodeURIComponent(preajusteName)}`
       );
       const preajustesData = await response.json();
-      document.querySelectorAll("select.user-select").forEach((select) => {
+      document.querySelectorAll<HTMLSelectElement>("select.user-select").forEach((select) => {
         const day = select.dataset.day;
         const turno = select.dataset.turno;
         const index = select.dataset.index;
@@ -746,29 +912,25 @@ const weekDates = getWeekDates(currentDate);
   };
 
   // Function to save week data
+  // CORREGIDO: Ahora procesa TODOS los selects sin importar visibilidad en mobile
   const saveWeekData = async () => {
     const currentWeekData = {};
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
     const weekDate = startOfWeek.toISOString().split("T")[0];
 
-    const userHistoryPromises = [];
+    // Show spinner al inicio
+    spinnerOverlay.classList.add("active");
 
-    // Vista única responsiva - obtener solo selects visibles
     let totalSelects = 0;
-    let visibleSelects = 0;
-    
-    document.querySelectorAll("select.user-select").forEach((select) => {
+    let savedSelects = 0;
+
+    // CORREGIDO: Procesar TODOS los selects sin filtrar por visibilidad
+    const selects = document.querySelectorAll<HTMLSelectElement>("select.user-select");
+
+    for (const select of selects) {
       totalSelects++;
-      
-      // En mobile, solo procesar días visibles; en desktop, procesar todos
-      const isMobile = window.innerWidth < 1024;
-      const dayContainer = select.closest('.day-container');
-      const isDayVisible = !isMobile || dayContainer?.style.display !== 'none';
-      
-      if (!isDayVisible) return; // Skip días ocultos en mobile
-      
-      visibleSelects++;
+
       const day = select.dataset.day;
       const turno = select.dataset.turno;
       const index = select.dataset.index;
@@ -777,89 +939,62 @@ const weekDates = getWeekDates(currentDate);
       // Validar que tenemos todos los datos necesarios
       if (!day || !turno || index === undefined) {
         console.warn('Select sin datos completos:', { day, turno, index, userName });
-        return;
+        continue;
       }
 
       if (userName && userName !== "--separator--" && userName !== "--error--" && userName !== "add") {
-        // Only save if a real user is selected
+        // Guardar si hay un usuario real seleccionado
         currentWeekData[`${day}-${turno}-${index}`] = userName;
-
-        // Check if user history record already exists
-        const userHistoryPromise = fetch(
-          `/api/checkUserHistory.json?userName=${userName}&date=${weekDate}&day=${day}&turno=${turno}&indexValue=${index}`
-        )
-          .then((response) => response.json())
-          .then((data) => {
-            if (!data.exists) {
-              // Save user selection to UserHistory table if it doesn't exist
-              return fetch("/api/saveUserHistory.json", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  userName,
-                  date: weekDate, // Use the week date
-                  day,
-                  turno,
-                  indexValue: index,
-                }),
-              });
-            }
-          });
-
-        userHistoryPromises.push(userHistoryPromise);
+        savedSelects++;
       }
-    });
+    }
 
-    // Show spinner
-    spinnerOverlay.classList.add("active");
-
-    // Wait for all user history checks and saves to complete
-    await Promise.all(userHistoryPromises);
-
-
-    // Save week data
+    // Guardar datos de la semana (el historial se guarda automáticamente en el backend)
     const response = await fetch("/api/saveWeekData.json", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        date: weekDate, // Use the same week date
+        date: weekDate,
         weekData: currentWeekData,
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
+      spinnerOverlay.classList.remove("active");
       throw new Error(`Error ${response.status}: ${errorData.error}`);
     }
 
     // Hide spinner
     spinnerOverlay.classList.remove("active");
-    
+
+    // Marcar que los cambios fueron guardados
+    markAsSaved();
+
     // Log de debug
-    console.log(`Guardado completado: ${totalSelects} selects totales, ${visibleSelects} procesados, ${Object.keys(currentWeekData).length} datos guardados`);
-    console.log('Datos guardados:', currentWeekData);
+    console.log(`Guardado completado: ${totalSelects} selects totales, ${savedSelects} con datos, ${Object.keys(currentWeekData).length} guardados`);
   };
 
   // Function to save preajustes data
+  // CORREGIDO: Usar for...of en lugar de forEach con async
   const savePreajustesData = async () => {
     const preajustesData = {};
-    const preajusteName = "Preajuste1"; // Puedes cambiar esto según sea necesario
+    const preajusteName = "Preajuste1";
 
-    document.querySelectorAll("select.user-select").forEach(async (select) => {
+    const selects = document.querySelectorAll<HTMLSelectElement>("select.user-select");
+
+    for (const select of selects) {
       const day = select.dataset.day;
       const turno = select.dataset.turno;
       const index = select.dataset.index;
       const userName = select.value;
 
       if (userName && userName !== "--separator--" && userName !== "--error--" && userName !== "add") {
-        // Only save if a real user is selected
         preajustesData[`${day}-${turno}-${index}`] = userName;
       }
-    });
+    }
 
     await fetch("/api/savePreajustesData.json", {
       method: "POST",
@@ -917,7 +1052,9 @@ const weekDates = getWeekDates(currentDate);
 
   import { Notyf } from "notyf";
   import "notyf/notyf.min.css";
-  import { ParticipationValidatorJS } from "../../utils/participationValidator.js";
+  import { ParticipationValidatorJS } from "../../utils/participationValidator";
+  import { undoRedoManager, type ChangeRecord } from "../../stores/undoRedoStore";
+  import type { WeekDay, Turno } from "../../types/program";
 
   // Sistema de gestión de notificaciones
   let notificationsStore = [];
@@ -980,17 +1117,20 @@ const weekDates = getWeekDates(currentDate);
     updateUI() {
       const count = notificationsStore.length;
       const unreadCount = notificationsStore.filter(n => !n.read).length;
-      
+
       // Actualizar contador en panel
-      document.getElementById('notificationCount').textContent = count;
-      
+      const notificationCount = document.getElementById('notificationCount');
+      if (notificationCount) notificationCount.textContent = String(count);
+
       // Actualizar badge flotante
       const floatingBadge = document.getElementById('floatingNotificationBadge');
-      if (unreadCount > 0) {
-        floatingBadge.textContent = unreadCount;
-        floatingBadge.classList.remove('hidden');
-      } else {
-        floatingBadge.classList.add('hidden');
+      if (floatingBadge) {
+        if (unreadCount > 0) {
+          floatingBadge.textContent = String(unreadCount);
+          floatingBadge.classList.remove('hidden');
+        } else {
+          floatingBadge.classList.add('hidden');
+        }
       }
       
       // Actualizar lista
@@ -1036,9 +1176,9 @@ const weekDates = getWeekDates(currentDate);
       }).join('');
       
       // Agregar event listeners para marcar como leída
-      container.querySelectorAll('[data-notification-id]').forEach(item => {
+      container.querySelectorAll<HTMLElement>('[data-notification-id]').forEach(item => {
         item.addEventListener('click', () => {
-          const id = parseInt(item.dataset.notificationId);
+          const id = parseInt(item.dataset.notificationId || '0');
           this.markAsRead(id);
         });
       });
@@ -1066,7 +1206,8 @@ const weekDates = getWeekDates(currentDate);
 
     // Cerrar panel al hacer clic fuera
     document.addEventListener('click', (event) => {
-      if (!panel.contains(event.target) && !toggleBtn.contains(event.target)) {
+      const target = event.target as Node;
+      if (panel && toggleBtn && !panel.contains(target) && !toggleBtn.contains(target)) {
         panel.classList.add('hidden');
       }
     });
@@ -1137,24 +1278,43 @@ const weekDates = getWeekDates(currentDate);
     await loadWeekData();
     
     // Agregar event listeners para los selects después de cargar
-    document.querySelectorAll("select.user-select").forEach((select) => {
+    document.querySelectorAll<HTMLSelectElement>("select.user-select").forEach((select) => {
+      // Guardar valor previo para undo/redo
+      let previousValue = select.value;
+
+      select.addEventListener("focus", () => {
+        // Capturar valor antes del cambio
+        previousValue = select.value;
+      });
+
       select.addEventListener("change", (event) => {
         const target = event.target as HTMLSelectElement;
-        
+        const newValue = target.value;
+
+        // Registrar cambio para undo/redo (solo si no es "add" que abre modal)
+        if (newValue !== "add" && previousValue !== newValue) {
+          recordSelectChange(select, previousValue, newValue);
+        }
+
+        // Marcar que hay cambios sin guardar
+        markAsChanged();
+
         if (target.value === "add") {
           const day = select.dataset.day;
           const turno = select.dataset.turno;
           const index = select.dataset.index;
-          
+
           // Obtener referencias a elementos del modal
           const modal = document.getElementById("userModal");
           const userList = document.getElementById("userList");
-          
+
           // Abrir el modal cuando se seleccione "Añadir usuario"
           modal.classList.remove("hidden");
           modal.dataset.day = day;
           modal.dataset.turno = turno;
           modal.dataset.index = index;
+          // Guardar valor previo para undo/redo
+          modal.dataset.previousValue = previousValue;
           
           // Cargar usuarios dinámicamente en el modal
           userList.innerHTML = '<li class="text-center py-4 text-gray-500">Cargando usuarios...</li>';
@@ -1209,6 +1369,9 @@ const weekDates = getWeekDates(currentDate);
                     const participationRules = button.dataset.participationRules;
                     
                     if (newUserName) {
+                      // Capturar valor previo para undo/redo (guardado en el modal al abrirlo)
+                      const modalPreviousValue = modal.dataset.previousValue || '';
+
                       // Verificar si la opción ya existe
                       const existingOption = Array.from(select.options).find(opt => opt.value === newUserName);
                       if (!existingOption) {
@@ -1218,7 +1381,7 @@ const weekDates = getWeekDates(currentDate);
                         newOption.textContent = displayText; // Usar el displayText con privilegios
                         newOption.dataset.congregacionId = user.congregacion?.id || '';
                         newOption.dataset.participationRules = participationRules || '[]';
-                        
+
                         // Insertar antes de la opción "Añadir usuario"
                         const addOption = Array.from(select.options).find(opt => opt.value === "add");
                         if (addOption) {
@@ -1227,16 +1390,21 @@ const weekDates = getWeekDates(currentDate);
                           select.appendChild(newOption);
                         }
                       }
-                      
+
                       // Actualizar el valor del select
                       select.value = newUserName;
-                      
+
+                      // Registrar cambio para undo/redo
+                      if (modalPreviousValue !== newUserName) {
+                        recordSelectChange(select, modalPreviousValue, newUserName);
+                      }
+
                       // Verificar si es precursor y mostrar fondo verde
                       updatePrecursorBackground(select, newUserName);
-                      
+
                       // Verificar las asignaciones después de añadir un usuario
                       await checkUserAssignment(select);
-                      
+
                       // Cerrar el modal
                       modal.classList.add("hidden");
                     }
@@ -1324,7 +1492,7 @@ const weekDates = getWeekDates(currentDate);
     
     // Set initial values after loading
     setTimeout(() => {
-      document.querySelectorAll("select.user-select").forEach((select) => {
+      document.querySelectorAll<HTMLSelectElement>("select.user-select").forEach((select) => {
         const key = `${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`;
         initialSelectValues[key] = select.value;
       });
@@ -1383,7 +1551,7 @@ const weekDates = getWeekDates(currentDate);
 
     // Verificar si el usuario ya está asignado en otro turno de la semana
     const assignedTurns: string[] = [];
-    document.querySelectorAll("select.user-select").forEach((otherSelect) => {
+    document.querySelectorAll<HTMLSelectElement>("select.user-select").forEach((otherSelect) => {
       if (otherSelect !== select && otherSelect.value === userName) {
         const otherDay = otherSelect.dataset.day;
         const otherTurno = otherSelect.dataset.turno;
@@ -1428,6 +1596,43 @@ const weekDates = getWeekDates(currentDate);
         }, (rulesString) => `rules-${rulesString}`);
         
         const parsedRules = parseRules(participationRules);
+        
+        // MOSTRAR CONDICIONES DEL USUARIO (solo si es nuevo o cambió de usuario)
+        const isNewOrChanged = !previousState || previousState.userName !== userName;
+        if (isNewOrChanged) {
+          const conditionsDescriptions: string[] = [];
+          
+          parsedRules.forEach((rule: any) => {
+            switch (rule.type) {
+              case 'max_per_month':
+                conditionsDescriptions.push(`Máximo ${rule.value} ${rule.value === 1 ? 'vez' : 'veces'} al mes`);
+                break;
+              case 'max_per_week':
+                conditionsDescriptions.push(`Máximo ${rule.value} ${rule.value === 1 ? 'vez' : 'veces'} por semana`);
+                break;
+              case 'specific_weeks':
+                const weeks = Array.isArray(rule.value) ? rule.value : [rule.value];
+                conditionsDescriptions.push(`Solo puede participar en las semanas: ${weeks.join(', ')}`);
+                break;
+              case 'alternating_weeks':
+                conditionsDescriptions.push(`Participa en semanas alternadas (una sí, una no)`);
+                break;
+              case 'weekly_availability':
+                conditionsDescriptions.push(`Envía su disponibilidad semanalmente`);
+                break;
+              default:
+                if (rule.description) {
+                  conditionsDescriptions.push(rule.description);
+                }
+                break;
+            }
+          });
+          
+          if (conditionsDescriptions.length > 0) {
+            const conditionsMessage = `🔍 Condiciones de ${fullName}: ${conditionsDescriptions.join(' • ')}`;
+            notify.info(conditionsMessage);
+          }
+        }
         
         // Validar reglas de participación
         const validation = await ParticipationValidatorJS.validateUserForDate(
@@ -1552,6 +1757,774 @@ const weekDates = getWeekDates(currentDate);
   // Sistema para trackear el estado de validación previo
   const validationStates = new Map(); // key: "day-turno-index", value: { canParticipate: boolean, hasWarnings: boolean, userName: string }
 
+  // ============================================
+  // SISTEMA DE UNDO/REDO
+  // ============================================
+
+  // Actualizar UI de botones undo/redo
+  const updateUndoRedoButtons = () => {
+    const undoBtn = document.getElementById('undoBtn') as HTMLButtonElement;
+    const redoBtn = document.getElementById('redoBtn') as HTMLButtonElement;
+    const stackInfo = undoRedoManager.getStackInfo();
+
+    if (undoBtn) {
+      undoBtn.disabled = !stackInfo.canUndo;
+      undoBtn.title = undoRedoManager.getUndoDescription() || 'Deshacer (Ctrl+Z)';
+    }
+
+    if (redoBtn) {
+      redoBtn.disabled = !stackInfo.canRedo;
+      redoBtn.title = undoRedoManager.getRedoDescription() || 'Rehacer (Ctrl+Y)';
+    }
+  };
+
+  // Registrar cambio para undo/redo
+  const recordSelectChange = (select: HTMLSelectElement, previousValue: string, newValue: string) => {
+    const day = select.dataset.day as WeekDay;
+    const turno = select.dataset.turno as Turno;
+    const index = parseInt(select.dataset.index || '0');
+
+    const change: ChangeRecord = {
+      day,
+      turno,
+      index,
+      previousValue,
+      newValue
+    };
+
+    undoRedoManager.recordChange(change);
+    updateUndoRedoButtons();
+  };
+
+  // Aplicar un cambio al DOM (para undo/redo)
+  const applyChange = async (change: ChangeRecord) => {
+    const select = document.querySelector<HTMLSelectElement>(
+      `select.user-select[data-day="${change.day}"][data-turno="${change.turno}"][data-index="${change.index}"]`
+    );
+
+    if (select) {
+      // Verificar si la opción existe
+      const optionExists = Array.from(select.options).some(opt => opt.value === change.newValue);
+
+      if (!optionExists && change.newValue) {
+        // Crear opción si no existe
+        const newOption = document.createElement('option');
+        newOption.value = change.newValue;
+        newOption.textContent = change.newValue;
+
+        const addOption = Array.from(select.options).find(opt => opt.value === 'add');
+        if (addOption) {
+          select.insertBefore(newOption, addOption);
+        } else {
+          select.appendChild(newOption);
+        }
+      }
+
+      select.value = change.newValue;
+
+      // Actualizar visual de precursor
+      updatePrecursorBackground(select, change.newValue);
+
+      // Revalidar si hay valor
+      if (change.newValue) {
+        await checkUserAssignment(select);
+      } else {
+        // Limpiar icono si se vacía
+        const icon = document.getElementById(`icon-${change.day}-${change.turno}-${change.index}`);
+        if (icon) icon.innerHTML = '';
+      }
+
+      // Marcar como cambiado
+      markAsChanged();
+    }
+  };
+
+  // Ejecutar Undo
+  const performUndo = async () => {
+    const changes = undoRedoManager.undo();
+    if (changes) {
+      for (const change of changes) {
+        await applyChange(change);
+      }
+      updateUndoRedoButtons();
+      notify.info(`Deshecho: ${changes.length} cambio(s)`);
+    }
+  };
+
+  // Ejecutar Redo
+  const performRedo = async () => {
+    const changes = undoRedoManager.redo();
+    if (changes) {
+      for (const change of changes) {
+        await applyChange(change);
+      }
+      updateUndoRedoButtons();
+      notify.info(`Rehecho: ${changes.length} cambio(s)`);
+    }
+  };
+
+  // Escuchar cambios en el stack
+  undoRedoManager.on('stack-changed', updateUndoRedoButtons);
+
+  // ============================================
+  // SISTEMA DE VISTA DE CONFLICTOS GLOBAL
+  // ============================================
+
+  interface ConflictInfo {
+    type: 'duplicate' | 'restriction' | 'warning';
+    userName: string;
+    fullName: string;
+    locations: Array<{ day: string; turno: string; index: number }>;
+    message: string;
+  }
+
+  // Analizar todos los conflictos de la semana
+  const analyzeWeekConflicts = async (): Promise<ConflictInfo[]> => {
+    const conflicts: ConflictInfo[] = [];
+    const userAssignments = new Map<string, Array<{ day: string; turno: string; index: number; select: HTMLSelectElement }>>();
+
+    // Recopilar todas las asignaciones
+    document.querySelectorAll<HTMLSelectElement>('select.user-select').forEach(select => {
+      const userName = select.value;
+      if (userName && userName !== '' && userName !== '--separator--' && userName !== '--error--' && userName !== 'add') {
+        const day = select.dataset.day || '';
+        const turno = select.dataset.turno || '';
+        const index = parseInt(select.dataset.index || '0');
+
+        if (!userAssignments.has(userName)) {
+          userAssignments.set(userName, []);
+        }
+        userAssignments.get(userName)!.push({ day, turno, index, select });
+      }
+    });
+
+    // Detectar usuarios duplicados
+    for (const [userName, locations] of userAssignments) {
+      if (locations.length > 1) {
+        const fullName = await getUserFullName(userName);
+        const locationStrings = locations.map(l => `${l.day} ${l.turno}`);
+
+        conflicts.push({
+          type: 'duplicate',
+          userName,
+          fullName,
+          locations: locations.map(l => ({ day: l.day, turno: l.turno, index: l.index })),
+          message: `${fullName} está asignado ${locations.length} veces: ${locationStrings.join(', ')}`
+        });
+      }
+    }
+
+    // Detectar restricciones de participación
+    for (const [stateKey, state] of validationStates) {
+      if (state.hasRestrictions || state.hasWarnings) {
+        const [day, turno, indexStr] = stateKey.split('-');
+        const fullName = await getUserFullName(state.userName);
+
+        // Evitar duplicados si ya está en conflictos por duplicación
+        const alreadyInConflicts = conflicts.some(c =>
+          c.userName === state.userName && c.type === 'duplicate'
+        );
+
+        if (!alreadyInConflicts) {
+          conflicts.push({
+            type: state.hasRestrictions ? 'restriction' : 'warning',
+            userName: state.userName,
+            fullName,
+            locations: [{ day, turno, index: parseInt(indexStr) }],
+            message: state.hasRestrictions
+              ? `${fullName} tiene restricciones de participación en ${day} ${turno}`
+              : `${fullName} tiene advertencias en ${day} ${turno}`
+          });
+        }
+      }
+    }
+
+    return conflicts;
+  };
+
+  // Renderizar lista de conflictos
+  const renderConflicts = (conflicts: ConflictInfo[]) => {
+    const container = document.getElementById('conflictsList');
+    const countBadge = document.getElementById('conflictsCount');
+    const floatingBadge = document.getElementById('floatingConflictsBadge');
+
+    if (!container) return;
+
+    // Actualizar badges
+    if (countBadge) countBadge.textContent = String(conflicts.length);
+    if (floatingBadge) {
+      if (conflicts.length > 0) {
+        floatingBadge.textContent = String(conflicts.length);
+        floatingBadge.classList.remove('hidden');
+      } else {
+        floatingBadge.classList.add('hidden');
+      }
+    }
+
+    if (conflicts.length === 0) {
+      container.innerHTML = `
+        <div class="text-center text-gray-500 py-8">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="font-medium text-green-600">¡Sin conflictos!</p>
+          <p class="text-sm">Todas las asignaciones son válidas</p>
+        </div>
+      `;
+      return;
+    }
+
+    const getIconForType = (type: string) => {
+      switch (type) {
+        case 'duplicate': return '👥';
+        case 'restriction': return '🚫';
+        case 'warning': return '⚠️';
+        default: return '❓';
+      }
+    };
+
+    const getColorForType = (type: string) => {
+      switch (type) {
+        case 'duplicate': return 'bg-orange-50 border-orange-200 text-orange-800';
+        case 'restriction': return 'bg-red-50 border-red-200 text-red-800';
+        case 'warning': return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+        default: return 'bg-gray-50 border-gray-200 text-gray-800';
+      }
+    };
+
+    container.innerHTML = conflicts.map(conflict => `
+      <div class="mb-3 p-3 border rounded-lg ${getColorForType(conflict.type)}">
+        <div class="flex items-start space-x-2">
+          <span class="text-lg">${getIconForType(conflict.type)}</span>
+          <div class="flex-1">
+            <p class="text-sm font-medium">${conflict.message}</p>
+            <div class="flex flex-wrap gap-1 mt-2">
+              ${conflict.locations.map(loc => `
+                <button
+                  class="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100 transition-colors conflict-location-btn"
+                  data-day="${loc.day}"
+                  data-turno="${loc.turno}"
+                  data-index="${loc.index}"
+                >
+                  📍 ${loc.day} ${loc.turno}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // Agregar event listeners para navegar a la ubicación
+    container.querySelectorAll('.conflict-location-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const day = (btn as HTMLElement).dataset.day;
+        const turno = (btn as HTMLElement).dataset.turno;
+        const index = (btn as HTMLElement).dataset.index;
+
+        // Encontrar y resaltar el select correspondiente
+        const select = document.querySelector<HTMLSelectElement>(
+          `select.user-select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
+        );
+
+        if (select) {
+          // Scroll hacia el select
+          select.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+          // Resaltar temporalmente
+          select.classList.add('ring-4', 'ring-red-500', 'ring-opacity-50');
+          setTimeout(() => {
+            select.classList.remove('ring-4', 'ring-red-500', 'ring-opacity-50');
+          }, 2000);
+
+          // Cerrar el panel
+          document.getElementById('conflictsPanel')?.classList.add('hidden');
+        }
+      });
+    });
+  };
+
+  // Actualizar conflictos
+  const refreshConflicts = async () => {
+    const conflicts = await analyzeWeekConflicts();
+    renderConflicts(conflicts);
+  };
+
+  // ============================================
+  // BÚSQUEDA EN VISTA PRINCIPAL
+  // ============================================
+
+  // Función para buscar y resaltar usuarios en el programa
+  const searchInProgram = (searchTerm: string) => {
+    const selects = document.querySelectorAll<HTMLSelectElement>('select.user-select');
+    const searchInput = document.getElementById('programSearchInput') as HTMLInputElement;
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const resultsInfo = document.getElementById('searchResultsInfo');
+
+    // Limpiar resaltados anteriores
+    selects.forEach(select => {
+      select.classList.remove('ring-4', 'ring-yellow-400', 'ring-opacity-75', 'bg-yellow-50');
+      const container = select.closest('.flex');
+      if (container) {
+        container.classList.remove('bg-yellow-100');
+      }
+    });
+
+    // Si no hay término de búsqueda, ocultar botón y info
+    if (!searchTerm.trim()) {
+      if (clearBtn) clearBtn.classList.add('hidden');
+      if (resultsInfo) resultsInfo.classList.add('hidden');
+      return;
+    }
+
+    // Mostrar botón de limpiar
+    if (clearBtn) clearBtn.classList.remove('hidden');
+
+    const normalizedSearch = searchTerm.toLowerCase().trim();
+    let matchCount = 0;
+    const matchedLocations: string[] = [];
+
+    // Buscar coincidencias
+    selects.forEach(select => {
+      const selectedOption = select.options[select.selectedIndex];
+      if (selectedOption && selectedOption.value && selectedOption.value !== '--separator--' && selectedOption.value !== 'add') {
+        const displayText = selectedOption.textContent?.toLowerCase() || '';
+        const userName = selectedOption.value.toLowerCase();
+
+        if (displayText.includes(normalizedSearch) || userName.includes(normalizedSearch)) {
+          // Resaltar coincidencia
+          select.classList.add('ring-4', 'ring-yellow-400', 'ring-opacity-75', 'bg-yellow-50');
+          const container = select.closest('.flex');
+          if (container) {
+            container.classList.add('bg-yellow-100');
+          }
+
+          matchCount++;
+          const day = select.dataset.day || '';
+          const turno = select.dataset.turno || '';
+          matchedLocations.push(`${day} ${turno}`);
+        }
+      }
+    });
+
+    // Mostrar información de resultados
+    if (resultsInfo) {
+      if (matchCount > 0) {
+        resultsInfo.textContent = `${matchCount} coincidencia${matchCount > 1 ? 's' : ''} encontrada${matchCount > 1 ? 's' : ''}`;
+        resultsInfo.classList.remove('hidden');
+        resultsInfo.classList.remove('text-gray-500');
+        resultsInfo.classList.add('text-green-600');
+      } else {
+        resultsInfo.textContent = 'Sin coincidencias';
+        resultsInfo.classList.remove('hidden');
+        resultsInfo.classList.remove('text-green-600');
+        resultsInfo.classList.add('text-gray-500');
+      }
+    }
+
+    // Si hay exactamente una coincidencia, hacer scroll hacia ella
+    if (matchCount === 1) {
+      const matchedSelect = document.querySelector<HTMLSelectElement>('select.user-select.ring-yellow-400');
+      if (matchedSelect) {
+        matchedSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  };
+
+  // Limpiar búsqueda
+  const clearSearch = () => {
+    const searchInput = document.getElementById('programSearchInput') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.value = '';
+      searchInProgram('');
+    }
+  };
+
+  // ============================================
+  // VALIDACIÓN DE CAPITÁN POR TURNO
+  // ============================================
+
+  interface TurnoCapitanStatus {
+    day: string;
+    turno: string;
+    hasCapitan: boolean;
+    capitanName?: string;
+    assignedUsers: string[];
+  }
+
+  // Verificar si un usuario es capitán basándose en el texto de display
+  const isUserCapitan = (displayText: string): boolean => {
+    return displayText.includes('[C]') || displayText.toLowerCase().includes('capitan');
+  };
+
+  // Analizar estado de capitanes por turno
+  const analyzeCapitanStatus = async (): Promise<TurnoCapitanStatus[]> => {
+    const turnoStatuses: TurnoCapitanStatus[] = [];
+    const turnoMap = new Map<string, TurnoCapitanStatus>();
+
+    // Agrupar selects por día-turno
+    document.querySelectorAll<HTMLSelectElement>('select.user-select').forEach(select => {
+      const day = select.dataset.day || '';
+      const turno = select.dataset.turno || '';
+      const key = `${day}-${turno}`;
+
+      if (!turnoMap.has(key)) {
+        turnoMap.set(key, {
+          day,
+          turno,
+          hasCapitan: false,
+          assignedUsers: []
+        });
+      }
+
+      const status = turnoMap.get(key)!;
+      const selectedOption = select.options[select.selectedIndex];
+
+      if (selectedOption && selectedOption.value &&
+          selectedOption.value !== '--separator--' &&
+          selectedOption.value !== 'add' &&
+          selectedOption.value !== '') {
+        const displayText = selectedOption.textContent || '';
+        status.assignedUsers.push(displayText);
+
+        if (isUserCapitan(displayText)) {
+          status.hasCapitan = true;
+          status.capitanName = displayText.replace('[C]', '').trim();
+        }
+      }
+    });
+
+    // Convertir a array y filtrar solo turnos con asignaciones pero sin capitán
+    for (const [key, status] of turnoMap) {
+      if (status.assignedUsers.length > 0) {
+        turnoStatuses.push(status);
+      }
+    }
+
+    return turnoStatuses;
+  };
+
+  // Verificar capitanes y mostrar advertencias
+  const validateCapitanes = async () => {
+    const statuses = await analyzeCapitanStatus();
+    const turnosSinCapitan = statuses.filter(s => !s.hasCapitan && s.assignedUsers.length > 0);
+
+    if (turnosSinCapitan.length === 0) {
+      notify.success('Todos los turnos con asignaciones tienen capitán');
+      return true;
+    }
+
+    // Mostrar advertencias para turnos sin capitán
+    turnosSinCapitan.forEach(status => {
+      notify.warning(`⚠️ ${status.day} ${status.turno}: Sin capitán asignado (${status.assignedUsers.length} usuarios)`);
+    });
+
+    return false;
+  };
+
+  // Agregar indicador visual de capitán en turnos
+  const updateCapitanIndicators = async () => {
+    const statuses = await analyzeCapitanStatus();
+
+    // Buscar contenedores de turno y agregar/actualizar indicador
+    statuses.forEach(status => {
+      // Buscar el primer select del turno para encontrar el contenedor
+      const firstSelect = document.querySelector<HTMLSelectElement>(
+        `select.user-select[data-day="${status.day}"][data-turno="${status.turno}"][data-index="0"]`
+      );
+
+      if (firstSelect) {
+        const container = firstSelect.closest('.turno-container, .flex-col, [data-turno]')?.parentElement;
+        if (container) {
+          // Buscar o crear indicador
+          let indicator = container.querySelector('.capitan-indicator');
+          if (!indicator) {
+            indicator = document.createElement('span');
+            indicator.className = 'capitan-indicator text-xs px-2 py-1 rounded-full ml-2';
+            // Insertar después del título del turno si existe
+            const turnoTitle = container.querySelector('h4, .turno-title, span');
+            if (turnoTitle) {
+              turnoTitle.appendChild(indicator);
+            }
+          }
+
+          if (status.hasCapitan) {
+            indicator.textContent = '👮 Capitán';
+            indicator.classList.remove('bg-yellow-100', 'text-yellow-800');
+            indicator.classList.add('bg-green-100', 'text-green-800');
+          } else if (status.assignedUsers.length > 0) {
+            indicator.textContent = '⚠️ Sin capitán';
+            indicator.classList.remove('bg-green-100', 'text-green-800');
+            indicator.classList.add('bg-yellow-100', 'text-yellow-800');
+          } else {
+            indicator.textContent = '';
+          }
+        }
+      }
+    });
+  };
+
+  // ============================================
+  // COPIAR SEMANA ANTERIOR
+  // ============================================
+
+  // Obtener datos de la semana anterior
+  const getPreviousWeekData = async (): Promise<Record<string, string>> => {
+    const previousWeekStart = new Date(currentDate);
+    previousWeekStart.setDate(previousWeekStart.getDate() - previousWeekStart.getDay() + 1 - 7); // Ir a la semana anterior
+
+    try {
+      const response = await fetch(
+        `/api/getWeekData.json?date=${previousWeekStart.toISOString().split('T')[0]}`
+      );
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('Error fetching previous week data:', error);
+    }
+    return {};
+  };
+
+  // Copiar asignaciones de la semana anterior
+  const copyFromPreviousWeek = async () => {
+    const previousWeekData = await getPreviousWeekData();
+
+    if (Object.keys(previousWeekData).length === 0) {
+      notify.warning('No hay datos de la semana anterior para copiar');
+      return;
+    }
+
+    // Guardar estado actual para undo
+    const bulkChanges: ChangeRecord[] = [];
+    let copiedCount = 0;
+    let skippedCount = 0;
+
+    // Aplicar datos de la semana anterior
+    for (const [key, userName] of Object.entries(previousWeekData)) {
+      const [day, turno, indexStr] = key.split('-');
+      const index = parseInt(indexStr);
+
+      const select = document.querySelector<HTMLSelectElement>(
+        `select.user-select[data-day="${day}"][data-turno="${turno}"][data-index="${index}"]`
+      );
+
+      if (select) {
+        const previousValue = select.value;
+
+        // Verificar si la opción existe
+        let optionExists = Array.from(select.options).some(opt => opt.value === userName);
+
+        if (!optionExists && userName) {
+          // Crear opción si no existe
+          const newOption = document.createElement('option');
+          newOption.value = userName;
+          newOption.textContent = `${userName} (copiado)`;
+          newOption.style.fontStyle = 'italic';
+
+          const addOption = Array.from(select.options).find(opt => opt.value === 'add');
+          if (addOption) {
+            select.insertBefore(newOption, addOption);
+          } else {
+            select.appendChild(newOption);
+          }
+          optionExists = true;
+        }
+
+        if (optionExists) {
+          // Registrar cambio para undo
+          if (previousValue !== userName) {
+            bulkChanges.push({
+              day: day as WeekDay,
+              turno: turno as Turno,
+              index,
+              previousValue,
+              newValue: userName
+            });
+
+            select.value = userName;
+            updatePrecursorBackground(select, userName);
+            copiedCount++;
+          }
+        } else {
+          skippedCount++;
+        }
+      }
+    }
+
+    // Registrar todos los cambios como una operación de bulk
+    if (bulkChanges.length > 0) {
+      undoRedoManager.recordChange(bulkChanges, 'bulk');
+      updateUndoRedoButtons();
+      markAsChanged();
+    }
+
+    // Mostrar resultado
+    if (copiedCount > 0) {
+      notify.success(`Se copiaron ${copiedCount} asignaciones de la semana anterior`);
+
+      // Validar asignaciones copiadas
+      document.querySelectorAll<HTMLSelectElement>('select.user-select').forEach(async (select) => {
+        if (select.value && select.value !== '--separator--' && select.value !== 'add') {
+          await checkUserAssignment(select);
+        }
+      });
+
+      // Actualizar panel de conflictos si está visible
+      const conflictsPanel = document.getElementById('conflictsPanel');
+      if (conflictsPanel && !conflictsPanel.classList.contains('hidden')) {
+        await refreshConflicts();
+      }
+    }
+
+    if (skippedCount > 0) {
+      notify.info(`${skippedCount} asignaciones no se pudieron copiar (usuarios no disponibles)`);
+    }
+  };
+
+  // Configurar event listeners para botones y teclado
+  document.addEventListener('DOMContentLoaded', () => {
+    // Botones de undo/redo
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+
+    if (undoBtn) {
+      undoBtn.addEventListener('click', performUndo);
+    }
+
+    if (redoBtn) {
+      redoBtn.addEventListener('click', performRedo);
+    }
+
+    // Atajos de teclado
+    document.addEventListener('keydown', async (event) => {
+      // Ctrl+Z para deshacer
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        await performUndo();
+      }
+
+      // Ctrl+Y o Ctrl+Shift+Z para rehacer
+      if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.key === 'z' && event.shiftKey))) {
+        event.preventDefault();
+        await performRedo();
+      }
+    });
+
+    // Limpiar undo/redo stack cuando cambia la semana
+    const originalClearUsersCache = window.clearUsersCache;
+    window.clearUsersCache = () => {
+      originalClearUsersCache();
+      undoRedoManager.clear();
+      updateUndoRedoButtons();
+    };
+
+    // Botón copiar semana anterior
+    const copyPreviousWeekBtn = document.getElementById('copyPreviousWeekBtn');
+    if (copyPreviousWeekBtn) {
+      copyPreviousWeekBtn.addEventListener('click', async () => {
+        if (confirm('¿Desea copiar las asignaciones de la semana anterior?\n\nEsto reemplazará las asignaciones actuales.')) {
+          spinnerOverlay?.classList.add('active');
+          try {
+            await copyFromPreviousWeek();
+          } finally {
+            spinnerOverlay?.classList.remove('active');
+          }
+        }
+      });
+    }
+
+    // Botón validar capitanes
+    const validateCapitanesBtn = document.getElementById('validateCapitanesBtn');
+    if (validateCapitanesBtn) {
+      validateCapitanesBtn.addEventListener('click', async () => {
+        spinnerOverlay?.classList.add('active');
+        try {
+          await validateCapitanes();
+          await updateCapitanIndicators();
+        } finally {
+          spinnerOverlay?.classList.remove('active');
+        }
+      });
+    }
+
+    // Búsqueda en vista principal
+    const programSearchInput = document.getElementById('programSearchInput') as HTMLInputElement;
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+    if (programSearchInput) {
+      // Debounce para la búsqueda
+      let searchTimeout: ReturnType<typeof setTimeout>;
+      programSearchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          searchInProgram(programSearchInput.value);
+        }, 300);
+      });
+
+      // Atajo de teclado: Escape para limpiar
+      programSearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          clearSearch();
+          programSearchInput.blur();
+        }
+      });
+    }
+
+    if (clearSearchBtn) {
+      clearSearchBtn.addEventListener('click', clearSearch);
+    }
+
+    // Atajo global: Ctrl+F para enfocar búsqueda
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        // Solo prevenir si no está en un input
+        const activeElement = document.activeElement;
+        if (activeElement?.tagName !== 'INPUT' && activeElement?.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          programSearchInput?.focus();
+        }
+      }
+    });
+
+    // Panel de conflictos
+    const conflictsPanel = document.getElementById('conflictsPanel');
+    const conflictsToggle = document.getElementById('conflictsToggle');
+    const closeConflictsBtn = document.getElementById('closeConflictsBtn');
+    const refreshConflictsBtn = document.getElementById('refreshConflictsBtn');
+
+    if (conflictsToggle) {
+      conflictsToggle.addEventListener('click', async () => {
+        conflictsPanel?.classList.toggle('hidden');
+        if (!conflictsPanel?.classList.contains('hidden')) {
+          await refreshConflicts();
+        }
+      });
+    }
+
+    if (closeConflictsBtn) {
+      closeConflictsBtn.addEventListener('click', () => {
+        conflictsPanel?.classList.add('hidden');
+      });
+    }
+
+    if (refreshConflictsBtn) {
+      refreshConflictsBtn.addEventListener('click', async () => {
+        await refreshConflicts();
+        notify.info('Análisis de conflictos actualizado');
+      });
+    }
+
+    // Cerrar panel al hacer clic fuera
+    document.addEventListener('click', (event) => {
+      const target = event.target as Node;
+      if (conflictsPanel && conflictsToggle &&
+          !conflictsPanel.contains(target) && !conflictsToggle.contains(target)) {
+        conflictsPanel.classList.add('hidden');
+      }
+    });
+  });
+
   // Event listener movido al DOMContentLoaded
 
   // OPTIMIZACIÓN: fetchWeekData consolidado con loadWeekData - usar loadWeekData para todo
@@ -1594,7 +2567,7 @@ const weekDates = getWeekDates(currentDate);
 
   function hasChanges() {
     let changes = false;
-    document.querySelectorAll("select.user-select").forEach((select) => {
+    document.querySelectorAll<HTMLSelectElement>("select.user-select").forEach((select) => {
       const key = `${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`;
       if (initialSelectValues[key] !== select.value) {
         changes = true;
@@ -1605,7 +2578,7 @@ const weekDates = getWeekDates(currentDate);
 
   function setInitialSelectValues() {
     setTimeout(() => {
-      document.querySelectorAll("select.user-select").forEach((select) => {
+      document.querySelectorAll<HTMLSelectElement>("select.user-select").forEach((select) => {
         const key = `${select.dataset.day}-${select.dataset.turno}-${select.dataset.index}`;
         initialSelectValues[key] = select.value;
       });

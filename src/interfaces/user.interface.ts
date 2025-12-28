@@ -9,7 +9,7 @@ export interface User {
   role: string;
   estado_civil: string;
   nombre_conyuge: null;
-  privilegios: null;
+  privilegios: string[] | null;
   disponibilidad: string;
   isActive: boolean;
   userName: string;
@@ -19,7 +19,7 @@ export interface User {
 }
 
 export interface ParticipationRule {
-  type: 'max_per_month' | 'max_per_week' | 'specific_weeks' | 'alternating_weeks';
+  type: 'max_per_month' | 'max_per_week' | 'specific_weeks' | 'alternating_weeks' | 'weekly_availability';
   value: number | number[];
   description: string;
 }
