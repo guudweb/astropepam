@@ -54,12 +54,15 @@ const iconId = `icon-${day}-${turno}-${index}`;
     private date: Date;
 
     constructor(selectElement: HTMLSelectElement) {
+      console.log('🚀 UserSelectComponent: Inicializando componente');
       this.element = selectElement;
       this.day = selectElement.dataset.day as WeekDay;
       this.turno = selectElement.dataset.turno as Turno;
       this.index = parseInt(selectElement.dataset.index || '0');
       this.date = new Date(selectElement.dataset.date || '');
-      
+
+      console.log('🚀 UserSelectComponent: día=', this.day, 'turno=', this.turno, 'index=', this.index, 'date=', this.date);
+
       const iconId = `icon-${this.day}-${this.turno}-${this.index}`;
       this.iconElement = document.getElementById(iconId) as HTMLSpanElement;
 
@@ -282,7 +285,10 @@ const iconId = `icon-${day}-${turno}-${index}`;
 
     private async validateCurrentSelection() {
       const userName = this.element.value;
+      console.log('🔍 validateCurrentSelection: Iniciando validación para', userName);
+
       if (!userName || userName === '--separator--' || userName === 'add') {
+        console.log('🔍 validateCurrentSelection: userName vacío o inválido, saliendo');
         return;
       }
 

@@ -31,11 +31,17 @@ export class ValidationManager {
   private static batchProcessTimeout: NodeJS.Timeout | null = null;
   private static readonly BATCH_DELAY = 50; // 50ms para agrupar validaciones
 
-  // Generar clave única para cache basada en usuario y semana
-  private static getCacheKey(userName: string, selectedDate: Date): string {
+  // Generar clave única para cache basada en usuario, semana, día y turno
+  // IMPORTANTE: Incluir día y turno porque la validación de reunión depende de estos valores
+  private static getCacheKey(userName: string, selectedDate: Date, day?: string, turno?: string): string {
     const weekStart = new Date(selectedDate);
     weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
-    return `${userName}-${weekStart.toISOString().split('T')[0]}`;
+    const baseKey = `${userName}-${weekStart.toISOString().split('T')[0]}`;
+    // Si hay día y turno, incluirlos en la clave para diferenciar validaciones de reunión
+    if (day && turno) {
+      return `${baseKey}-${day}-${turno}`;
+    }
+    return baseKey;
   }
 
   // Obtener clave de semana para invalidación
@@ -95,16 +101,12 @@ export class ValidationManager {
     skipCache: boolean = false
   ): Promise<ValidationResult> {
     try {
-      // IMPORTANTE: Siempre validar incidencias y conflictos de reunión,
-      // incluso si el usuario no tiene reglas de participación
-
       // Verificar cache (si no se salta)
-      const cacheKey = this.getCacheKey(userName, selectedDate);
+      const cacheKey = this.getCacheKey(userName, selectedDate, day, turno);
       if (!skipCache && this.validationCache.has(cacheKey)) {
         const cached = this.validationCache.get(cacheKey)!;
         const now = Date.now();
 
-        // Usar cache si es válido y de la misma semana
         if (cached.weekKey === this.currentWeekKey &&
             now - cached.timestamp < this.CACHE_DURATION) {
           return cached.result;
@@ -112,15 +114,13 @@ export class ValidationManager {
       }
 
       // Validar con el sistema existente (incluyendo reunión e incidencias)
-      // IMPORTANTE: Pasar datos del usuario si existen, de lo contrario usar valores vacíos
-      // La validación de incidencias solo necesita el userName
       const validation = await ParticipationValidatorJS.validateUserComplete(
         userName,
         user?.participation_rules || [],
         selectedDate,
-        user?.congregacion, // Datos de la congregación para validar conflicto de reunión
-        day, // Día seleccionado
-        turno // Turno seleccionado
+        user?.congregacion,
+        day,
+        turno
       );
 
       // Guardar en cache

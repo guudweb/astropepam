@@ -396,6 +396,9 @@ const weekDates = getWeekDates(currentDate);
       option.value = user.userName;
       option.textContent = displayName + statusIcon;
       option.dataset.congregacionId = user.congregacion?.id || '';
+      option.dataset.congregacionNombre = user.congregacion?.nombre || '';
+      option.dataset.congregacionDiaReunion = user.congregacion?.diaReunion || '';
+      option.dataset.congregacionTurnoReunion = user.congregacion?.turnoReunion || '';
       option.dataset.participationRules = JSON.stringify(user.participation_rules || []);
       option.disabled = user.canParticipate === false;
       
@@ -677,6 +680,9 @@ const weekDates = getWeekDates(currentDate);
               
               newOption.textContent = displayText;
               newOption.dataset.congregacionId = userInfo.congregacion?.id || '';
+              newOption.dataset.congregacionNombre = userInfo.congregacion?.nombre || '';
+              newOption.dataset.congregacionDiaReunion = userInfo.congregacion?.diaReunion || '';
+              newOption.dataset.congregacionTurnoReunion = userInfo.congregacion?.turnoReunion || '';
               newOption.dataset.participationRules = JSON.stringify(userInfo.participation_rules || []);
               newOption.style.color = '#666';
               newOption.style.fontStyle = 'italic';
@@ -698,19 +704,85 @@ const weekDates = getWeekDates(currentDate);
         }
         
         select.value = savedValue;
-        
+
         // Actualizar fondo de precursor para valores cargados
         updatePrecursorBackground(select, savedValue);
       });
 
       // Hide spinner
       spinnerOverlay.classList.remove("active");
+
+      // VALIDAR USUARIOS ASIGNADOS AL CARGAR LA SEMANA
+      // Esto detecta incidencias o conflictos de reunión creados después de hacer el programa
+      await validateAllAssignedUsers();
+
     } catch (error) {
       console.error("Error loading week data:", error);
       // Hide spinner in case of error
       spinnerOverlay.classList.remove("active");
     }
   };
+
+  // Función para verificar incidencias activas en usuarios asignados al cargar la semana
+  async function validateAllAssignedUsers() {
+    try {
+      // Obtener la fecha de inicio de la semana actual (usar currentDate que es la variable global)
+      const weekStart = new Date(currentDate);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      // Obtener incidencias activas que afectan esta semana
+      const response = await fetch(`/api/incidencias/getAll.json?onlyActive=true&fromDate=${weekStart.toISOString().split('T')[0]}`);
+      if (!response.ok) {
+        console.warn('No se pudieron obtener las incidencias');
+        return;
+      }
+
+      const { data: incidencias } = await response.json();
+
+      if (!incidencias || incidencias.length === 0) {
+        return;
+      }
+
+      // Crear un Set con los userNames que tienen incidencias activas esta semana
+      const usersWithIncidencias = new Set<string>();
+      incidencias.forEach((inc: { userName: string; fechaInicio: string; fechaFin: string; nombreUsuario?: string }) => {
+        const incInicio = new Date(inc.fechaInicio);
+        const incFin = new Date(inc.fechaFin);
+        // Verificar si la incidencia se solapa con la semana actual
+        if (incInicio <= weekEnd && incFin >= weekStart) {
+          usersWithIncidencias.add(inc.userName);
+        }
+      });
+
+      if (usersWithIncidencias.size === 0) {
+        return;
+      }
+
+      // Buscar si alguno de esos usuarios está asignado en el programa
+      const selectsWithValues = document.querySelectorAll<HTMLSelectElement>("select.user-select");
+      const affectedSelects: HTMLSelectElement[] = [];
+
+      selectsWithValues.forEach((select) => {
+        const userName = select.value;
+        if (userName && usersWithIncidencias.has(userName)) {
+          affectedSelects.push(select);
+        }
+      });
+
+      if (affectedSelects.length === 0) {
+        return;
+      }
+
+      // Solo validar los usuarios que tienen incidencias
+      for (const select of affectedSelects) {
+        await checkUserAssignment(select);
+      }
+    } catch (error) {
+      console.error('Error al verificar incidencias:', error);
+    }
+  }
 
   document
     .getElementById("preajustesSelect")
@@ -1226,6 +1298,9 @@ const weekDates = getWeekDates(currentDate);
                         newOption.value = newUserName;
                         newOption.textContent = displayText; // Usar el displayText con privilegios
                         newOption.dataset.congregacionId = user.congregacion?.id || '';
+                        newOption.dataset.congregacionNombre = user.congregacion?.nombre || '';
+                        newOption.dataset.congregacionDiaReunion = user.congregacion?.diaReunion || '';
+                        newOption.dataset.congregacionTurnoReunion = user.congregacion?.turnoReunion || '';
                         newOption.dataset.participationRules = participationRules || '[]';
 
                         // Insertar antes de la opción "Añadir usuario"
@@ -1430,168 +1505,162 @@ const weekDates = getWeekDates(currentDate);
       return;
     }
 
-    // Obtener reglas de participación del usuario
+    // Obtener reglas de participación y datos de congregación del usuario
     const selectedOption = select.options[select.selectedIndex];
-    const participationRules = selectedOption.getAttribute('data-participation-rules');
-    
-    if (participationRules && participationRules !== '[]') {
+    const participationRulesStr = selectedOption.getAttribute('data-participation-rules');
+    const congregacionId = selectedOption.getAttribute('data-congregacion-id');
+    const congregacionNombre = selectedOption.getAttribute('data-congregacion-nombre');
+    const congregacionDiaReunion = selectedOption.getAttribute('data-congregacion-dia-reunion');
+    const congregacionTurnoReunion = selectedOption.getAttribute('data-congregacion-turno-reunion');
+
+    // Construir objeto de congregación para validación de conflictos de reunión
+    const congregacionData = congregacionId ? {
+      id: parseInt(congregacionId),
+      nombre: congregacionNombre || '',
+      diaReunion: congregacionDiaReunion || '',
+      turnoReunion: congregacionTurnoReunion || ''
+    } : undefined;
+
+    // Parsear reglas de participación si existen
+    let parsedRules = [];
+    if (participationRulesStr && participationRulesStr !== '[]') {
       try {
-        // OPTIMIZACIÓN: Memoizar el parseado de reglas de participación
-        const parseRules = memoize((rulesString) => {
-          return JSON.parse(rulesString);
-        }, (rulesString) => `rules-${rulesString}`);
-        
-        const parsedRules = parseRules(participationRules);
-        
-        // MOSTRAR CONDICIONES DEL USUARIO (solo si es nuevo o cambió de usuario)
-        const isNewOrChanged = !previousState || previousState.userName !== userName;
-        if (isNewOrChanged) {
-          const conditionsDescriptions: string[] = [];
-          
-          parsedRules.forEach((rule: any) => {
-            switch (rule.type) {
-              case 'max_per_month':
-                conditionsDescriptions.push(`Máximo ${rule.value} ${rule.value === 1 ? 'vez' : 'veces'} al mes`);
-                break;
-              case 'max_per_week':
-                conditionsDescriptions.push(`Máximo ${rule.value} ${rule.value === 1 ? 'vez' : 'veces'} por semana`);
-                break;
-              case 'specific_weeks':
-                const weeks = Array.isArray(rule.value) ? rule.value : [rule.value];
-                conditionsDescriptions.push(`Solo puede participar en las semanas: ${weeks.join(', ')}`);
-                break;
-              case 'alternating_weeks':
-                conditionsDescriptions.push(`Participa en semanas alternadas (una sí, una no)`);
-                break;
-              case 'weekly_availability':
-                conditionsDescriptions.push(`Envía su disponibilidad semanalmente`);
-                break;
-              default:
-                if (rule.description) {
-                  conditionsDescriptions.push(rule.description);
-                }
-                break;
-            }
-          });
-          
-          if (conditionsDescriptions.length > 0) {
-            const conditionsMessage = `🔍 Condiciones de ${fullName}: ${conditionsDescriptions.join(' • ')}`;
-            notify.info(conditionsMessage);
-          }
-        }
-        
-        // Validar reglas de participación
-        const validation = await ParticipationValidatorJS.validateUserForDate(
-          userName, 
-          parsedRules, 
-          selectedDate
-        );
+        parsedRules = JSON.parse(participationRulesStr);
+      } catch (e) {
+        console.error('Error parsing participation rules:', e);
+      }
+    }
 
-        // Crear estado actual
-        const currentState = {
-          userName: userName,
-          hasRestrictions: !validation.canParticipate,
-          hasWarnings: validation.warnings && validation.warnings.length > 0,
-          canParticipate: validation.canParticipate
-        };
-        
-        // Comparar con estado previo
-        const hadPreviousRestrictions = previousState && previousState.hasRestrictions;
-        const hadPreviousWarnings = previousState && previousState.hasWarnings;
-        const wasAnotherUser = previousState && previousState.userName !== userName;
-        
-        if (!validation.canParticipate) {
-          if (icon) {
-            icon.innerHTML = "🚫"; // No puede participar
-          }
-          
-          // Mostrar restricciones solo si es nuevo o cambió de usuario
-          if (!previousState || wasAnotherUser || !hadPreviousRestrictions) {
-            validation.restrictions.forEach(restriction => {
-              notify.error(`${fullName}: ${restriction}`);
-            });
-            
-            // Mostrar reglas que aplican
-            if (validation.rulesDescription && validation.rulesDescription.length > 0) {
-              notify.error(`Condiciones de ${fullName}: ${validation.rulesDescription.join(', ')}`);
-            }
-          }
-          
-        } else if (validation.warnings && validation.warnings.length > 0) {
-          if (icon) {
-            icon.innerHTML = "⚠️"; // Advertencia
-          }
-          
-          // Si antes tenía restricciones y ahora solo advertencias, notificar mejora
-          if (hadPreviousRestrictions) {
-            notify.open({
-              type: 'info',
-              message: `${fullName}: ✓ Ya puede participar (con advertencias)`
-            });
-          }
-          
-          // Mostrar advertencias solo si es nuevo o cambió
-          if (!previousState || wasAnotherUser || (!hadPreviousWarnings && !hadPreviousRestrictions)) {
-            validation.warnings.forEach(warning => {
-              notify.open({
-                type: 'warning',
-                message: `${fullName}: ${warning}`
-              });
-            });
-          }
-          
-        } else {
-          if (icon) {
-            icon.innerHTML = "✅"; // Todo bien
-          }
-          
-          // Si antes tenía restricciones o advertencias y ahora está bien, notificar
-          if (previousState && (hadPreviousRestrictions || hadPreviousWarnings)) {
-            // Solo notificar si es el mismo usuario
-            if (!wasAnotherUser) {
-              notify.success(`${fullName}: ✓ Cumple todas las condiciones`);
-            }
-          }
-        }
-        
-        // Guardar estado actual
-        validationStates.set(stateKey, currentState);
+    // MOSTRAR CONDICIONES DEL USUARIO (solo si es nuevo o cambió de usuario y tiene reglas)
+    const isNewOrChanged = !previousState || previousState.userName !== userName;
+    if (isNewOrChanged && parsedRules.length > 0) {
+      const conditionsDescriptions: string[] = [];
 
-        // Añadir tooltip con información de reglas
-        if (icon && validation.rulesDescription && validation.rulesDescription.length > 0) {
-          icon.title = `Condiciones de ${fullName}:\n${validation.rulesDescription.join('\n')}`;
+      parsedRules.forEach((rule: any) => {
+        switch (rule.type) {
+          case 'max_per_month':
+            conditionsDescriptions.push(`Máximo ${rule.value} ${rule.value === 1 ? 'vez' : 'veces'} al mes`);
+            break;
+          case 'max_per_week':
+            conditionsDescriptions.push(`Máximo ${rule.value} ${rule.value === 1 ? 'vez' : 'veces'} por semana`);
+            break;
+          case 'specific_weeks':
+            const weeks = Array.isArray(rule.value) ? rule.value : [rule.value];
+            conditionsDescriptions.push(`Solo puede participar en las semanas: ${weeks.join(', ')}`);
+            break;
+          case 'alternating_weeks':
+            conditionsDescriptions.push(`Participa en semanas alternadas (una sí, una no)`);
+            break;
+          case 'weekly_availability':
+            conditionsDescriptions.push(`Envía su disponibilidad semanalmente`);
+            break;
+          default:
+            if (rule.description) {
+              conditionsDescriptions.push(rule.description);
+            }
+            break;
         }
-        
-      } catch (error) {
-        console.error('Error validating participation rules:', error);
+      });
+
+      if (conditionsDescriptions.length > 0) {
+        const conditionsMessage = `🔍 Condiciones de ${fullName}: ${conditionsDescriptions.join(' • ')}`;
+        notify.info(conditionsMessage);
+      }
+    }
+
+    // SIEMPRE ejecutar validación completa (incidencias + reunión + reglas de participación)
+    // Esto valida incidencias y conflictos de reunión incluso si no hay reglas de participación
+    try {
+      // Usar validateUserComplete que incluye validación de incidencias y reunión
+      const validation = await ParticipationValidatorJS.validateUserComplete(
+        userName,
+        parsedRules,
+        selectedDate,
+        congregacionData, // Datos de congregación para validar conflicto de reunión
+        day,  // Día seleccionado para validar conflicto de reunión
+        turno // Turno seleccionado para validar conflicto de reunión
+      );
+
+      // Crear estado actual
+      const currentState = {
+        userName: userName,
+        hasRestrictions: !validation.canParticipate,
+        hasWarnings: validation.warnings && validation.warnings.length > 0,
+        canParticipate: validation.canParticipate
+      };
+
+      // Comparar con estado previo
+      const hadPreviousRestrictions = previousState && previousState.hasRestrictions;
+      const hadPreviousWarnings = previousState && previousState.hasWarnings;
+      const wasAnotherUser = previousState && previousState.userName !== userName;
+
+      if (!validation.canParticipate) {
         if (icon) {
-          icon.innerHTML = ""; // Limpiar icono en caso de error
+          icon.innerHTML = "🚫"; // No puede participar
         }
-      }
-    } else {
-      // Sin reglas de participación
-      if (icon) {
-        icon.innerHTML = ""; // Limpiar icono si no hay restricciones
-      }
-      
-      // Si antes tenía restricciones/advertencias y ahora no tiene reglas, notificar
-      if (previousState && (previousState.hasRestrictions || previousState.hasWarnings)) {
-        const wasAnotherUser = previousState.userName !== userName;
-        if (!wasAnotherUser) {
+
+        // Mostrar restricciones solo si es nuevo o cambió de usuario
+        if (!previousState || wasAnotherUser || !hadPreviousRestrictions) {
+          validation.restrictions.forEach(restriction => {
+            notify.error(`${fullName}: ${restriction}`);
+          });
+
+          // Mostrar reglas que aplican
+          if (validation.rulesDescription && validation.rulesDescription.length > 0) {
+            notify.error(`Condiciones de ${fullName}: ${validation.rulesDescription.join(', ')}`);
+          }
+        }
+
+      } else if (validation.warnings && validation.warnings.length > 0) {
+        if (icon) {
+          icon.innerHTML = "⚠️"; // Advertencia
+        }
+
+        // Si antes tenía restricciones y ahora solo advertencias, notificar mejora
+        if (hadPreviousRestrictions) {
           notify.open({
             type: 'info',
-            message: `${fullName}: ✓ Sin condiciones especiales`
+            message: `${fullName}: ✓ Ya puede participar (con advertencias)`
           });
         }
+
+        // Mostrar advertencias solo si es nuevo o cambió
+        if (!previousState || wasAnotherUser || (!hadPreviousWarnings && !hadPreviousRestrictions)) {
+          validation.warnings.forEach(warning => {
+            notify.open({
+              type: 'warning',
+              message: `${fullName}: ${warning}`
+            });
+          });
+        }
+
+      } else {
+        if (icon) {
+          icon.innerHTML = "✅"; // Todo bien
+        }
+
+        // Si antes tenía restricciones o advertencias y ahora está bien, notificar
+        if (previousState && (hadPreviousRestrictions || hadPreviousWarnings)) {
+          // Solo notificar si es el mismo usuario
+          if (!wasAnotherUser) {
+            notify.success(`${fullName}: ✓ Cumple todas las condiciones`);
+          }
+        }
       }
-      
-      // Guardar estado sin reglas
-      validationStates.set(stateKey, {
-        userName: userName,
-        hasRestrictions: false,
-        hasWarnings: false,
-        canParticipate: true
-      });
+
+      // Guardar estado actual
+      validationStates.set(stateKey, currentState);
+
+      // Añadir tooltip con información de reglas
+      if (icon && validation.rulesDescription && validation.rulesDescription.length > 0) {
+        icon.title = `Condiciones de ${fullName}:\n${validation.rulesDescription.join('\n')}`;
+      }
+
+    } catch (error) {
+      console.error('Error validating user:', error);
+      if (icon) {
+        icon.innerHTML = ""; // Limpiar icono en caso de error
+      }
     }
   }
 
