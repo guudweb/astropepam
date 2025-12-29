@@ -84,7 +84,7 @@ const UserHistory = defineTable({
 const Incidencias = defineTable({
   columns: {
     id: column.number({ primaryKey: true, autoIncrement: true }),
-    userName: column.text({ references: () => Usuario.columns.userName }), // Usuario afectado
+    userName: column.text(), // Usuario afectado (sin foreign key para evitar problemas de compatibilidad)
     fechaInicio: column.date(),   // Fecha desde cuando no está disponible
     fechaFin: column.date(),      // Fecha hasta cuando no está disponible
     motivo: column.text(),        // Motivo de la incidencia

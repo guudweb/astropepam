@@ -45,6 +45,8 @@ export interface UserData {
   congregacion?: {
     id: number;
     nombre: string;
+    diaReunion?: string;
+    turnoReunion?: string;
   };
   canParticipate?: boolean;
   validationMessage?: string;

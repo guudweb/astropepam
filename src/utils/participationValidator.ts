@@ -17,9 +17,17 @@ export interface UserParticipation {
   turno: string;
 }
 
+// Tipo flexible para congregación (acepta campos opcionales)
+export interface CongregacionPartial {
+  id?: number;
+  nombre?: string;
+  diaReunion?: string;
+  turnoReunion?: string;
+}
+
 // Contexto adicional para validación de reunión e incidencias
 export interface ValidationContext {
-  congregacion?: Congregacion;
+  congregacion?: CongregacionPartial | Congregacion;
   incidencias?: Incidencia[];
   day?: string; // Día de la semana seleccionado (lunes, martes, etc.)
   turno?: string; // Turno seleccionado (T1, T2, T3, T4)
@@ -326,12 +334,21 @@ export class ParticipationValidator {
     }
 
     // Validar conflicto con reunión de congregación
+    console.log('🔍 validateUserForDate - Checking meeting conflict:', {
+      hasCongregacion: !!context?.congregacion,
+      hasDay: !!context?.day,
+      hasTurno: !!context?.turno,
+      congregacion: context?.congregacion
+    });
+
     if (context?.congregacion && context?.day && context?.turno) {
       const meetingConflict = this.validateMeetingConflict(
         context.congregacion,
         context.day,
         context.turno
       );
+
+      console.log('🔍 validateUserForDate - Meeting conflict result:', meetingConflict);
 
       if (meetingConflict.hasConflict) {
         result.canParticipate = false;
@@ -340,11 +357,18 @@ export class ParticipationValidator {
     }
 
     // Validar incidencias activas
+    console.log('🔍 validateUserForDate - Checking incidencias:', {
+      hasIncidencias: !!context?.incidencias,
+      incidenciasCount: context?.incidencias?.length || 0
+    });
+
     if (context?.incidencias && context.incidencias.length > 0) {
       const incidenciaConflict = this.validateIncidencias(
         context.incidencias,
         selectedDate
       );
+
+      console.log('🔍 validateUserForDate - Incidencia conflict result:', incidenciaConflict);
 
       if (incidenciaConflict.hasConflict) {
         result.canParticipate = false;
@@ -372,7 +396,7 @@ export class ParticipationValidator {
    * @returns Objeto con información del conflicto
    */
   static validateMeetingConflict(
-    congregacion: Congregacion,
+    congregacion: CongregacionPartial | Congregacion,
     day: string,
     turno: string
   ): { hasConflict: boolean; message: string } {
@@ -487,12 +511,19 @@ export class ParticipationValidator {
     userName: string,
     participationRules: ParticipationRule[] | string,
     selectedDate: Date,
-    congregacion?: Congregacion,
+    congregacion?: CongregacionPartial | Congregacion,
     day?: string,
     turno?: string
   ): Promise<ExtendedValidationResult> {
     // Obtener incidencias del usuario
     const incidencias = await this.getUserIncidencias(userName, selectedDate);
+
+    // Debug: Log de datos recibidos para validación
+    console.log('🔍 validateUserComplete - userName:', userName);
+    console.log('🔍 validateUserComplete - selectedDate:', selectedDate);
+    console.log('🔍 validateUserComplete - congregacion:', congregacion);
+    console.log('🔍 validateUserComplete - day:', day, 'turno:', turno);
+    console.log('🔍 validateUserComplete - incidencias encontradas:', incidencias.length, incidencias);
 
     return this.validateUserForDate(
       userName,

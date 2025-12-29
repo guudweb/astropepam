@@ -76,13 +76,18 @@ export default function IncidenciasManager({ isAdmin, currentUserName }: Props) 
 
   const fetchUsuarios = async () => {
     try {
-      const response = await fetch('/api/getAllUsers.json');
+      // Usar un límite alto para obtener todos los usuarios
+      const response = await fetch('/api/getAllUsers.json?limit=1000');
       const data = await response.json();
       if (data.data) {
-        setUsuarios(data.data.map((u: any) => ({
-          userName: u.userName,
-          nombre: u.nombre
-        })));
+        // Ordenar usuarios por nombre para facilitar la búsqueda
+        const sortedUsers = data.data
+          .map((u: any) => ({
+            userName: u.userName,
+            nombre: u.nombre
+          }))
+          .sort((a: User, b: User) => a.nombre.localeCompare(b.nombre));
+        setUsuarios(sortedUsers);
       }
     } catch (err) {
       console.error('Error fetching usuarios:', err);

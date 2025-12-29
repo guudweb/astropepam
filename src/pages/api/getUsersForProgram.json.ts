@@ -10,6 +10,7 @@ export const GET: APIRoute = async ({ url }) => {
     const activeOnly = params.get("activeOnly") !== "false"; // Por defecto true
     
     // OPTIMIZACIÓN: Solo seleccionar campos necesarios y usar INNER JOIN para activos
+    // Incluir diaReunion y turnoReunion para validación de conflictos de reunión
     const baseSelect = {
       user_id: Usuario.user_id,
       nombre: Usuario.nombre,
@@ -20,7 +21,9 @@ export const GET: APIRoute = async ({ url }) => {
       isActive: Usuario.isActive,
       participation_rules: Usuario.participation_rules,
       congregacion_id: Usuario.congregacion,
-      congregacion_nombre: Congregacion.nombre
+      congregacion_nombre: Congregacion.nombre,
+      congregacion_diaReunion: Congregacion.diaReunion,
+      congregacion_turnoReunion: Congregacion.turnoReunion
     };
 
     let query = db
@@ -46,6 +49,7 @@ export const GET: APIRoute = async ({ url }) => {
     const users = await query.execute();
 
     // Transformar datos para el formato esperado
+    // Incluir datos completos de congregación para validación de reuniones
     const formattedUsers = users.map(user => ({
       user_id: user.user_id,
       nombre: user.nombre,
@@ -57,7 +61,9 @@ export const GET: APIRoute = async ({ url }) => {
       participation_rules: user.participation_rules,
       congregacion: {
         id: user.congregacion_id,
-        nombre: user.congregacion_nombre
+        nombre: user.congregacion_nombre,
+        diaReunion: user.congregacion_diaReunion,
+        turnoReunion: user.congregacion_turnoReunion
       }
     }));
 

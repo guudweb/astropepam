@@ -95,26 +95,8 @@ export class ValidationManager {
     skipCache: boolean = false
   ): Promise<ValidationResult> {
     try {
-      // Si no tenemos los datos del usuario, intentar obtenerlos del store o API
-      if (!user) {
-        console.warn('User data not provided for validation');
-        return {
-          canParticipate: true,
-          warnings: [],
-          restrictions: [],
-          icon: '✅'
-        };
-      }
-
-      // Si el usuario no tiene reglas de participación, permitir
-      if (!user.participation_rules || user.participation_rules.length === 0) {
-        return {
-          canParticipate: true,
-          warnings: [],
-          restrictions: [],
-          icon: '✅'
-        };
-      }
+      // IMPORTANTE: Siempre validar incidencias y conflictos de reunión,
+      // incluso si el usuario no tiene reglas de participación
 
       // Verificar cache (si no se salta)
       const cacheKey = this.getCacheKey(userName, selectedDate);
@@ -130,11 +112,13 @@ export class ValidationManager {
       }
 
       // Validar con el sistema existente (incluyendo reunión e incidencias)
+      // IMPORTANTE: Pasar datos del usuario si existen, de lo contrario usar valores vacíos
+      // La validación de incidencias solo necesita el userName
       const validation = await ParticipationValidatorJS.validateUserComplete(
         userName,
-        user.participation_rules || [],
+        user?.participation_rules || [],
         selectedDate,
-        user.congregacion, // Datos de la congregación para validar conflicto de reunión
+        user?.congregacion, // Datos de la congregación para validar conflicto de reunión
         day, // Día seleccionado
         turno // Turno seleccionado
       );

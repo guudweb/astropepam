@@ -112,8 +112,11 @@ const iconId = `icon-${day}-${turno}-${index}`;
         const statusIcon = UserLoader.getStatusIcon(user);
         option.textContent = `${displayText} ${statusIcon}`;
         
-        // Agregar datos adicionales
+        // Agregar datos adicionales (incluyendo congregación completa para validación de reuniones)
         option.dataset.congregacionId = user.congregacion?.id?.toString() || '';
+        option.dataset.congregacionNombre = user.congregacion?.nombre || '';
+        option.dataset.congregacionDiaReunion = user.congregacion?.diaReunion || '';
+        option.dataset.congregacionTurnoReunion = user.congregacion?.turnoReunion || '';
         option.dataset.participationRules = JSON.stringify(user.participation_rules || []);
         option.disabled = user.canParticipate === false;
         
@@ -323,39 +326,53 @@ const iconId = `icon-${day}-${turno}-${index}`;
           return;
         }
 
-        // TERCERO: Validar reglas de participación
-        let userForValidation = user;
-        let hasRulesForValidation = user && user.participation_rules && user.participation_rules.length > 0;
-        
-        // Si no hay reglas en el store, verificar en el DOM y crear un objeto temporal
-        if (!hasRulesForValidation) {
-          const selectedOption = this.element.options[this.element.selectedIndex];
-          if (selectedOption && selectedOption.dataset.participationRules) {
+        // TERCERO: Validar usuario (reglas de participación, incidencias, conflictos de reunión)
+        // IMPORTANTE: Siempre ejecutar validación para detectar incidencias y conflictos de reunión
+        // Crear userForValidation con al menos el userName (necesario para validar incidencias)
+        let userForValidation: UserData = user || { userName, nombre: '', id: 0 } as UserData;
+
+        // Obtener datos adicionales del DOM
+        const selectedOption = this.element.options[this.element.selectedIndex];
+        if (selectedOption) {
+          // Obtener reglas de participación del DOM si existen
+          if (selectedOption.dataset.participationRules) {
             try {
               const rulesFromDOM = JSON.parse(selectedOption.dataset.participationRules);
               if (rulesFromDOM && rulesFromDOM.length > 0) {
                 userForValidation = {
-                  ...user,
+                  ...(userForValidation || { userName, nombre: '', id: 0 }),
                   participation_rules: rulesFromDOM
-                };
-                hasRulesForValidation = true;
-                console.log('🔍 DEBUG - Created temporary user object with rules from DOM');
+                } as UserData;
               }
             } catch (error) {
-              console.error('Error parsing participation rules from DOM for validation:', error);
+              console.error('Error parsing participation rules from DOM:', error);
             }
           }
+
+          // Obtener datos de congregación del DOM (incluyendo diaReunion y turnoReunion para validación)
+          if (selectedOption.dataset.congregacionId) {
+            const congregacionData = {
+              id: parseInt(selectedOption.dataset.congregacionId),
+              nombre: selectedOption.dataset.congregacionNombre || '',
+              diaReunion: selectedOption.dataset.congregacionDiaReunion || '',
+              turnoReunion: selectedOption.dataset.congregacionTurnoReunion || ''
+            };
+
+            console.log('🔍 DEBUG - Congregación from DOM:', congregacionData);
+
+            userForValidation = {
+              ...userForValidation,
+              congregacion: congregacionData
+            };
+          }
         }
-        
-        if (hasRulesForValidation) {
-          const validation = await ValidationManager.validateUserAssignment(
-            userName, this.day, this.turno, this.index, this.date, userForValidation
-          );
-          
-          await this.showValidationResult(userName, validation);
-        } else {
-          this.clearValidationIcon();
-        }
+
+        // Siempre ejecutar validación para detectar incidencias y conflictos de reunión
+        const validation = await ValidationManager.validateUserAssignment(
+          userName, this.day, this.turno, this.index, this.date, userForValidation
+        );
+
+        await this.showValidationResult(userName, validation);
       } catch (error) {
         console.error('Error validating user assignment:', error);
         this.iconElement.innerHTML = "";
