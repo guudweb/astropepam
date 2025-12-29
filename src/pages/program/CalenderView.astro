@@ -732,18 +732,12 @@ const { isAdmin } = Astro.locals;
         doc.save("calendario-programa.pdf");
       };
 
-      // Detectar si estamos en vista móvil
-      const isMobileView = () => {
-        return window.innerWidth < 768;
-      };
-
       // Nueva función para capturar la tabla directamente con html2canvas
+      // Siempre captura la vista de escritorio, incluso en móvil
       const captureTableAsPDF = async () => {
         try {
           const { jsPDF } = window.jspdf;
-          const isMobile = isMobileView();
 
-          // Seleccionar el elemento correcto según la vista
           const calendarView = document.getElementById("calendarView");
 
           if (!calendarView) {
@@ -754,60 +748,8 @@ const { isAdmin } = Astro.locals;
           // Pequeño delay para asegurar que todos los estilos están aplicados
           await new Promise((resolve) => setTimeout(resolve, 100));
 
-          // Configuración diferente para móvil vs desktop
-          const captureConfig = isMobile ? {
-            scale: 2,
-            useCORS: true,
-            allowTaint: false,
-            backgroundColor: "#f3f4f6", // bg-gray-100 para móvil
-            scrollX: 0,
-            scrollY: -window.scrollY, // Capturar desde el top
-            windowWidth: window.innerWidth,
-            removeContainer: true,
-            logging: false,
-            onclone: (clonedDoc) => {
-              const clonedElement = clonedDoc.getElementById("calendarView");
-              if (clonedElement) {
-                clonedElement.style.display = "block";
-                clonedElement.style.visibility = "visible";
-
-                // En móvil: mostrar solo la vista móvil
-                const desktopView = clonedElement.querySelector(".hidden.md\\:block");
-                if (desktopView) {
-                  desktopView.style.display = "none";
-                }
-
-                const mobileView = clonedElement.querySelector(".md\\:hidden");
-                if (mobileView) {
-                  mobileView.style.display = "block";
-                  mobileView.classList.remove("md:hidden");
-                  // Asegurar que las tarjetas se muestren correctamente
-                  mobileView.style.width = "100%";
-                }
-
-                // Asegurar estilos para las tarjetas móviles
-                const emptySlots = clonedElement.querySelectorAll(".empty-slot");
-                emptySlots.forEach((slot) => {
-                  slot.style.textAlign = "center";
-                  slot.style.display = "flex";
-                  slot.style.alignItems = "center";
-                  slot.style.justifyContent = "center";
-                });
-
-                // Añadir estilos CSS para móvil
-                const style = clonedDoc.createElement("style");
-                style.textContent = `
-                  .empty-slot {
-                    text-align: center !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                  }
-                `;
-                clonedDoc.head.appendChild(style);
-              }
-            },
-          } : {
+          // Configurar html2canvas para capturar siempre la vista de escritorio
+          const canvas = await html2canvas(calendarView, {
             scale: 2,
             useCORS: true,
             allowTaint: false,
@@ -824,14 +766,14 @@ const { isAdmin } = Astro.locals;
                 clonedElement.style.display = "block";
                 clonedElement.style.visibility = "visible";
 
-                // En desktop: mostrar la vista de escritorio
+                // Siempre mostrar la vista de escritorio
                 const desktopView = clonedElement.querySelector(".hidden.md\\:block");
                 if (desktopView) {
                   desktopView.classList.remove("hidden");
-                  desktopView.classList.add("block");
+                  desktopView.style.display = "block";
                 }
 
-                // Ocultar vista móvil
+                // Siempre ocultar la vista móvil
                 const mobileView = clonedElement.querySelector(".md\\:hidden");
                 if (mobileView) {
                   mobileView.style.display = "none";
@@ -854,7 +796,7 @@ const { isAdmin } = Astro.locals;
                   slot.style.height = "100%";
                 });
 
-                // Añadir estilos CSS para desktop
+                // Añadir estilos CSS
                 const style = clonedDoc.createElement("style");
                 style.textContent = `
                   th { text-align: center !important; }
@@ -874,19 +816,11 @@ const { isAdmin } = Astro.locals;
                 clonedElement.offsetHeight;
               }
             },
-          };
+          });
 
-          // Capturar el elemento correcto
-          const elementToCapture = isMobile
-            ? calendarView.querySelector(".md\\:hidden") || calendarView
-            : calendarView;
-
-          const canvas = await html2canvas(elementToCapture, captureConfig);
-
-          // Crear el PDF con orientación diferente según vista
-          const orientation = isMobile ? "portrait" : "landscape";
+          // Crear el PDF siempre en orientación horizontal (landscape)
           const doc = new jsPDF({
-            orientation: orientation,
+            orientation: "landscape",
             unit: "mm",
             format: "a4",
           });
@@ -920,7 +854,7 @@ const { isAdmin } = Astro.locals;
           // Agregar la imagen capturada
           const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
-          // Calcular dimensiones según orientación
+          // Calcular dimensiones
           const pageWidth = doc.internal.pageSize.getWidth();
           const pageHeight = doc.internal.pageSize.getHeight();
           const startY = 24;
@@ -928,35 +862,21 @@ const { isAdmin } = Astro.locals;
           const availableWidth = pageWidth - (margin * 2);
           const availableHeight = pageHeight - startY - margin;
 
-          // Calcular el tamaño de la imagen manteniendo la proporción
-          const imgRatio = canvas.width / canvas.height;
-          let finalWidth, finalHeight;
+          // Ajustar al espacio disponible
+          const widthRatio = availableWidth / canvas.width;
+          const heightRatio = availableHeight / canvas.height;
+          const ratio = Math.min(widthRatio, heightRatio);
 
-          if (isMobile) {
-            // En móvil, ajustar al ancho disponible y permitir múltiples páginas si es necesario
-            finalWidth = availableWidth;
-            finalHeight = finalWidth / imgRatio;
+          const finalWidth = canvas.width * ratio;
+          const finalHeight = canvas.height * ratio;
 
-            // Agregar la imagen (si es muy alta, jsPDF la recortará automáticamente)
-            doc.addImage(imgData, "JPEG", margin, startY, finalWidth, finalHeight);
-          } else {
-            // En desktop, ajustar al espacio disponible
-            const widthRatio = availableWidth / canvas.width;
-            const heightRatio = availableHeight / canvas.height;
-            const ratio = Math.min(widthRatio, heightRatio);
+          // Centrar horizontalmente
+          const startX = (pageWidth - finalWidth) / 2;
 
-            finalWidth = canvas.width * ratio;
-            finalHeight = canvas.height * ratio;
-
-            // Centrar horizontalmente
-            const startX = (pageWidth - finalWidth) / 2;
-
-            doc.addImage(imgData, "JPEG", startX, startY, finalWidth, finalHeight);
-          }
+          doc.addImage(imgData, "JPEG", startX, startY, finalWidth, finalHeight);
 
           // Descargar el PDF
-          const fileName = isMobile ? "calendario-movil.pdf" : "calendario-capturado.pdf";
-          doc.save(fileName);
+          doc.save("calendario-capturado.pdf");
         } catch (error) {
           console.error("Error capturando la tabla:", error);
           alert("Error al generar el PDF. Por favor, inténtalo de nuevo.");
